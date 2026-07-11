@@ -9,10 +9,12 @@ import com.library.mapper.BookCopyMapper;
 import com.library.repository.BookCopyRepository;
 import com.library.repository.BookRepository;
 import com.library.service.interfaces.BookCopyService;
+
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -21,6 +23,7 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Transactional
 public class BookCopyServiceImpl implements BookCopyService {
     BookCopyRepository bookCopyRepository;
     BookRepository bookRepository;
@@ -28,7 +31,7 @@ public class BookCopyServiceImpl implements BookCopyService {
 
     @Override
     public List<BookCopyResponse> getAllBookCopies() {
-        return bookCopyRepository.findAll().stream()
+        return bookCopyRepository.findAllWithBook().stream()
                 .map(bookCopyMapper::toResponse)
                 .collect(Collectors.toList());
     }

@@ -1,6 +1,8 @@
 package com.library.service.impl;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
@@ -20,6 +22,7 @@ import com.library.exception.MemberNotFoundException;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Transactional
 public class MemberServiceImpl implements MemberService {
     final MemberRepository memberRepository;
     final MemberMapper memberMapper;

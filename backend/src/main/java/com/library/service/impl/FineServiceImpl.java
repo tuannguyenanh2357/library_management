@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.List;
 @Setter
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class FineServiceImpl implements FineService {
     private final FineRepository repository;
     private final FineMapper mapper;
@@ -31,19 +33,19 @@ public class FineServiceImpl implements FineService {
 
     @Override
     public List<FineResponse> getAll() {
-        return repository.findAll().stream().map(mapper::toResponse).toList();
+        return repository.findAllWithRelations().stream().map(mapper::toResponse).toList();
     }
 
     @Override
     public List<FineResponse> getByMemberId(Long memberId) {
-        return repository.findByBorrowing_Member_Id(memberId).stream()
+        return repository.findByMemberIdWithRelations(memberId).stream()
                 .map(mapper::toResponse)
                 .toList();
     }
 
     @Override
     public List<FineResponse> getUnpaidFines() {
-        return repository.findByStatus(FineStatus.UNPAID).stream()
+        return repository.findByStatusWithRelations(FineStatus.UNPAID).stream()
                 .map(mapper::toResponse)
                 .toList();
     }

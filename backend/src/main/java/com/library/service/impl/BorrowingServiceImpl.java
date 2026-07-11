@@ -16,7 +16,9 @@ import com.library.repository.FineRepository;
 import com.library.repository.MemberRepository;
 import com.library.service.interfaces.BorrowingService;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -25,13 +27,15 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+@Transactional
 public class BorrowingServiceImpl implements BorrowingService {
 
-    private final BorrowingRepository borrowingRepository;
-    private final MemberRepository memberRepository;
-    private final BookCopyRepository bookCopyRepository;
-    private final FineRepository fineRepository;
-    private final BorrowingMapper mapper;
+    final BorrowingRepository borrowingRepository;
+    final MemberRepository memberRepository;
+    final BookCopyRepository bookCopyRepository;
+    final FineRepository fineRepository;
+    final BorrowingMapper mapper;
 
     @Override
     public BorrowingResponse borrowBook(BorrowingCreationRequest request) {
@@ -126,7 +130,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     @Override
     public List<BorrowingResponse> getAll() {
 
-        return borrowingRepository.findAll()
+        return borrowingRepository.findAllWithRelations()
                 .stream()
                 .map(mapper::toResponse)
                 .toList();
@@ -135,7 +139,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     @Override
     public List<BorrowingResponse> getByMemberId(Long memberId) {
 
-        return borrowingRepository.findByMemberId(memberId)
+        return borrowingRepository.findByMemberIdWithRelations(memberId)
                 .stream()
                 .map(mapper::toResponse)
                 .toList();
@@ -143,14 +147,12 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     @Override
     public List<BorrowingResponse> getOverdueBorrowings() {
-
-        return borrowingRepository.findAll()
-                .stream()
-                .filter(b -> b.getReturnDate() == null)
-                .filter(b -> b.getDueDate().isBefore(LocalDate.now()))
-                .map(mapper::toResponse)
-                .toList();
-    }
+    
+    return borrowingRepository.findOverdueBorrowings(LocalDate.now())
+            .stream()
+            .map(mapper::toResponse)
+            .toList();
+}
 
     @Override
     public void deleteBorrowing(Long borrowingId) {
