@@ -1,30 +1,27 @@
-package com.library.dto.request;
+package com.library.dto.response;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class UpdateBookRequest {
-    @NotBlank(message = "Title is required")
+public class BookResponse {
     String title;
 
-    @NotBlank(message = "Author is required")
     String author;
+
+    String isbn;
 
     String publisher;
 
-    @NotBlank(message = "Category is required")
     String category;
 
     String description;
 
-    @NotNull(message = "Publication year is required")
     Integer publicationYear;
 }
