@@ -18,7 +18,7 @@ public class FineController {
         return ResponseEntity.ok(fineService.getAll());
     }
 
-    @GetMapping("/fineId")
+    @GetMapping("/{fineId}")
     public ResponseEntity<FineResponse> getFineById(@PathVariable Long fineId) {
         return ResponseEntity.ok(fineService.getById(fineId));
     }
@@ -33,8 +33,9 @@ public class FineController {
         return ResponseEntity.ok(fineService.getUnpaidFines());
     }
 
-    @PutMapping("/{fineId}")
-    public ResponseEntity<FineResponse> updateFine(@PathVariable Long fineId, @RequestBody FineResponse fineResponse) {
+
+    @PutMapping("/{fineId}/pay")
+    public ResponseEntity<FineResponse> payFine(@PathVariable Long fineId) {
         return ResponseEntity.ok(fineService.payFine(fineId));
     }
 }
