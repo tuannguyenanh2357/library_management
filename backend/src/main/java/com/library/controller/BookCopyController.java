@@ -3,6 +3,7 @@ package com.library.controller;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.library.service.interfaces.BookCopyService;
 import com.library.dto.response.BookCopyResponse;
 import com.library.dto.request.BookCopyCreationRequest;
@@ -28,6 +29,7 @@ public class BookCopyController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<BookCopyResponse> createBookCopy(@Valid @RequestBody BookCopyCreationRequest request) {
         BookCopyResponse created = bookCopyService.createBookCopy(request);
         URI location = URI.create("/book-copies/" + created.getId());
@@ -35,12 +37,14 @@ public class BookCopyController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<BookCopyResponse> updateBookCopy(@PathVariable Long id, @Valid @RequestBody BookCopyUpdateRequest request) {
         BookCopyResponse updated = bookCopyService.updateBookCopy(id, request);
         return ResponseEntity.ok(updated);
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<Void> deleteBookCopy(@PathVariable Long id) {
         bookCopyService.deleteBookCopy(id);
         return ResponseEntity.noContent().build();

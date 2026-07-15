@@ -5,6 +5,7 @@ import com.library.service.interfaces.FineService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -14,6 +15,7 @@ import java.util.List;
 public class FineController {
     private final FineService fineService;
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<List<FineResponse>> getAll() {
         return ResponseEntity.ok(fineService.getAll());
     }
@@ -29,12 +31,14 @@ public class FineController {
     }
 
     @GetMapping("/unpaid")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<List<FineResponse>> getUnpaidFines() {
         return ResponseEntity.ok(fineService.getUnpaidFines());
     }
 
 
     @PutMapping("/{fineId}/pay")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<FineResponse> payFine(@PathVariable Long fineId) {
         return ResponseEntity.ok(fineService.payFine(fineId));
     }

@@ -1,15 +1,16 @@
-package com.library.dto.request;
+package com.library.dto.response;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-public class LoginRequest {
-    String username;
-    String password;
+@Builder
+public class IntrospectResponse {
+    boolean valid;
 }

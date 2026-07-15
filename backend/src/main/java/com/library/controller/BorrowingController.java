@@ -6,6 +6,7 @@ import com.library.service.interfaces.BorrowingService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 
 import java.util.List;
 
@@ -16,6 +17,7 @@ public class BorrowingController {
     private final BorrowingService borrowingService;
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<List<BorrowingResponse>> getAllBorrowings() {
         return ResponseEntity.ok(borrowingService.getAll());
     }
@@ -31,6 +33,7 @@ public class BorrowingController {
     }
 
     @GetMapping("/overdue")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<List<BorrowingResponse>> getOverdueBorrowings() {
         return ResponseEntity.ok(borrowingService.getOverdueBorrowings());
     }
@@ -41,6 +44,7 @@ public class BorrowingController {
     }
 
     @PutMapping("/{borrowingId}/return")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<BorrowingResponse> returnBook(@PathVariable Long borrowingId) {
         return ResponseEntity.ok(borrowingService.returnBook(borrowingId));
     }

@@ -2,6 +2,7 @@ package com.library.service.impl;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -26,6 +27,7 @@ import com.library.exception.MemberNotFoundException;
 public class MemberServiceImpl implements MemberService {
     final MemberRepository memberRepository;
     final MemberMapper memberMapper;
+    final PasswordEncoder passwordEncoder;
 
     @Override
     public List<MemberResponse> getAllMembers() {
@@ -45,6 +47,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public MemberResponse createMember(MemberCreationRequest request) {
         Member member = memberMapper.toMember(request);
+        member.setPassword(passwordEncoder.encode(member.getPassword()));
         member = memberRepository.save(member);
         return memberMapper.toMemberResponse(member);
     }
@@ -53,7 +56,13 @@ public class MemberServiceImpl implements MemberService {
     public MemberResponse updateMember(Long memberId, MemberUpdateRequest request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotFoundException("Member not found"));
+        
+        String newPassword = request.getPassword();
         memberMapper.updateMemberFromRequest(request, member);
+        if (newPassword != null && !newPassword.isBlank()) {
+            member.setPassword(passwordEncoder.encode(newPassword));
+        }
+        
         member = memberRepository.save(member);
         return memberMapper.toMemberResponse(member);
     }

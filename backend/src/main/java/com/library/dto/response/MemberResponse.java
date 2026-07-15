@@ -1,5 +1,6 @@
 package com.library.dto.response;
 
+import com.library.entity.enums.MemberRole;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -22,5 +23,5 @@ public class MemberResponse {
     Boolean isActive;
     String avatar;
     Integer age;
-
+    MemberRole role;
 }

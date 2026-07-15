@@ -43,7 +43,7 @@ public class Member {
     String username;
 
     @Nationalized
-    @Column(nullable = false, length = 50)
+    @Column(nullable = false, length = 60)
     String password;
 
     @Email

@@ -34,3 +34,15 @@ spring:
 
 server:
   port: 8080
+
+jwt:
+  signerKey: "1234567890123456789012345678901234567890123456789012345678901234"
+
+app:
+  setup:
+    admin:
+      username: ${ADMIN_USERNAME:admin}
+      password: ${ADMIN_PASSWORD:admin123}
+    librarian:
+      username: ${LIBRARIAN_USERNAME:librarian}
+      password: ${LIBRARIAN_PASSWORD:librarian123}

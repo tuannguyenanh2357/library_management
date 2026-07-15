@@ -11,6 +11,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookResponse {
+
+    Long id;
+    
     String title;
 
     String author;
