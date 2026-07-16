@@ -46,6 +46,10 @@ public class Book {
     @Column(columnDefinition = "NVARCHAR(MAX)")
     String description;
 
+    @Column(name = "image_url")
+    String imageUrl;
+
+
     @Column(name = "publication_year")
     Integer publicationYear;
     @Column(name = "created_at")

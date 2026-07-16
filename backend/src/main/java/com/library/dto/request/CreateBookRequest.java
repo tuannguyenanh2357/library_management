@@ -32,5 +32,6 @@ public class CreateBookRequest {
     @NotNull(message = "Publication year is required")
     Integer publicationYear;
 
+    String imageUrl;
 
 }

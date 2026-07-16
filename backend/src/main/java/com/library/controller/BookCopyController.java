@@ -24,6 +24,7 @@ public class BookCopyController {
     }
 
     @GetMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<List<BookCopyResponse>> getAllBookCopies() {
         return ResponseEntity.ok(bookCopyService.getAllBookCopies());
     }

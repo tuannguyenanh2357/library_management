@@ -27,4 +27,7 @@ public class BookResponse {
     String description;
 
     Integer publicationYear;
+
+    String imageUrl;
+
 }

@@ -10,6 +10,7 @@ import com.library.service.interfaces.BookService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +32,16 @@ public class BookServiceImpl implements BookService {
                 .map(bookMapper::toBookResponse)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<BookResponse> getPopularBooks() {
+        java.time.LocalDate oneWeekAgo = java.time.LocalDate.now().minusDays(7);
+        List<Book> books = bookRepository.findTop10MostBorrowedSince(oneWeekAgo, PageRequest.of(0, 10));
+        return books.stream()
+                .map(bookMapper::toBookResponse)
+                .collect(Collectors.toList());
+    }
+
     @Override
     public BookResponse createBook(CreateBookRequest request) {
         Book book = bookMapper.toBook(request);
