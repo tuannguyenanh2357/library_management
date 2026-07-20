@@ -50,6 +50,10 @@ public class Book {
     String imageUrl;
 
 
+    @Column(name = "daily_fine_amount", precision = 10, scale = 2)
+    @Builder.Default
+    java.math.BigDecimal dailyFineAmount = new java.math.BigDecimal("5000.00");
+
     @Column(name = "publication_year")
     Integer publicationYear;
     @Column(name = "created_at")

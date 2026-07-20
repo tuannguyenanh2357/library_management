@@ -12,6 +12,7 @@ public interface BorrowingService {
     List<BorrowingResponse> getAll();
     List<BorrowingResponse> getByMemberId(Long memberId);
     List<BorrowingResponse> getOverdueBorrowings();
+    List<BorrowingResponse> getByCopyId(Long copyId);
     void deleteBorrowing(Long borrowingId);
     
 }

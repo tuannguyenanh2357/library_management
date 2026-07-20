@@ -30,4 +30,8 @@ public class BookResponse {
 
     String imageUrl;
 
+    java.math.BigDecimal dailyFineAmount;
+
+    long availableCopiesCount;
+
 }

@@ -35,19 +35,33 @@ public class BorrowingServiceImpl implements BorrowingService {
     final MemberRepository memberRepository;
     final BookCopyRepository bookCopyRepository;
     final FineRepository fineRepository;
+    final com.library.service.interfaces.ReservationService reservationService;
     final BorrowingMapper mapper;
 
     @Override
     public BorrowingResponse borrowBook(BorrowingCreationRequest request) {
 
         Member member = memberRepository.findById(request.getMemberId())
-                .orElseThrow(() -> new RuntimeException("Member not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy độc giả"));
 
         BookCopy bookCopy = bookCopyRepository.findById(request.getBookCopyId())
-                .orElseThrow(() -> new RuntimeException("Book copy not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy bản sao sách"));
 
         if (bookCopy.getStatus() != BookCopyStatus.AVAILABLE) {
-            throw new RuntimeException("Book is not available");
+            if (bookCopy.getStatus() == BookCopyStatus.RESERVED) {
+                // Kiểm tra xem người đang mượn có phải là người đã đặt trước cuốn này không
+                boolean isReservedForThisMember = reservationService.getMyReservations(member.getUsername()).stream()
+                        .anyMatch(res -> res.getStatus() == com.library.entity.enums.ReservationStatus.FULFILLED && res.getFulfilledCopyId().equals(bookCopy.getId()));
+                
+                if (!isReservedForThisMember) {
+                    throw new RuntimeException("Bản sao này đã được giữ chỗ cho một độc giả khác.");
+                }
+                
+                // Nếu đúng người, cần hoàn tất reservation
+                reservationService.completeReservationByCopyId(bookCopy.getId());
+            } else {
+                throw new RuntimeException("Book is not available");
+            }
         }
 
         LocalDate borrowDate = LocalDate.now();
@@ -91,7 +105,8 @@ public class BorrowingServiceImpl implements BorrowingService {
         borrowing.setStatus(BorrowingStatus.RETURNED);
 
         BookCopy bookCopy = borrowing.getBookCopy();
-        bookCopy.markAsReturned();
+        // Xóa dòng markAsReturned() vì ReservationService sẽ lo việc này
+
 
         if (borrowing.getReturnDate().isAfter(borrowing.getDueDate())) {
 
@@ -99,12 +114,15 @@ public class BorrowingServiceImpl implements BorrowingService {
                     borrowing.getDueDate(),
                     borrowing.getReturnDate());
 
-            BigDecimal amount = BigDecimal.valueOf(overdueDays * 5000);
+            java.math.BigDecimal dailyFine = bookCopy.getBook().getDailyFineAmount() != null
+                    ? bookCopy.getBook().getDailyFineAmount()
+                    : java.math.BigDecimal.valueOf(5000);
+            BigDecimal amount = dailyFine.multiply(BigDecimal.valueOf(overdueDays));
 
             Fines fine = Fines.builder()
                     .borrowing(borrowing)
                     .amount(amount)
-                    .reason("Returned book late")
+                    .reason("Trả sách quá hạn")
                     .issuedDate(LocalDate.now())
                     .status(FineStatus.UNPAID)
                     .build();
@@ -113,7 +131,10 @@ public class BorrowingServiceImpl implements BorrowingService {
         }
 
         borrowingRepository.save(borrowing);
-        bookCopyRepository.save(bookCopy);
+        
+        // Thay vì tự động set thành AVAILABLE, chuyển quyền định đoạt cho ReservationService
+        // Nếu có người đang xếp hàng chờ, sách sẽ đổi thành RESERVED. Ngược lại nó sẽ thành AVAILABLE.
+        reservationService.fulfillNextReservationIfAny(bookCopy.getBook().getId(), bookCopy);
 
         return mapper.toResponse(borrowing);
     }
@@ -153,6 +174,14 @@ public class BorrowingServiceImpl implements BorrowingService {
             .map(mapper::toResponse)
             .toList();
 }
+
+    @Override
+    public List<BorrowingResponse> getByCopyId(Long copyId) {
+        return borrowingRepository.findByBookCopyIdWithRelations(copyId)
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
 
     @Override
     public void deleteBorrowing(Long borrowingId) {

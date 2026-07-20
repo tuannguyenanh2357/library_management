@@ -51,5 +51,37 @@ public class MemberController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/me")
+    public ResponseEntity<?> getMyProfile() {
+        try {
+            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+            if (auth == null) {
+                return ResponseEntity.status(401).body("Authentication object is null");
+            }
+            String username = auth.getName();
+            return ResponseEntity.ok(memberService.getMemberByUsername(username));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(500).body("Error: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/me")
+    public ResponseEntity<MemberResponse> updateMyProfile(@Valid @RequestBody com.library.dto.request.MyProfileUpdateRequest request) {
+        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        MemberResponse updated = memberService.updateMyProfile(username, request);
+        return ResponseEntity.ok(updated);
+    }
+
+    @PutMapping("/me/password")
+    public ResponseEntity<?> changePassword(@Valid @RequestBody com.library.dto.request.ChangePasswordRequest request) {
+        try {
+            String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+            memberService.changePassword(username, request);
+            return ResponseEntity.ok(java.util.Map.of("message", "Đổi mật khẩu thành công"));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
+        }
+    }
 
 }

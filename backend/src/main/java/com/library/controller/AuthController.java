@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -34,6 +35,7 @@ public class AuthController {
     }
 
     @PostMapping("/introspect")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MemberResponse> introspect(@Valid @RequestBody RegisterRequest request) {
         MemberResponse response = authenticationService.register(request);
         return ResponseEntity.ok(response);

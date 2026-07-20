@@ -14,6 +14,7 @@ public interface BookCopyMapper {
 
     @Mapping(target = "author", source = "book.author")
     @Mapping(target = "title", source = "book.title")
+    @Mapping(target = "bookId", source = "book.id")
     BookCopyResponse toResponse(BookCopy entity);
 
     @BeanMapping(

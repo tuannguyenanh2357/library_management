@@ -2,6 +2,7 @@ package com.library.controller;
 
 import com.library.dto.request.UpdateBookRequest;
 import com.library.dto.response.BookResponse;
+import com.library.dto.response.PageResponse;
 import com.library.dto.request.CreateBookRequest;
 import java.util.List;
 import com.library.service.interfaces.BookService;
@@ -30,8 +31,21 @@ public class BookController {
     }
 
     @GetMapping
-    public ResponseEntity<List<BookResponse>> getAllBooks() {
-        return ResponseEntity.ok(bookService.getAllBooks());
+    public ResponseEntity<PageResponse<BookResponse>> getAllBooks(
+            @RequestParam(required = false) Long id,
+            @RequestParam(required = false) String title,
+            @RequestParam(required = false) String author,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String publisher,
+            @RequestParam(required = false) String isbn,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(bookService.getAllBooks(id, title, author, category, publisher, isbn, page, size));
+    }
+
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getCategories() {
+        return ResponseEntity.ok(bookService.getUniqueCategories());
     }
 
     @GetMapping("/popular")

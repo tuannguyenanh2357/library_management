@@ -10,15 +10,20 @@ import java.util.List;
 
 public interface FineRepository extends JpaRepository<Fines, Long> {
 
-    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member m " + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book " + "WHERE b.member.id = :memberId AND f.status = :status")
+    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member m "
+            + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book "
+            + "WHERE b.member.id = :memberId AND f.status = :status")
     List<Fines> findByBorrowing_Member_IdAndStatus(Long memberId, FineStatus status);
 
-    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member " + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book")
+    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member " + "JOIN FETCH b.bookCopy bc "
+            + "JOIN FETCH bc.book")
     List<Fines> findAllWithRelations();
 
-    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member m " + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book " + "WHERE b.member.id = :memberId")
+    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member m "
+            + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book " + "WHERE b.member.id = :memberId")
     List<Fines> findByMemberIdWithRelations(@Param("memberId") Long memberId);
 
-    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member " + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book " + "WHERE f.status = :status")
+    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member " + "JOIN FETCH b.bookCopy bc "
+            + "JOIN FETCH bc.book " + "WHERE f.status = :status")
     List<Fines> findByStatusWithRelations(@Param("status") FineStatus status);
 }

@@ -1,5 +1,6 @@
 package com.library.dto.request;
 
+import com.library.entity.enums.BookCopyStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -15,4 +16,5 @@ import lombok.experimental.FieldDefaults;
 public class BookCopyUpdateRequest {
     @NotNull(message = "Book ID is required")
     Long bookId;
+    BookCopyStatus status;
 }

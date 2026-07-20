@@ -23,11 +23,13 @@ public class BorrowingController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<BorrowingResponse> getBorrowingById(@PathVariable Long id) {
         return ResponseEntity.ok(borrowingService.getById(id));
     }
 
     @GetMapping("/member/{memberId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN') or principal.claims['memberId'] == #memberId")
     public ResponseEntity<List<BorrowingResponse>> getBorrowingsByMemberId(@PathVariable Long memberId) {
         return ResponseEntity.ok(borrowingService.getByMemberId(memberId));
     }
@@ -39,6 +41,7 @@ public class BorrowingController {
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<BorrowingResponse> borrowBook(@RequestBody BorrowingCreationRequest request) {
         return ResponseEntity.ok(borrowingService.borrowBook(request));
     }
@@ -49,6 +52,10 @@ public class BorrowingController {
         return ResponseEntity.ok(borrowingService.returnBook(borrowingId));
     }
 
-
+    @GetMapping("/copy/{copyId}")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    public ResponseEntity<List<BorrowingResponse>> getBorrowingsByCopyId(@PathVariable Long copyId) {
+        return ResponseEntity.ok(borrowingService.getByCopyId(copyId));
+    }
 
 }

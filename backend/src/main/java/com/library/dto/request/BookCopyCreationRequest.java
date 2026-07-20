@@ -12,4 +12,6 @@ import lombok.experimental.FieldDefaults;
 public class BookCopyCreationRequest {
     @NotNull(message = "Book ID is required")
     Long bookId;
+
+    String barCode;
 }

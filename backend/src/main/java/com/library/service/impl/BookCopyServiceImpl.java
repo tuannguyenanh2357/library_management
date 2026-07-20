@@ -1,5 +1,7 @@
 package com.library.service.impl;
 
+import com.library.entity.enums.BookCopyStatus;
+
 import com.library.dto.request.BookCopyCreationRequest;
 import com.library.dto.request.BookCopyUpdateRequest;
 import com.library.dto.response.BookCopyResponse;
@@ -9,6 +11,7 @@ import com.library.mapper.BookCopyMapper;
 import com.library.repository.BookCopyRepository;
 import com.library.repository.BookRepository;
 import com.library.service.interfaces.BookCopyService;
+import com.library.service.interfaces.ReservationService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,6 +31,7 @@ public class BookCopyServiceImpl implements BookCopyService {
     BookCopyRepository bookCopyRepository;
     BookRepository bookRepository;
     BookCopyMapper bookCopyMapper;
+    ReservationService reservationService;
 
     @Override
     public List<BookCopyResponse> getAllBookCopies() {
@@ -44,6 +48,13 @@ public class BookCopyServiceImpl implements BookCopyService {
     }
 
     @Override
+    public BookCopyResponse getBookCopyByBarcode(String barcode) {
+        BookCopy bookCopy = bookCopyRepository.findByBarCode(barcode)
+                .orElseThrow(() -> new RuntimeException("Book copy not found with barcode: " + barcode));
+        return bookCopyMapper.toResponse(bookCopy);
+    }
+
+    @Override
     public BookCopyResponse createBookCopy(BookCopyCreationRequest request) {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
@@ -55,6 +66,10 @@ public class BookCopyServiceImpl implements BookCopyService {
         }
 
         BookCopy savedBookCopy = bookCopyRepository.save(bookCopy);
+        
+        // Kiểm tra xem có ai đang xếp hàng đợi cuốn sách này không. Nếu có thì gán luôn bản sao này cho người đó.
+        reservationService.fulfillNextReservationIfAny(book.getId(), savedBookCopy);
+        
         return bookCopyMapper.toResponse(savedBookCopy);
     }
 
@@ -65,6 +80,10 @@ public class BookCopyServiceImpl implements BookCopyService {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
+        if (existingBookCopy.getStatus() == BookCopyStatus.BORROWED) {
+            throw new RuntimeException("Không thể cập nhật trạng thái của bản sao đang được mượn.");
+        }
+
         bookCopyMapper.updateBookCopy(existingBookCopy, request);
         existingBookCopy.setBook(book);
 
@@ -74,6 +93,13 @@ public class BookCopyServiceImpl implements BookCopyService {
 
     @Override
     public void deleteBookCopy(Long bookCopyId) {
+        BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
+                .orElseThrow(() -> new RuntimeException("Book copy not found"));
+
+        if (existingBookCopy.getStatus() == BookCopyStatus.BORROWED) {
+            throw new RuntimeException("Không thể xóa bản sao đang được mượn.");
+        }
+
         bookCopyRepository.deleteById(bookCopyId);
     }
 }

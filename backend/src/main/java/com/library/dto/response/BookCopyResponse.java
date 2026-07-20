@@ -19,4 +19,5 @@ public class BookCopyResponse {
     String author;
     String title;
     LocalDate dueDate;
+    Long bookId;
 }

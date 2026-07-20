@@ -10,6 +10,7 @@ public interface BookCopyService {
     BookCopyResponse createBookCopy(BookCopyCreationRequest request);
     BookCopyResponse updateBookCopy(Long bookCopyId, BookCopyUpdateRequest request);
     BookCopyResponse getBookCopyById(Long bookCopyId);
+    BookCopyResponse getBookCopyByBarcode(String barcode);
     List<BookCopyResponse> getAllBookCopies();
     void deleteBookCopy(Long bookCopyId);
 }

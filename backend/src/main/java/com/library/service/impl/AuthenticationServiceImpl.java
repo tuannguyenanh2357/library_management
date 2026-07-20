@@ -94,7 +94,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         if (memberRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already exists");
         }
-        String phoneStr = request.getPhone() != null ? String.valueOf(request.getPhone()) : "";
+        String phoneStr = request.getPhone() != null ? request.getPhone().trim() : "";
         if (!phoneStr.isBlank() && memberRepository.existsByPhone(phoneStr)) {
             throw new RuntimeException("Phone number already exists");
         }
@@ -124,9 +124,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .issuer("library-management")
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(24, ChronoUnit.HOURS).toEpochMilli()
+                        Instant.now().plus(90, ChronoUnit.MINUTES).toEpochMilli()
                 ))
                 .claim("scope", userRole)
+                .claim("memberId", member.getId())
                 .build();
 
         Payload payload = new Payload(jwtClaimsSet.toJSONObject());

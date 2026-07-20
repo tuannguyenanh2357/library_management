@@ -132,7 +132,7 @@ END;
 GO
 
 
--- Sách sắp hết hạn mượn trong N ngày tới
+-- Sách sắp hết hạn mượn trong số ngày tới
 IF OBJECT_ID('dbo.GetBooksExpiringInNextDays', 'P') IS NOT NULL
     DROP PROCEDURE dbo.GetBooksExpiringInNextDays;
 GO

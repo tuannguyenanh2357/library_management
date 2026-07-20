@@ -38,7 +38,7 @@ public class BookCopy {
 
     // String shelfLocation;
 
-    @OneToMany(mappedBy = "bookCopy", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "bookCopy", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @Builder.Default
     List<Borrowing> borrowings = new ArrayList<>();
 

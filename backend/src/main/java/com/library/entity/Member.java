@@ -4,6 +4,7 @@ import com.library.entity.enums.MemberRole;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import com.library.entity.enums.BorrowingStatus;
@@ -46,14 +47,16 @@ public class Member {
     @Column(nullable = false, length = 60)
     String password;
 
-    @Email
+    @Email(message = "Invalid email format")
     @NotBlank(message = "Email is required")
-    @Nationalized
     @Column(nullable = false, unique = true)
     String email;
 
     @NotBlank(message = "Phone number is required")
-    @Nationalized
+    @Pattern(
+            regexp = "^(\\+84|0)[3-9]\\d{8}$",
+            message = "Invalid Vietnamese phone number"
+    )
     @Column(nullable = false, unique = true)
     String phone;
 
@@ -77,9 +80,13 @@ public class Member {
     @Column(name = "role", nullable = false)
     MemberRole role;
 
-    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @Builder.Default
     List<Borrowing> borrowings = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @Builder.Default
+    List<BorrowingRequest> borrowingRequests = new ArrayList<>();
 
     @Column(name = "created_at", updatable = false)
     LocalDateTime createdAt;

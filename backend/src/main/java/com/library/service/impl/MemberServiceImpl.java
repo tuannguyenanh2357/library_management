@@ -40,7 +40,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public MemberResponse getMemberById(Long memberID) {
         Member member = memberRepository.findById(memberID)
-                .orElseThrow(() -> new MemberNotFoundException("Member not found"));
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
         return memberMapper.toMemberResponse(member);
     }
 
@@ -55,7 +55,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public MemberResponse updateMember(Long memberId, MemberUpdateRequest request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberNotFoundException("Member not found"));
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
         
         String newPassword = request.getPassword();
         memberMapper.updateMemberFromRequest(request, member);
@@ -69,6 +69,48 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public void deleteMember(Long memberId) {
-        memberRepository.deleteById(memberId);
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        
+        if (member.hasBorrowedBooks()) {
+            throw new RuntimeException("Không thể xóa độc giả vì họ đang mượn sách chưa trả.");
+        }
+        
+        memberRepository.delete(member);
+    }
+
+    @Override
+    public MemberResponse getMemberByUsername(String username) {
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên với tên người dùng: " + username));
+        return memberMapper.toMemberResponse(member);
+    }
+
+    @Override
+    public MemberResponse updateMyProfile(String username, com.library.dto.request.MyProfileUpdateRequest request) {
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        
+        if (request.getName() != null) member.setName(request.getName());
+        if (request.getEmail() != null) member.setEmail(request.getEmail());
+        if (request.getPhone() != null) member.setPhone(request.getPhone());
+        if (request.getAddress() != null) member.setAddress(request.getAddress());
+        if (request.getAvatar() != null) member.setAvatar(request.getAvatar());
+
+        member = memberRepository.save(member);
+        return memberMapper.toMemberResponse(member);
+    }
+
+    @Override
+    public void changePassword(String username, com.library.dto.request.ChangePasswordRequest request) {
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        
+        if (!passwordEncoder.matches(request.getOldPassword(), member.getPassword())) {
+            throw new RuntimeException("Mật khẩu cũ không chính xác");
+        }
+        
+        member.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        memberRepository.save(member);
     }
 }

@@ -16,4 +16,7 @@ public class BorrowingCreationRequest {
     private Long bookCopyId;
     @NotNull (message = "Due Date is required")
     private LocalDate dueDate;
+
+    String note;
+
 }

@@ -26,6 +26,7 @@ public class FineController {
     }
 
     @GetMapping("/member/{memberId}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN') or principal.claims['memberId'] == #memberId")
     public ResponseEntity<List<FineResponse>> getFinesByMemberId(@PathVariable Long memberId) {
         return ResponseEntity.ok(fineService.getByMemberId(memberId));
     }

@@ -30,4 +30,6 @@ public class UpdateBookRequest {
 
     String imageUrl;
 
+    java.math.BigDecimal dailyFineAmount;
+
 }

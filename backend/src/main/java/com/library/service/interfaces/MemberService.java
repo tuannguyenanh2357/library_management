@@ -13,5 +13,8 @@ public interface MemberService {
 
     List<MemberResponse> getAllMembers();
     void deleteMember(Long memberId);
+    MemberResponse getMemberByUsername(String username);
 
+    MemberResponse updateMyProfile(String username, com.library.dto.request.MyProfileUpdateRequest request);
+    void changePassword(String username, com.library.dto.request.ChangePasswordRequest request);
 }

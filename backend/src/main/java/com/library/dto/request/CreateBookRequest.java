@@ -5,7 +5,6 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 import lombok.experimental.FieldDefaults;
 
 @Data
@@ -33,5 +32,7 @@ public class CreateBookRequest {
     Integer publicationYear;
 
     String imageUrl;
+
+    java.math.BigDecimal dailyFineAmount;
 
 }

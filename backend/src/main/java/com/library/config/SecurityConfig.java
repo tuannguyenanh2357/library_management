@@ -32,7 +32,10 @@ public class SecurityConfig {
     private static final String[] PUBLIC_URLS = {
             "/auth/login",
             "/auth/register",
-            "/dashboard"
+            "/dashboard",
+            "/about",
+            "/contact",
+            "/files/download/**"
     };
 
     @Value("${jwt.signerKey}")
@@ -50,8 +53,7 @@ public class SecurityConfig {
         httpSecurity.authorizeHttpRequests(request -> request
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers(PUBLIC_URLS).permitAll()
-                .requestMatchers(HttpMethod.GET, "/books/**").permitAll() // Cho phép xem sách mà không cần
-                                                                                   // đăng nhập
+                .requestMatchers(HttpMethod.GET, "/books/**").permitAll()
                 .anyRequest().authenticated());
 
         httpSecurity.oauth2ResourceServer(oauth2 -> oauth2

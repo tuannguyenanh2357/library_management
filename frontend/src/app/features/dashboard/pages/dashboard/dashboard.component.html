@@ -1,0 +1,99 @@
+
+
+<!-- 2. PHẦN GIỮA: THÂN TRANG (MAIN CONTENT) -->
+<main class="dashboard-main">
+  <!-- Hero Section & Search -->
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <h1>Khám Phá Tri Thức - Định Hình Tương Lai</h1>
+      <p>Tìm kiếm hàng nghìn đầu sách khoa học, văn học, công nghệ chất lượng cao ngay lập tức</p>
+
+      <app-search-panel></app-search-panel>
+    </div>
+  </section>
+
+  <!-- Top 10 sácg được mượn nhiều nhất tuần -->
+  <section class="section-container top-borrowed-section">
+    <div class="section-header">
+      <h2>🔥 Top 10 Sách Được Mượn Nhiều Nhất</h2>
+      <p>Những cuốn sách được độc giả yêu thích và mượn đọc nhiều nhất tuần qua</p>
+    </div>
+
+    @if (loading()) {
+      <div class="section-loader">
+        <span class="spinner"></span> Đang tải danh sách sách...
+      </div>
+    } @else if (errorMessage()) {
+      <div class="section-error">⚠️ {{ errorMessage() }}</div>
+    } @else {
+      <div class="books-slider-container">
+        <div class="books-slider">
+          @for (book of top10Books(); track book.id; let idx = $index) {
+            <div class="slider-card" (click)="openDetailModal(book)">
+              <div class="badge-rank">#{{ idx + 1 }}</div>
+              <div class="card-cover">
+                <img [src]="book.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400'" [alt]="book.title" />
+              </div>
+              <div class="card-info">
+                <span class="book-category">{{ book.category }}</span>
+                <h4 class="book-title" [title]="book.title">{{ book.title }}</h4>
+                <p class="book-author">{{ book.author }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- sách mới nhất -->
+  <section class="section-container books-grid-section">
+    <div class="section-header">
+      <h2>📖 Khám Phá Sách Mới</h2>
+      <p>Tuyển chọn những cuốn sách mới nhất vừa được đưa vào kho thư viện</p>
+    </div>
+
+    @if (loading()) {
+      <div class="section-loader">
+        <span class="spinner"></span> Đang tải kho sách...
+      </div>
+    } @else if (errorMessage()) {
+      <div class="section-error">⚠️ {{ errorMessage() }}</div>
+    } @else {
+      <div class="books-grid">
+        @for (book of featuredBooks(); track book.id) {
+          <div class="grid-card" (click)="openDetailModal(book)">
+            <div class="card-cover">
+              <img [src]="book.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400'" [alt]="book.title" />
+            </div>
+            <div class="card-info">
+              <span class="book-category">{{ book.category }}</span>
+              <h4 class="book-title" [title]="book.title">{{ book.title }}</h4>
+              <p class="book-author">Tác giả: {{ book.author }}</p>
+              @if (book.publisher) {
+                <p class="book-publisher">NXB: {{ book.publisher }}</p>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="grid-actions">
+        <a routerLink="/books" class="btn btn-view-all">Xem tất cả sách ➔</a>
+      </div>
+    }
+  </section>
+
+  <!-- Modal xem chi tiết sách -->
+  <app-book-detail-modal
+    [isOpen]="isDetailModalOpen()"
+    [book]="selectedBook()"
+    (close)="closeDetailModal()"
+    (borrow)="onBorrowBook($event)"
+    (reserve)="onReserveBook($event)"
+  ></app-book-detail-modal>
+
+</main>
+
+
