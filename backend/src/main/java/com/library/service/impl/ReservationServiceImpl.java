@@ -26,6 +26,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import com.library.config.RabbitMQConfig;
+import com.library.dto.event.ReservationFulfilledEvent;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +42,7 @@ public class ReservationServiceImpl implements ReservationService {
     BookCopyRepository bookCopyRepository;
     BorrowingRepository borrowingRepository;
     ReservationMapper mapper;
+    RabbitTemplate rabbitTemplate;
 
     @Override
     public ReservationResponse createReservation(ReservationCreationRequest request) {
@@ -154,7 +158,16 @@ public class ReservationServiceImpl implements ReservationService {
             
             reservationRepository.save(res);
             bookCopyRepository.save(returnedCopy);
-            // TODO: Gửi email/notification cho độc giả báo sách đã về
+            
+            // Gửi event qua RabbitMQ thay vì gửi email trực tiếp đồng bộ
+            ReservationFulfilledEvent event = ReservationFulfilledEvent.builder()
+                    .memberEmail(res.getMember().getEmail())
+                    .memberName(res.getMember().getName())
+                    .bookTitle(res.getBook().getTitle())
+                    .expiryDate(res.getExpiryDate())
+                    .build();
+            rabbitTemplate.convertAndSend(RabbitMQConfig.RESERVATION_EXCHANGE, RabbitMQConfig.RESERVATION_FULFILLED_ROUTING_KEY, event);
+            
         } else {
             returnedCopy.setStatus(BookCopyStatus.AVAILABLE);
             bookCopyRepository.save(returnedCopy);
