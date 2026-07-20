@@ -1,0 +1,42 @@
+<header class="header-navbar">
+  <div class="navbar-container">
+    <a routerLink="/dashboard" class="navbar-logo">
+      <span>📚</span> LIBRAHUB
+    </a>
+
+    <nav class="navbar-menu">
+      <a routerLink="/dashboard" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="menu-link">Trang Chủ</a>
+      <a routerLink="/books" routerLinkActive="active" class="menu-link">Kho Sách</a>
+      <a routerLink="/about" routerLinkActive="active" class="menu-link">Giới Thiệu</a>
+      <a routerLink="/contact" fragment="contact" class="menu-link">Liên Hệ</a>
+    </nav>
+
+    <div class="navbar-auth">
+      @if (authService.isLoggedIn()) {
+        <div class="avatar-dropdown-container">
+          @if (authService.isAdmin()) {
+            <a routerLink="/admin/dashboard" class="btn btn-admin">Trang Quản Trị</a>
+          }
+          <div class="avatar-circle" (click)="toggleDropdown($event)">
+            {{ getUsernameInitial() }}
+          </div>
+
+          @if (isDropdownOpen()) {
+            <div class="profile-dropdown-menu" (click)="$event.stopPropagation()">
+              <!-- <div class="dropdown-header">
+                <p class="dropdown-user-name">&#64;{{ authService.getUsername() }}</p>
+                <span class="dropdown-role-label">{{ authService.getUserRole() || 'MEMBER' }}</span>
+              </div> -->
+              <hr class="dropdown-divider" />
+              <a routerLink="/profile" class="dropdown-item" (click)="closeDropdown()">👤 Trang cá nhân</a>
+              <button (click)="onLogout()" class="dropdown-item logout-item">🚪 Đăng xuất</button>
+            </div>
+          }
+        </div>
+      } @else {
+        <a routerLink="/login" class="btn btn-login">Đăng Nhập</a>
+        <a routerLink="/register" class="btn btn-register">Đăng Ký</a>
+      }
+    </div>
+  </div>
+</header>

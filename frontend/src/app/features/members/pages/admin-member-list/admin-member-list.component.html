@@ -1,0 +1,208 @@
+<div class="member-list-container">
+  <div class="header-section">
+    <div class="title-group">
+      <button class="btn-back" routerLink="/admin/dashboard">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+        Quay lại
+      </button>
+      <h2>Quản Lý Độc Giả</h2>
+    </div>
+    <button class="btn btn-primary" (click)="openAddModal()">+ Thêm độc giả mới</button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Đang tải danh sách độc giả...</p>
+    </div>
+  } @else if (errorMessage()) {
+    <div class="error-state" style="text-align: center; color: red; padding: 40px;">
+      <p>⚠️ {{ errorMessage() }}</p>
+      <button class="btn btn-primary" (click)="loadMembers()">Thử lại</button>
+    </div>
+  } @else {
+    @if (members().length === 0) {
+      <div class="empty-state">
+        <p>Chưa có độc giả nào trong thư viện.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="member-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Tên đăng nhập</th>
+              <th>Họ và tên</th>
+              <th>Email</th>
+              <th>Vai trò</th>
+              <th>Trạng thái</th>
+              <th>Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (member of paginatedMembers(); track member.id) {
+              <tr [class.locked-row]="!member.isActive">
+                <td>{{ member.id }}</td>
+                <td><strong>{{ member.username }}</strong></td>
+                <td>{{ member.name }}</td>
+                <td>{{ member.email }}</td>
+                <td>
+                  <span class="role-badge" [class.admin-role]="member.role === 'ADMIN'" [class.librarian-role]="member.role === 'LIBRARIAN'">
+                    {{ member.role }}
+                  </span>
+                </td>
+                <td>
+                  @if (member.isActive) {
+                    <span class="status-badge active">Hoạt động</span>
+                  } @else {
+                    <span class="status-badge locked">Đã Khóa</span>
+                  }
+                </td>
+                <td>
+                  <div class="action-buttons">
+                    <button class="btn-action btn-history" (click)="openHistoryModal(member)" title="Xem lịch sử mượn trả">🕒</button>
+                    <button class="btn-action btn-edit" (click)="openEditModal(member)" title="Sửa thông tin">✏️</button>
+                    @if (member.isActive) {
+                      <button class="btn-action btn-lock" (click)="toggleLock(member)" title="Khóa tài khoản">🔒</button>
+                    } @else {
+                      <button class="btn-action btn-unlock" (click)="toggleLock(member)" title="Mở khóa tài khoản">🔓</button>
+                    }
+                    <button class="btn-action btn-delete" (click)="deleteMember(member.id)" title="Xóa tài khoản">🗑️</button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Controls -->
+      <app-pagination
+        [currentPage]="currentPage()"
+        [totalItems]="members().length"
+        [pageSize]="pageSize"
+        itemLabel="độc giả"
+        (pageChange)="goToPage($event)"
+      />
+    }
+  }
+
+  <!-- Modal Thêm/Sửa Độc giả -->
+  @if (isMemberModalOpen()) {
+    <div class="modal-backdrop" (click)="closeMemberModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <h3>{{ isEditMode() ? '✏️ Chỉnh Sửa Thông Tin Độc Giả' : '➕ Thêm Độc Giả Mới' }}</h3>
+
+        <form (ngSubmit)="saveMember()">
+          <div class="form-group-row">
+            <div class="form-group">
+              <label>Họ và tên <span class="required">*</span>:</label>
+              <input type="text" [(ngModel)]="currentMember().name" name="name" required placeholder="Nhập họ và tên" />
+            </div>
+            <div class="form-group">
+              <label>Tên đăng nhập <span class="required">*</span>:</label>
+              <input type="text" [(ngModel)]="currentMember().username" name="username" required [disabled]="isEditMode()" placeholder="Nhập tên đăng nhập" />
+            </div>
+          </div>
+
+          <div class="form-group-row">
+            <div class="form-group">
+              <label>Email <span class="required">*</span>:</label>
+              <input type="email" [(ngModel)]="currentMember().email" name="email" required placeholder="email@example.com" />
+            </div>
+            <div class="form-group">
+              <label>Số điện thoại:</label>
+              <input type="text" [(ngModel)]="currentMember().phone" name="phone" placeholder="Nhập SĐT" />
+            </div>
+          </div>
+
+          <div class="form-group-row">
+            <div class="form-group">
+              <label>Tuổi:</label>
+              <input type="number" [(ngModel)]="currentMember().age" name="age" min="1" />
+            </div>
+            <div class="form-group">
+              <label>Mật khẩu {{ isEditMode() ? '(Bỏ trống nếu không đổi)' : '*' }}:</label>
+              <input type="password" [(ngModel)]="currentMember().password" name="password" placeholder="Nhập mật khẩu" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Địa chỉ:</label>
+            <input type="text" [(ngModel)]="currentMember().address" name="address" placeholder="Nhập địa chỉ" />
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" (click)="closeMemberModal()">Hủy</button>
+            <button type="submit" class="btn btn-primary">Lưu tài khoản</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Lịch sử mượn trả -->
+  @if (isHistoryModalOpen()) {
+    <div class="modal-backdrop" (click)="closeHistoryModal()">
+      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <h3>🕒 Lịch Sử Mượn Trả: {{ selectedMemberName() }}</h3>
+
+        @if (isHistoryLoading()) {
+          <div class="loading-state" style="padding: 40px;">
+            <div class="spinner"></div>
+            <p>Đang tải lịch sử mượn trả...</p>
+          </div>
+        } @else {
+          @if (memberBorrowings().length === 0) {
+            <div class="empty-state">
+              <p>Độc giả này chưa từng mượn sách nào.</p>
+            </div>
+          } @else {
+            <div class="table-responsive history-table-wrapper">
+              <table class="member-table history-table">
+                <thead>
+                  <tr>
+                    <th>Sách</th>
+                    <th>Ngày mượn</th>
+                    <th>Hạn trả</th>
+                    <th>Trạng thái</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (borrowing of memberBorrowings(); track borrowing.id) {
+                    <tr [class.overdue-row]="isOverdue(borrowing)">
+                      <td>
+                        <strong>{{ borrowing.bookTitle }}</strong><br>
+                        <small>Mã sách: {{ borrowing.barCode }}</small>
+                      </td>
+                      <td>{{ borrowing.borrowDate | date:'dd/MM/yyyy' }}</td>
+                      <td>
+                        {{ borrowing.dueDate | date:'dd/MM/yyyy' }}
+                        @if (isOverdue(borrowing)) {
+                          <br><span class="overdue-text">⚠️ Quá hạn</span>
+                        }
+                      </td>
+                      <td>
+                        @if (borrowing.returnDate) {
+                          <span class="status-badge status-returned">Đã trả</span>
+                        } @else {
+                          <span class="status-badge status-active">Đang mượn</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeHistoryModal()">Đóng</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>
