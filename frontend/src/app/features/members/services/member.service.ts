@@ -58,6 +58,16 @@ export interface ChangePasswordRequest {
   newPassword?: string;
 }
 
+export interface UnpaidMemberProjection {
+  memberId: number;
+  memberCode: string;
+  name: string;
+  email: string;
+  phone: string;
+  totalUnpaidAmount: number;
+  unpaidFinesCount: number;
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({
@@ -71,6 +81,10 @@ export class MemberService {
 
   getAllMembers(): Observable<Member[]> {
     return this.http.get<Member[]>(this.apiUrl);
+  }
+
+  getMembersWithUnpaidFines(): Observable<UnpaidMemberProjection[]> {
+    return this.http.get<UnpaidMemberProjection[]>(`${this.apiUrl}/unpaid-fines`);
   }
 
   getMemberById(id: number): Observable<Member> {

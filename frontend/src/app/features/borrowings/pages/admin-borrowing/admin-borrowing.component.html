@@ -1,14 +1,16 @@
 <div class="borrowing-container">
   <div class="header">
-    <button class="btn-back" routerLink="/admin/dashboard">
+    <div class="title-group">
+      <button class="btn-back" routerLink="/admin/dashboard">
         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
         Quay lại
       </button>
-    <h2>Quản Lý Mượn Trả Sách</h2>
-    <p>Xử lý yêu cầu và quét mã vạch giao dịch</p>
+      <h2>  Quản Lý Mượn Trả Sách</h2>
+    </div>
+    <!-- <p>Xử lý yêu cầu và quét mã vạch giao dịch</p> -->
   </div>
 
   <div class="tabs">
@@ -29,6 +31,12 @@
     </button>
     <button [class.active]="activeTab() === 'RESERVATIONS'" (click)="activeTab.set('RESERVATIONS')">
       Hàng Đợi
+    </button>
+    <button [class.active]="activeTab() === 'OVERDUE_SP'" (click)="activeTab.set('OVERDUE_SP'); loadOverdueBooksSP()">
+      ⚠️ Sách Quá Hạn (SP)
+      @if (overdueBooksSP().length > 0) {
+        <span class="badge" style="background: #ef4444; color: white;">{{ overdueBooksSP().length }}</span>
+      }
     </button>
   </div>
 
@@ -170,6 +178,64 @@
             </tbody>
           </table>
         </div>
+      </div>
+    }
+
+    <!-- SÁCH QUÁ HẠN (STORED PROCEDURE) -->
+    @if (activeTab() === 'OVERDUE_SP') {
+      <div class="card">
+        <div class="card-header-flex">
+          <div>
+            <h3>⚠️ Danh Sách Sách Đang Quá Hạn</h3>
+            <p class="sub-text">Cảnh báo các khoản mượn đã trễ hạn chưa trả để gọi điện / thông báo đòi sách</p>
+          </div>
+          <button class="btn-scan" (click)="loadOverdueBooksSP()">🔄 Tải lại</button>
+        </div>
+
+        @if (isOverdueLoading()) {
+          <div class="empty-state" style="padding: 40px;">
+            <p>Đang tải danh sách quá hạn từ Stored Procedure...</p>
+          </div>
+        } @else if (overdueBooksSP().length === 0) {
+          <div class="empty-state" style="padding: 40px; color: #10b981;">
+            <p>🎉 Tuyệt vời! Hiện tại không có cuốn sách nào đang bị quá hạn.</p>
+          </div>
+        } @else {
+          <div class="table-responsive" style="margin-top: 16px;">
+            <table class="modern-table">
+              <thead>
+                <tr>
+                  <th>Mã Phiếu Mượn</th>
+                  <th>Mã Vạch Sách</th>
+                  <th>Tên Sách</th>
+                  <th>Độc Giả</th>
+                  <th>Số Điện Thoại</th>
+                  <th class="text-center">Ngày Mượn</th>
+                  <th class="text-center">Hạn Trả</th>
+                  <th class="text-center">Số Ngày Quá Hạn</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of overdueBooksSP(); track item.borrowingId) {
+                  <tr style="background-color: #fff5f5;">
+                    <td><strong>#{{ item.borrowingId }}</strong></td>
+                    <td><code>{{ item.barCode }}</code></td>
+                    <td><strong style="color: #1e293b;">{{ item.bookTitle }}</strong></td>
+                    <td>{{ item.memberName }} <small class="text-muted">(ID: {{ item.memberId }})</small></td>
+                    <td><a [href]="'tel:' + item.memberPhone" style="color: #2563eb; text-decoration: none;">📞 {{ item.memberPhone }}</a></td>
+                    <td class="text-center">{{ item.borrowDate | date:'dd/MM/yyyy' }}</td>
+                    <td class="text-center text-danger"><strong>{{ item.dueDate | date:'dd/MM/yyyy' }}</strong></td>
+                    <td class="text-center">
+                      <span class="status-badge rejected" style="font-size: 0.9rem; padding: 6px 12px;">
+                        🚨 Quá {{ item.overdueDays }} ngày
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
       </div>
     }
 

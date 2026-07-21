@@ -84,4 +84,9 @@ public class MemberController {
         }
     }
 
+    @GetMapping("/unpaid-fines")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    public ResponseEntity<List<com.library.dto.response.UnpaidMemberProjection>> getMembersWithUnpaidFines() {
+        return ResponseEntity.ok(memberService.getMembersWithUnpaidFines());
+    }
 }

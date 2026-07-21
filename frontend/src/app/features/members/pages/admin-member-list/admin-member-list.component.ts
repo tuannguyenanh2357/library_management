@@ -2,12 +2,13 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MemberService, Member, MemberCreationRequest, MemberUpdateRequest } from '../../services/member.service';
+import { MemberService, Member, MemberCreationRequest, MemberUpdateRequest, UnpaidMemberProjection } from '../../services/member.service';
 
 import { BorrowingService } from '../../../borrowings/services/borrowing.service';
 import { BorrowingResponse } from '../../../../core/models/borrowing.model';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
+import { AuthService } from '../../../auth/services/auth.service';
 
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
@@ -23,6 +24,7 @@ export class AdminMemberListComponent implements OnInit {
   private borrowingService = inject(BorrowingService);
   private toastService = inject(ToastService);
   private confirmService = inject(ConfirmService);
+  protected authService = inject(AuthService);
 
   Math = Math;
 
@@ -50,7 +52,30 @@ export class AdminMemberListComponent implements OnInit {
   // Modals state
   isMemberModalOpen = signal<boolean>(false);
   isHistoryModalOpen = signal<boolean>(false);
+  isUnpaidFinesModalOpen = signal<boolean>(false);
+  unpaidMembers = signal<UnpaidMemberProjection[]>([]);
+  isUnpaidLoading = signal<boolean>(false);
   isEditMode = signal<boolean>(false);
+
+  openUnpaidFinesModal(): void {
+    this.isUnpaidFinesModalOpen.set(true);
+    this.isUnpaidLoading.set(true);
+    this.memberService.getMembersWithUnpaidFines().subscribe({
+      next: (data) => {
+        this.unpaidMembers.set(data);
+        this.isUnpaidLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Lỗi khi tải danh sách độc giả nợ phạt:', err);
+        this.toastService.error('Không thể tải danh sách nợ tiền phạt');
+        this.isUnpaidLoading.set(false);
+      }
+    });
+  }
+
+  closeUnpaidFinesModal(): void {
+    this.isUnpaidFinesModalOpen.set(false);
+  }
 
   // Form state
   currentMember = signal<Partial<MemberCreationRequest & MemberUpdateRequest & { id?: number }>>({});
@@ -170,6 +195,12 @@ export class AdminMemberListComponent implements OnInit {
   }
 
   async deleteMember(id: number): Promise<void> {
+    const member = this.members().find(m => m.id === id);
+    if (member?.role === 'ADMIN') {
+      this.toastService.warning('Không thể xóa tài khoản Quản trị viên (ADMIN).');
+      return;
+    }
+
     if (await this.confirmService.confirm('Bạn có chắc chắn muốn xóa độc giả này không? Tất cả dữ liệu liên quan sẽ bị mất.')) {
       this.memberService.deleteMember(id).subscribe({
         next: () => {

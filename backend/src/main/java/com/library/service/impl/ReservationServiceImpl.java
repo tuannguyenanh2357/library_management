@@ -152,7 +152,7 @@ public class ReservationServiceImpl implements ReservationService {
             res.setStatus(ReservationStatus.FULFILLED);
             res.setFulfilledCopy(returnedCopy);
             res.setFulfilledDate(LocalDateTime.now());
-            res.setExpiryDate(LocalDateTime.now().plusHours(48)); // 48 giờ để đến lấy sách
+            res.setExpiryDate(LocalDateTime.now().plusHours(48)); 
             
             returnedCopy.setStatus(BookCopyStatus.RESERVED);
             

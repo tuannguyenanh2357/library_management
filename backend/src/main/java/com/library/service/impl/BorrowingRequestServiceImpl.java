@@ -17,6 +17,8 @@ import com.library.repository.MemberRepository;
 import com.library.service.interfaces.BorrowingRequestService;
 import com.library.service.interfaces.BorrowingService;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,14 +29,15 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Transactional
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class BorrowingRequestServiceImpl implements BorrowingRequestService {
 
-    private final BorrowingRequestRepository requestRepository;
-    private final MemberRepository memberRepository;
-    private final BookRepository bookRepository;
-    private final BookCopyRepository bookCopyRepository;
-    private final BorrowingService borrowingService;
-    private final BorrowingRequestMapper mapper;
+    final BorrowingRequestRepository requestRepository;
+    final MemberRepository memberRepository;
+    final BookRepository bookRepository;
+    final BookCopyRepository bookCopyRepository;
+    final BorrowingService borrowingService;
+    final BorrowingRequestMapper mapper;
 
     @Override
     public BorrowingRequestResponse createRequest(BorrowingRequestCreationRequest dto) {

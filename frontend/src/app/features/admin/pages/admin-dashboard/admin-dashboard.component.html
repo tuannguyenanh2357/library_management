@@ -6,7 +6,7 @@
       <div class="welcome-left">
         <span class="welcome-badge">🛡️ HỆ THỐNG QUẢN TRỊ</span>
         <h2>{{ greeting() }}, Admin!</h2>
-        <p>Hôm nay hệ thống hoạt động ổn định. Kiểm tra nhanh các số liệu bên dưới.</p>
+        <p>Hôm nay là một ngày tuyệt vời, hãy tận hưởng ngày hôm nay nhé baby^^</p>
       </div>
       <div class="welcome-right">
         <div class="date-widget">
@@ -99,7 +99,7 @@
       </a>
 
       <!-- Overdue Borrowings -->
-      <a routerLink="/admin/fines" class="kpi-card glass-card border-red clickable-card" [class.has-overdue]="(stats()?.overdueBorrowings || 0) > 0">
+      <a routerLink="/admin/borrowings" class="kpi-card glass-card border-red clickable-card" [class.has-overdue]="(stats()?.overdueBorrowings || 0) > 0">
         <div class="kpi-icon-wrapper bg-soft-red">
           <span class="kpi-emoji">⏰</span>
         </div>
@@ -169,6 +169,19 @@
               <div class="action-content">
                 <h4>Quản Lý Phạt & Trễ Hạn</h4>
                 <p>Theo dõi và thu tiền phạt quá hạn</p>
+              </div>
+              <div class="action-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </a>
+
+            <a routerLink="/admin/reports" class="modern-action-card">
+              <div class="action-icon bg-soft-amber text-amber">📊</div>
+              <div class="action-content">
+                <h4>Báo Cáo Doanh Thu</h4>
+                <p>Thống kê thu phạt theo tuần, top vi phạm & sách trễ hạn</p>
               </div>
               <div class="action-arrow">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">

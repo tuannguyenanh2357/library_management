@@ -4,6 +4,7 @@ import com.library.dto.request.CreateBookRequest;
 import com.library.dto.request.UpdateBookRequest;
 import com.library.dto.response.BookResponse;
 import com.library.dto.response.PageResponse;
+import com.library.dto.response.TopBookProjection;
 import com.library.entity.Book;
 import com.library.repository.BookRepository;
 import com.library.repository.BookCopyRepository;
@@ -33,16 +34,26 @@ public class BookServiceImpl implements BookService {
 
     private BookResponse mapToResponse(Book book) {
         BookResponse response = bookMapper.toBookResponse(book);
-        long available = bookCopyRepository.countByBook_IdAndStatus(book.getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE);
+        long available = bookCopyRepository.countByBook_IdAndStatus(book.getId(),
+                com.library.entity.enums.BookCopyStatus.AVAILABLE);
         response.setAvailableCopiesCount(available);
         return response;
     }
 
     @Override
-    public PageResponse<BookResponse> getAllBooks(Long id, String title, String author, String category, String publisher, String isbn, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
-        Page<Book> bookPage = bookRepository.findByFilters(id, title, author, category, publisher, isbn, pageable);
-        
+    public PageResponse<BookResponse> getAllBooks(Long id, String title, String author, String category,
+            String publisher, String isbn, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size,
+                Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+                
+        String titlePattern = (title != null && !title.trim().isEmpty()) ? "%" + title.trim().toLowerCase() + "%" : null;
+        String authorPattern = (author != null && !author.trim().isEmpty()) ? "%" + author.trim().toLowerCase() + "%" : null;
+        String categoryPattern = (category != null && !category.trim().isEmpty()) ? "%" + category.trim().toLowerCase() + "%" : null;
+        String publisherPattern = (publisher != null && !publisher.trim().isEmpty()) ? "%" + publisher.trim().toLowerCase() + "%" : null;
+        String isbnPattern = (isbn != null && !isbn.trim().isEmpty()) ? "%" + isbn.trim().toLowerCase() + "%" : null;
+
+        Page<Book> bookPage = bookRepository.findByFilters(id, titlePattern, authorPattern, categoryPattern, publisherPattern, isbnPattern, pageable);
+
         List<BookResponse> content = bookPage.getContent().stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -63,6 +74,11 @@ public class BookServiceImpl implements BookService {
         return books.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TopBookProjection> getTop10MostBorrowedBooks() {
+        return bookRepository.getTop10MostBorrowedBooks();
     }
 
     @Override

@@ -18,9 +18,9 @@ export class SearchPanelComponent implements OnInit {
   private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
 
-  protected searchTitle = signal<string>('');
-  protected searchAuthor = signal<string>('');
-  protected selectedCategory = signal<string>('');
+  protected searchTitle = '';
+  protected searchAuthor = '';
+  protected selectedCategory = '';
   protected categories = signal<string[]>([]);
 
   ngOnInit(): void {
@@ -34,18 +34,18 @@ export class SearchPanelComponent implements OnInit {
     this.route.queryParams
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(params => {
-        this.searchTitle.set(params['title'] || '');
-        this.searchAuthor.set(params['author'] || '');
-        this.selectedCategory.set(params['category'] || '');
+        this.searchTitle = params['title'] || '';
+        this.searchAuthor = params['author'] || '';
+        this.selectedCategory = params['category'] || '';
       });
   }
 
   onSearch(): void {
     this.router.navigate(['/books'], {
       queryParams: {
-        title: this.searchTitle().trim() || null,
-        author: this.searchAuthor().trim() || null,
-        category: this.selectedCategory() || null
+        title: this.searchTitle.trim() || null,
+        author: this.searchAuthor.trim() || null,
+        category: this.selectedCategory || null
       }
     });
   }

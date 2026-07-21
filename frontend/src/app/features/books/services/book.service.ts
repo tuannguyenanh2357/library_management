@@ -1,7 +1,7 @@
 import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable  } from "rxjs";
-import { BooksResponse, CreateBookRequest, UpdateBookRequest } from "../models/books.model";
+import { BooksResponse, CreateBookRequest, UpdateBookRequest, TopBookProjection } from "../models/books.model";
 import { PageResponse } from "../../../shared/models/page.model";
 import { environment } from '../../../../environments/environment';
 
@@ -39,9 +39,14 @@ export class BookService {
         return this.http.get<string[]>(`${this.apiUrl}/categories`);
     }
 
-    // lấy 10 cuốn sách được mượn nhiều nhat tuần
+    // lấy 10 cuốn sách được mượn nhiều nhat tuần (JPQL)
     getPopularBooks(): Observable<BooksResponse[]> {
         return this.http.get<BooksResponse[]>(`${this.apiUrl}/popular`);
+    }
+
+    // Lấy top 10 sách mượn nhiều nhất từ Stored Procedure SQL Server
+    getTop10MostBorrowedBooks(): Observable<TopBookProjection[]> {
+        return this.http.get<TopBookProjection[]>(`${this.apiUrl}/top-10-borrowed`);
     }
 
     // lay sach theo ID

@@ -28,11 +28,10 @@ public class NotificationConsumer {
         String subject = "THÔNG BÁO: Sách đặt trước đã có sẵn tại thư viện";
         String text = String.format("Kính gửi %s,\n\n" +
                 "Cuốn sách '%s' bạn đặt trước đã có sẵn tại thư viện.\n" +
-                "Vui lòng đến nhận sách trước %s. Sau thời gian này, sách sẽ được chuyển cho người khác.\n\n" +
+                "Vui lòng đến nhận sách trước %s tại địa điểm: 123 Nguyễn Khang, Hà Nội. Sau thời gian này, sách sẽ được chuyển cho người khác.\n\n" +
                 "Trân trọng,\nBan Quản lý Thư viện", 
                 event.getMemberName(), event.getBookTitle(), formattedExpiry);
 
-        // Gửi email thực tế
         emailService.sendEmail(event.getMemberEmail(), subject, text);
         
         log.info("Đã gửi email thành công tới: {}", event.getMemberEmail());

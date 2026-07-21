@@ -221,6 +221,14 @@
   text-overflow: ellipsis;
 }
 
+.borrow-count-badge {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #dd6b20;
+}
+
 /* ==========================================================================
    4. GRID 12 BOOKS STYLES
    ========================================================================== */

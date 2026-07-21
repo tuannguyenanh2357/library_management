@@ -184,6 +184,11 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
+    public List<com.library.dto.response.OverdueBookProjection> getOverdueBooksFromSP() {
+        return borrowingRepository.getOverdueBooksFromSP();
+    }
+
+    @Override
     public void deleteBorrowing(Long borrowingId) {
 
         Borrowing borrowing = borrowingRepository.findById(borrowingId)

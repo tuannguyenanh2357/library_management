@@ -16,7 +16,7 @@
     @if (filterTitle() || filterAuthor() || filterCategory()) {
       <div class="filter-status">
         <span>Đang tìm kiếm theo: </span>
-        @if (filterTitle()) { <span class="badge">Tiêu đề: "{{ filterTitle() }}"</span> }
+        @if (filterTitle()) { <span class="badge">Tên sách: "{{ filterTitle() }}"</span> }
         @if (filterAuthor()) { <span class="badge">Tác giả: "{{ filterAuthor() }}"</span> }
         @if (filterCategory()) { <span class="badge">Thể loại: "{{ filterCategory() }}"</span> }
         <a routerLink="/books" class="btn-clear-filter">Xóa bộ lọc ✖</a>

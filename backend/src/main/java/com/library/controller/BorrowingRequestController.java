@@ -1,6 +1,4 @@
 package com.library.controller;
-
-import com.library.dto.request.BorrowingRequestApprovalRequest;
 import com.library.dto.request.BorrowingRequestCreationRequest;
 import com.library.dto.response.BorrowingRequestResponse;
 import com.library.service.interfaces.BorrowingRequestService;

@@ -40,6 +40,12 @@ public class BorrowingController {
         return ResponseEntity.ok(borrowingService.getOverdueBorrowings());
     }
 
+    @GetMapping("/sp-overdue")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    public ResponseEntity<List<com.library.dto.response.OverdueBookProjection>> getOverdueBooksFromSP() {
+        return ResponseEntity.ok(borrowingService.getOverdueBooksFromSP());
+    }
+
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<BorrowingResponse> borrowBook(@RequestBody BorrowingCreationRequest request) {

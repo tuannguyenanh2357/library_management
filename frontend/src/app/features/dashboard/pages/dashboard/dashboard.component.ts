@@ -1,12 +1,12 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, catchError } from 'rxjs';
 import { BookService } from '@features/books/services/book.service';
 import { AuthService } from '@features/auth/services/auth.service';
 import { BorrowingRequestService } from '@core/services/borrowing-request.service';
 import { ReservationService } from '@features/books/services/reservation.service';
-import { BooksResponse } from '@features/books/models/books.model';
+import { BooksResponse, TopBookProjection } from '@features/books/models/books.model';
 import { SearchPanelComponent } from '@shared/components/search-panel/search-panel.component';
 import { BookDetailModalComponent } from '@shared/components/book-detail-modal/book-detail-modal.component';
 import { ToastService } from '@shared/services/toast.service';
@@ -33,11 +33,15 @@ export class DashboardComponent implements OnInit {
   // States
   protected books = signal<BooksResponse[]>([]);
   protected popularBooks = signal<BooksResponse[]>([]);
+  protected top10ProcedureBooks = signal<TopBookProjection[]>([]);
   protected loading = signal<boolean>(true);
   protected errorMessage = signal<string>('');
 
-  // Top 10 borrowed books (loaded from real backend database stats)
+  // Top 10 borrowed books (loaded from real backend database stats via Stored Procedure)
   protected top10Books = computed(() => {
+    if (this.top10ProcedureBooks().length > 0) {
+      return this.top10ProcedureBooks();
+    }
     return this.popularBooks();
   });
 
@@ -50,9 +54,23 @@ export class DashboardComponent implements OnInit {
   protected isDetailModalOpen = signal<boolean>(false);
   protected selectedBook = signal<BooksResponse | null>(null);
 
-  protected openDetailModal(book: BooksResponse): void {
-    this.selectedBook.set(book);
-    this.isDetailModalOpen.set(true);
+  protected openDetailModal(book: any): void {
+    const bookId = book.id || book.bookId;
+    if (bookId) {
+      this.bookService.getBookById(bookId).subscribe({
+        next: (fullBook) => {
+          this.selectedBook.set(fullBook);
+          this.isDetailModalOpen.set(true);
+        },
+        error: () => {
+          this.selectedBook.set(book as BooksResponse);
+          this.isDetailModalOpen.set(true);
+        }
+      });
+    } else {
+      this.selectedBook.set(book as BooksResponse);
+      this.isDetailModalOpen.set(true);
+    }
   }
 
   protected closeDetailModal(): void {
@@ -68,14 +86,31 @@ export class DashboardComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set('');
 
-    // lấy top 10 sách bán chạy nhất tuần
+    // lấy top 10 sách mượn nhiều nhất bằng Stored Procedure SQL Server
     forkJoin({
-      all: this.bookService.getAllBooks(undefined, undefined, undefined, 0, 12),
-      popular: this.bookService.getPopularBooks()
+      all: this.bookService.getAllBooks(undefined, undefined, undefined, 0, 12).pipe(
+        catchError((err) => {
+          console.error('Lỗi lấy danh sách sách:', err);
+          return of({ content: [] } as any);
+        })
+      ),
+      popular: this.bookService.getPopularBooks().pipe(
+        catchError((err) => {
+          console.error('Lỗi lấy popular books:', err);
+          return of([]);
+        })
+      ),
+      topStoredProc: this.bookService.getTop10MostBorrowedBooks().pipe(
+        catchError((err) => {
+          console.error('Lỗi lấy Stored Procedure top 10 books:', err);
+          return of([]);
+        })
+      )
     }).subscribe({
       next: (res) => {
-        this.books.set(res.all.content);
-        this.popularBooks.set(res.popular);
+        this.books.set(res.all?.content || []);
+        this.popularBooks.set(res.popular || []);
+        this.top10ProcedureBooks.set(res.topStoredProc || []);
         this.loading.set(false);
       },
       error: (err) => {

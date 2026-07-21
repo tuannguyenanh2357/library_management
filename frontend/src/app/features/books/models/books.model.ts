@@ -12,6 +12,15 @@ export interface BooksResponse {
     availableCopiesCount?: number;
 }
 
+export interface TopBookProjection {
+    bookId: number;
+    title: string;
+    author: string;
+    category: string;
+    borrowCount: number;
+    imageUrl?: string;
+}
+
 export interface CreateBookRequest {
     title: string;
     author: string;

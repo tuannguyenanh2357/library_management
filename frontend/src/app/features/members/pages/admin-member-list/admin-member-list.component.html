@@ -10,7 +10,12 @@
       </button>
       <h2>Quản Lý Độc Giả</h2>
     </div>
-    <button class="btn btn-primary" (click)="openAddModal()">+ Thêm độc giả mới</button>
+    <div class="header-actions" style="display: flex; gap: 12px;">
+      <button class="btn btn-warning" (click)="openUnpaidFinesModal()" style="background-color: #ed8936; color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer;">
+        ⚠️ Độc Giả Nợ Phạt (SP)
+      </button>
+      <button class="btn btn-primary" (click)="openAddModal()">+ Thêm độc giả mới</button>
+    </div>
   </div>
 
   @if (isLoading()) {
@@ -70,7 +75,9 @@
                     } @else {
                       <button class="btn-action btn-unlock" (click)="toggleLock(member)" title="Mở khóa tài khoản">🔓</button>
                     }
-                    <button class="btn-action btn-delete" (click)="deleteMember(member.id)" title="Xóa tài khoản">🗑️</button>
+                    @if (member.role !== 'ADMIN') {
+                      <button class="btn-action btn-delete" (click)="deleteMember(member.id)" title="Xóa tài khoản">🗑️</button>
+                    }
                   </div>
                 </td>
               </tr>
@@ -201,6 +208,67 @@
         }
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" (click)="closeHistoryModal()">Đóng</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Thống kê Độc giả nợ phạt (Stored Procedure) -->
+  @if (isUnpaidFinesModalOpen()) {
+    <div class="modal-backdrop" (click)="closeUnpaidFinesModal()">
+      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+        <h3>⚠️ Thống Kê Độc Giả Nợ Tiền Phạt</h3>
+
+        @if (isUnpaidLoading()) {
+          <div class="loading-state" style="padding: 40px;">
+            <div class="spinner"></div>
+            <p>Đang tải danh sách nợ phạt từ Stored Procedure...</p>
+          </div>
+        } @else {
+          @if (unpaidMembers().length === 0) {
+            <div class="empty-state" style="padding: 30px; text-align: center; color: #38a169;">
+              <p>🎉 Tuyệt vời! Hiện tại không có độc giả nào nợ tiền phạt chưa thanh toán.</p>
+            </div>
+          } @else {
+            <div class="table-responsive history-table-wrapper">
+              <table class="member-table history-table">
+                <thead>
+                  <tr>
+                    <th>Mã Độc Giả</th>
+                    <th>Họ và Tên</th>
+                    <th>Email / SĐT</th>
+                    <th>Số Phiếu Phạt</th>
+                    <th>Tổng Tiền Nợ Phạt</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of unpaidMembers(); track m.memberId) {
+                    <tr>
+                      <td><strong>{{ m.memberCode || ('#MBR-' + m.memberId) }}</strong></td>
+                      <td>{{ m.name }}</td>
+                      <td>
+                        <small>{{ m.email }}</small><br>
+                        <small style="color: #718096;">📞 {{ m.phone }}</small>
+                      </td>
+                      <td>
+                        <span class="status-badge locked" style="background: #feebc8; color: #c05621;">
+                          {{ m.unpaidFinesCount }} khoản nợ
+                        </span>
+                      </td>
+                      <td>
+                        <strong style="color: #e53e3e; font-size: 1.05rem;">
+                          {{ m.totalUnpaidAmount | number }} VND
+                        </strong>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        }
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeUnpaidFinesModal()">Đóng</button>
         </div>
       </div>
     </div>

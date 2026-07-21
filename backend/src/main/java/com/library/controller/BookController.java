@@ -5,6 +5,7 @@ import com.library.dto.response.BookResponse;
 import com.library.dto.response.PageResponse;
 import com.library.dto.request.CreateBookRequest;
 import java.util.List;
+import com.library.dto.response.TopBookProjection;
 import com.library.service.interfaces.BookService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -18,6 +19,11 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 public class BookController {
     private final BookService bookService;
+
+    @GetMapping("/top-10-borrowed")
+    public ResponseEntity<List<TopBookProjection>> getTop10MostBorrowedBooks() {
+        return ResponseEntity.ok(bookService.getTop10MostBorrowedBooks());
+    }
     @GetMapping("/{id}")
     public ResponseEntity<BookResponse> getBookById(@PathVariable Long id) {
         return ResponseEntity.ok(bookService.getBookById(id));

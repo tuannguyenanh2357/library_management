@@ -9,7 +9,12 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.library.dto.response.OverdueBookProjection;
+
 public interface BorrowingRepository extends JpaRepository<Borrowing, Long> {
+
+    @Query(value = "EXEC dbo.GetOverdueBooks", nativeQuery = true)
+    List<OverdueBookProjection> getOverdueBooksFromSP();
 
     @Query("SELECT b FROM Borrowing b " + "JOIN FETCH b.member m " + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book bk")
     List<Borrowing> findAllWithRelations();
