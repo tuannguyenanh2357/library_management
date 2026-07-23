@@ -48,19 +48,20 @@ public class ReservationServiceImpl implements ReservationService {
     public ReservationResponse createReservation(ReservationCreationRequest request) {
         Member member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy độc giả"));
-        
+
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đầu sách"));
 
         // Check if member already has an active reservation for this book
         boolean exists = reservationRepository.existsByMemberIdAndBookIdAndStatusIn(
                 member.getId(), book.getId(), Arrays.asList(ReservationStatus.PENDING, ReservationStatus.FULFILLED));
-        
+
         if (exists) {
             throw new RuntimeException("Bạn đã đặt trước cuốn sách này rồi.");
         }
 
-        // Check if there are available copies. If there is an available copy, user should just borrow it directly or create BorrowingRequest.
+        // Check if there are available copies. If there is an available copy, user
+        // should just borrow it directly or create BorrowingRequest.
         // Actually, Reservation is for when it's out of stock.
         long availableCount = bookCopyRepository.countByBook_IdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
         if (availableCount > 0) {
@@ -81,7 +82,7 @@ public class ReservationServiceImpl implements ReservationService {
     public List<ReservationResponse> getMyReservations(String username) {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên"));
-        
+
         return reservationRepository.findByMemberIdOrderByRequestDateDesc(member.getId())
                 .stream()
                 .map(this::mapToResponseWithExpectedDate)
@@ -107,7 +108,8 @@ public class ReservationServiceImpl implements ReservationService {
     private ReservationResponse mapToResponseWithExpectedDate(Reservation reservation) {
         ReservationResponse response = mapper.toResponse(reservation);
         if (reservation.getStatus() == ReservationStatus.PENDING) {
-            response.setExpectedAvailableDate(borrowingRepository.findEarliestDueDateByBookId(reservation.getBook().getId()));
+            response.setExpectedAvailableDate(
+                    borrowingRepository.findEarliestDueDateByBookId(reservation.getBook().getId()));
         }
         return response;
     }
@@ -117,20 +119,24 @@ public class ReservationServiceImpl implements ReservationService {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin đặt trước"));
 
-        // Only the owner or an admin should cancel. We'll simplify to just checking the owner if it's not an admin API.
+        // Only the owner or an admin should cancel. We'll simplify to just checking the
+        // owner if it's not an admin API.
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
 
-        if (!reservation.getMember().getId().equals(member.getId()) && member.getRole() != com.library.entity.enums.MemberRole.ADMIN && member.getRole() != com.library.entity.enums.MemberRole.LIBRARIAN) {
+        if (!reservation.getMember().getId().equals(member.getId())
+                && member.getRole() != com.library.entity.enums.MemberRole.ADMIN
+                && member.getRole() != com.library.entity.enums.MemberRole.LIBRARIAN) {
             throw new RuntimeException("Bạn không có quyền hủy đặt chỗ này");
         }
 
         if (reservation.getStatus() == ReservationStatus.FULFILLED) {
-            // Sách đã được giữ, nếu hủy thì sách phải về AVAILABLE và chuyển cho người tiếp theo (nếu có)
+            // Sách đã được giữ, nếu hủy thì sách phải về AVAILABLE và chuyển cho người tiếp
+            // theo (nếu có)
             BookCopy copy = reservation.getFulfilledCopy();
             reservation.setStatus(ReservationStatus.CANCELLED);
             reservationRepository.save(reservation);
-            
+
             if (copy != null) {
                 // Sách này không còn bị giữ bởi người này nữa
                 fulfillNextReservationIfAny(reservation.getBook().getId(), copy);
@@ -145,29 +151,31 @@ public class ReservationServiceImpl implements ReservationService {
 
     @Override
     public void fulfillNextReservationIfAny(Long bookId, BookCopy returnedCopy) {
-        Optional<Reservation> nextReservation = reservationRepository.findFirstByBookIdAndStatusOrderByRequestDateAsc(bookId, ReservationStatus.PENDING);
-        
+        Optional<Reservation> nextReservation = reservationRepository
+                .findFirstByBookIdAndStatusOrderByRequestDateAsc(bookId, ReservationStatus.PENDING);
+
         if (nextReservation.isPresent()) {
             Reservation res = nextReservation.get();
             res.setStatus(ReservationStatus.FULFILLED);
             res.setFulfilledCopy(returnedCopy);
             res.setFulfilledDate(LocalDateTime.now());
-            res.setExpiryDate(LocalDateTime.now().plusHours(48)); 
-            
+            res.setExpiryDate(LocalDateTime.now().plusHours(48));
+
             returnedCopy.setStatus(BookCopyStatus.RESERVED);
-            
+
             reservationRepository.save(res);
             bookCopyRepository.save(returnedCopy);
-            
-            // Gửi event qua RabbitMQ thay vì gửi email trực tiếp đồng bộ
+
+            // Gửi event qua RabbitMQ
             ReservationFulfilledEvent event = ReservationFulfilledEvent.builder()
                     .memberEmail(res.getMember().getEmail())
                     .memberName(res.getMember().getName())
                     .bookTitle(res.getBook().getTitle())
                     .expiryDate(res.getExpiryDate())
                     .build();
-            rabbitTemplate.convertAndSend(RabbitMQConfig.RESERVATION_EXCHANGE, RabbitMQConfig.RESERVATION_FULFILLED_ROUTING_KEY, event);
-            
+            rabbitTemplate.convertAndSend(RabbitMQConfig.RESERVATION_EXCHANGE,
+                    RabbitMQConfig.RESERVATION_FULFILLED_ROUTING_KEY, event);
+
         } else {
             returnedCopy.setStatus(BookCopyStatus.AVAILABLE);
             bookCopyRepository.save(returnedCopy);
@@ -175,9 +183,17 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    public boolean hasPendingReservations(Long bookId) {
+        return !reservationRepository
+                .findByBookIdAndStatusOrderByRequestDateAsc(bookId, ReservationStatus.PENDING)
+                .isEmpty();
+    }
+
+    @Override
     public void completeReservationByCopyId(Long copyId) {
         reservationRepository.findAll().stream()
-                .filter(r -> r.getStatus() == ReservationStatus.FULFILLED && r.getFulfilledCopy() != null && r.getFulfilledCopy().getId().equals(copyId))
+                .filter(r -> r.getStatus() == ReservationStatus.FULFILLED && r.getFulfilledCopy() != null
+                        && r.getFulfilledCopy().getId().equals(copyId))
                 .findFirst()
                 .ifPresent(r -> {
                     r.setStatus(ReservationStatus.COMPLETED);

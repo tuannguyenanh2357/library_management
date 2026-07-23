@@ -44,6 +44,13 @@ public class BorrowingServiceImpl implements BorrowingService {
         Member member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy độc giả"));
 
+        if (member.hasOverdueBorrowings()) {
+            throw new RuntimeException("Không thể mượn sách mới khi đang có sách quá hạn chưa trả");
+        }
+        if (fineRepository.existsByBorrowing_Member_IdAndStatus(member.getId(), FineStatus.UNPAID)) {
+            throw new RuntimeException("Không thể mượn sách mới khi đang có khoản phạt chưa thanh toán");
+        }
+
         BookCopy bookCopy = bookCopyRepository.findById(request.getBookCopyId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy bản sao sách"));
 
@@ -195,5 +202,87 @@ public class BorrowingServiceImpl implements BorrowingService {
                 .orElseThrow(() -> new RuntimeException("Borrowing not found"));
 
         borrowingRepository.delete(borrowing);
+    }
+
+    private static final int MAX_RENEWALS = 1;
+    private static final int RENEWAL_EXTENSION_DAYS = 7;
+
+    @Override
+    public BorrowingResponse renewBorrowing(Long borrowingId, String username) {
+        Borrowing borrowing = borrowingRepository.findById(borrowingId)
+                .orElseThrow(() -> new RuntimeException("Borrowing not found"));
+
+        if (!borrowing.getMember().getUsername().equals(username)) {
+            throw new RuntimeException("Bạn không có quyền gia hạn phiếu mượn này");
+        }
+        if (borrowing.getStatus() != BorrowingStatus.ACTIVE) {
+            throw new RuntimeException("Phiếu mượn không còn hoạt động");
+        }
+        if (LocalDate.now().isAfter(borrowing.getDueDate())) {
+            throw new RuntimeException("Không thể gia hạn sách đã quá hạn");
+        }
+        if (borrowing.getRenewalCount() >= MAX_RENEWALS) {
+            throw new RuntimeException("Bạn chỉ được gia hạn một lần cho mỗi lượt mượn");
+        }
+
+        Long bookId = borrowing.getBookCopy().getBook().getId();
+        if (reservationService.hasPendingReservations(bookId)) {
+            throw new RuntimeException("Không thể gia hạn vì đang có độc giả khác chờ mượn cuốn sách này");
+        }
+
+        borrowing.setDueDate(borrowing.getDueDate().plusDays(RENEWAL_EXTENSION_DAYS));
+        borrowing.setRenewalCount(borrowing.getRenewalCount() + 1);
+        borrowingRepository.save(borrowing);
+
+        return mapper.toResponse(borrowing);
+    }
+
+    @Override
+    public BorrowingResponse reportLost(Long borrowingId) {
+        return closeWithReplacementFee(borrowingId, true);
+    }
+
+    @Override
+    public BorrowingResponse reportDamaged(Long borrowingId) {
+        return closeWithReplacementFee(borrowingId, false);
+    }
+
+    private BorrowingResponse closeWithReplacementFee(Long borrowingId, boolean lost) {
+        Borrowing borrowing = borrowingRepository.findById(borrowingId)
+                .orElseThrow(() -> new RuntimeException("Borrowing not found"));
+
+        if (borrowing.getStatus() != BorrowingStatus.ACTIVE) {
+            throw new RuntimeException("Chỉ có thể báo mất/hỏng với phiếu mượn đang hoạt động");
+        }
+
+        BookCopy bookCopy = borrowing.getBookCopy();
+        if (lost) {
+            bookCopy.markAsLost();
+        } else {
+            bookCopy.markAsDamaged();
+        }
+        bookCopyRepository.save(bookCopy);
+
+        borrowing.setReturnDate(LocalDate.now());
+        borrowing.setStatus(BorrowingStatus.RETURNED);
+        borrowingRepository.save(borrowing);
+
+        BigDecimal fee = bookCopy.getBook().getReplacementFee() != null
+                ? bookCopy.getBook().getReplacementFee()
+                : new BigDecimal("200000.00");
+
+        Fines fine = Fines.builder()
+                .borrowing(borrowing)
+                .amount(fee)
+                .reason(lost ? "Đền bù sách bị mất" : "Đền bù sách bị hỏng")
+                .issuedDate(LocalDate.now())
+                .status(FineStatus.UNPAID)
+                .build();
+        fineRepository.save(fine);
+
+        // Không gọi fulfillNextReservationIfAny: bản sách mất/hỏng không thể giao cho ai,
+        // reservation đang chờ tiếp tục đợi bản khác.
+
+        return mapper.toResponse(borrowing);
     }
 }

@@ -11,6 +11,8 @@ import { BorrowingResponse } from '@core/models/borrowing.model';
 import { ReservationService } from '../../../books/services/reservation.service';
 import { ReservationResponse } from '../../../books/models/reservation.model';
 import { FileService } from '@core/services/file.service';
+import { FineService } from '@features/fines/services/fine.service';
+import { FineResponse } from '@features/fines/models/fine.model';
 
 
 @Component({
@@ -26,6 +28,7 @@ export class ProfileComponent implements OnInit {
   private borrowingRequestService = inject(BorrowingRequestService);
   private reservationService = inject(ReservationService);
   private fileService = inject(FileService);
+  private fineService = inject(FineService);
   private authService = inject(AuthService);
   private router = inject(Router);
 
@@ -38,7 +41,8 @@ export class ProfileComponent implements OnInit {
   protected borrowings = signal<BorrowingResponse[]>([]);
   protected onlineRequests = signal<BorrowingRequestResponse[]>([]);
   protected myReservations = signal<ReservationResponse[]>([]);
-  protected activeTab = signal<string>('history'); // 'history' | 'edit' | 'password' | 'reservations'
+  protected myFines = signal<FineResponse[]>([]);
+  protected activeTab = signal<string>('history'); // 'history' | 'edit' | 'password' | 'reservations' | 'fines'
 
   // Form edit states
   protected editForm = signal<ProfileUpdateRequest>({
@@ -121,6 +125,18 @@ export class ProfileComponent implements OnInit {
             this.checkLoadingComplete();
           }
         });
+
+        // Fetch my fines
+        this.fineService.getFinesByMemberId(member.id).subscribe({
+          next: (fines) => {
+            this.myFines.set(fines);
+            this.checkLoadingComplete();
+          },
+          error: (err) => {
+            console.error('Lỗi khi tải danh sách khoản phạt:', err);
+            this.checkLoadingComplete();
+          }
+        });
       },
       error: (err) => {
         console.error('Lỗi khi tải thông tin cá nhân:', err);
@@ -134,7 +150,7 @@ export class ProfileComponent implements OnInit {
   private loadCount = 0;
   private checkLoadingComplete() {
     this.loadCount++;
-    if (this.loadCount >= 3) {
+    if (this.loadCount >= 4) {
       this.loading.set(false);
       this.loadCount = 0;
     }
@@ -212,6 +228,54 @@ export class ProfileComponent implements OnInit {
       case 'COMPLETED': return 'Đã đến lấy';
       case 'CANCELLED': return 'Đã hủy';
       case 'EXPIRED': return 'Hết hạn giữ';
+      default: return status;
+    }
+  }
+
+  protected canRenew(b: BorrowingResponse): boolean {
+    return !b.returnDate && !this.isOverdue(b) && (b.renewalCount ?? 0) < 1;
+  }
+
+  protected renewBorrowing(b: BorrowingResponse): void {
+    this.borrowingService.renewBorrowing(b.id).subscribe({
+      next: () => {
+        this.loadProfileAndHistory();
+      },
+      error: (err) => {
+        console.error('Lỗi khi gia hạn mượn sách:', err);
+        alert('Không thể gia hạn lúc này. Lỗi: ' + (err?.error?.message || 'Không xác định'));
+      }
+    });
+  }
+
+  protected cancelOnlineRequest(id: number): void {
+    if (confirm('Bạn có chắc chắn muốn hủy yêu cầu mượn sách này?')) {
+      this.borrowingRequestService.cancelRequest(id).subscribe({
+        next: () => {
+          this.loadProfileAndHistory();
+        },
+        error: (err) => {
+          console.error('Lỗi khi hủy yêu cầu mượn:', err);
+          alert('Không thể hủy yêu cầu lúc này. Lỗi: ' + (err?.error?.message || 'Không xác định'));
+        }
+      });
+    }
+  }
+
+  protected getFineStatusClass(status: string): string {
+    switch (status) {
+      case 'UNPAID': return 'overdue';
+      case 'PAID': return 'returned';
+      case 'CANCELLED': return '';
+      default: return '';
+    }
+  }
+
+  protected getFineStatusText(status: string): string {
+    switch (status) {
+      case 'UNPAID': return 'Chưa thanh toán';
+      case 'PAID': return 'Đã thanh toán';
+      case 'CANCELLED': return 'Đã miễn';
       default: return status;
     }
   }

@@ -32,17 +32,13 @@ export class DashboardComponent implements OnInit {
 
   // States
   protected books = signal<BooksResponse[]>([]);
-  protected popularBooks = signal<BooksResponse[]>([]);
   protected top10ProcedureBooks = signal<TopBookProjection[]>([]);
   protected loading = signal<boolean>(true);
   protected errorMessage = signal<string>('');
 
   // Top 10 borrowed books (loaded from real backend database stats via Stored Procedure)
   protected top10Books = computed(() => {
-    if (this.top10ProcedureBooks().length > 0) {
-      return this.top10ProcedureBooks();
-    }
-    return this.popularBooks();
+    return this.top10ProcedureBooks();
   });
 
   // Grid of 12 books (3 rows x 4 columns)
@@ -94,12 +90,6 @@ export class DashboardComponent implements OnInit {
           return of({ content: [] } as any);
         })
       ),
-      popular: this.bookService.getPopularBooks().pipe(
-        catchError((err) => {
-          console.error('Lỗi lấy popular books:', err);
-          return of([]);
-        })
-      ),
       topStoredProc: this.bookService.getTop10MostBorrowedBooks().pipe(
         catchError((err) => {
           console.error('Lỗi lấy Stored Procedure top 10 books:', err);
@@ -109,7 +99,6 @@ export class DashboardComponent implements OnInit {
     }).subscribe({
       next: (res) => {
         this.books.set(res.all?.content || []);
-        this.popularBooks.set(res.popular || []);
         this.top10ProcedureBooks.set(res.topStoredProc || []);
         this.loading.set(false);
       },

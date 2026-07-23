@@ -43,7 +43,7 @@ public class Reservation {
     LocalDateTime fulfilledDate; // Ngày có sách (đã gán fulfilledCopy)
 
     @Column(name = "expiry_date")
-    LocalDateTime expiryDate; // Hạn cuối để đến lấy sách (ví dụ: 48h sau fulfilledDate)
+    LocalDateTime expiryDate; // Hạn cuối để đến lấy sách (ví dụ: 48h sau có thông báo email đến nhận sách)
 
     @Column(name = "updated_at")
     LocalDateTime updatedAt;

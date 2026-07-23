@@ -31,6 +31,8 @@ public class BookResponse {
 
     java.math.BigDecimal dailyFineAmount;
 
+    java.math.BigDecimal replacementFee;
+
     long availableCopiesCount;
 
 }

@@ -39,10 +39,6 @@ export class BookService {
         return this.http.get<string[]>(`${this.apiUrl}/categories`);
     }
 
-    // lấy 10 cuốn sách được mượn nhiều nhat tuần (JPQL)
-    getPopularBooks(): Observable<BooksResponse[]> {
-        return this.http.get<BooksResponse[]>(`${this.apiUrl}/popular`);
-    }
 
     // Lấy top 10 sách mượn nhiều nhất từ Stored Procedure SQL Server
     getTop10MostBorrowedBooks(): Observable<TopBookProjection[]> {

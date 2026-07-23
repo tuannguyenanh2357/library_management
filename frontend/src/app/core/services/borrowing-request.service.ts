@@ -38,4 +38,8 @@ export class BorrowingRequestService {
   rejectRequest(id: number, reason: string): Observable<BorrowingRequestResponse> {
     return this.http.post<BorrowingRequestResponse>(`${this.apiUrl}/${id}/reject?reason=${encodeURIComponent(reason)}`, {});
   }
+
+  cancelRequest(id: number): Observable<BorrowingRequestResponse> {
+    return this.http.put<BorrowingRequestResponse>(`${this.apiUrl}/${id}/cancel`, {});
+  }
 }

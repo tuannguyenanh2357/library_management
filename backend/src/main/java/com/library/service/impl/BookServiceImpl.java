@@ -67,14 +67,6 @@ public class BookServiceImpl implements BookService {
                 .build();
     }
 
-    @Override
-    public List<BookResponse> getPopularBooks() {
-        java.time.LocalDate oneWeekAgo = java.time.LocalDate.now().minusDays(7);
-        List<Book> books = bookRepository.findTop10MostBorrowedSince(oneWeekAgo, PageRequest.of(0, 10));
-        return books.stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
-    }
 
     @Override
     public List<TopBookProjection> getTop10MostBorrowedBooks() {

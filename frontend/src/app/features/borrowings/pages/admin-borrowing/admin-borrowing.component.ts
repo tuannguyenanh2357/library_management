@@ -277,11 +277,15 @@ export class AdminBorrowingComponent implements OnInit {
     });
   }
 
+  private findActiveBorrowingForReturnForm(): BorrowingResponse | undefined {
+    const barcode = this.returnForm.value.barcode;
+    return this.borrowings().find(b => b.barCode === barcode && !b.returnDate);
+  }
+
   onSubmitReturn() {
     if (this.returnForm.invalid) return;
 
-    const barcode = this.returnForm.value.barcode;
-    const activeBorrowing = this.borrowings().find(b => b.barCode === barcode && !b.returnDate);
+    const activeBorrowing = this.findActiveBorrowingForReturnForm();
 
     if (!activeBorrowing) {
       this.toastService.warning('Không tìm thấy phiếu mượn nào chưa trả cho mã vạch này.');
@@ -295,6 +299,55 @@ export class AdminBorrowingComponent implements OnInit {
         this.loadBorrowings();
       },
       error: (err) => this.toastService.error('Lỗi khi trả sách: ' + err.error?.message)
+    });
+  }
+
+  reportLost() {
+    const activeBorrowing = this.findActiveBorrowingForReturnForm();
+    if (!activeBorrowing) {
+      this.toastService.warning('Không tìm thấy phiếu mượn nào chưa trả cho mã vạch này.');
+      return;
+    }
+    if (!confirm(`Xác nhận báo MẤT sách "${activeBorrowing.bookTitle}"? Hệ thống sẽ tạo khoản phạt đền bù.`)) return;
+
+    this.borrowingService.reportLost(activeBorrowing.id).subscribe({
+      next: () => {
+        this.toastService.success('Đã báo mất sách và tạo khoản phạt đền bù!');
+        this.returnForm.reset();
+        this.loadBorrowings();
+      },
+      error: (err) => this.toastService.error('Lỗi khi báo mất sách: ' + err.error?.message)
+    });
+  }
+
+  reportDamaged() {
+    const activeBorrowing = this.findActiveBorrowingForReturnForm();
+    if (!activeBorrowing) {
+      this.toastService.warning('Không tìm thấy phiếu mượn nào chưa trả cho mã vạch này.');
+      return;
+    }
+    if (!confirm(`Xác nhận báo HỎNG sách "${activeBorrowing.bookTitle}"? Hệ thống sẽ tạo khoản phạt đền bù.`)) return;
+
+    this.borrowingService.reportDamaged(activeBorrowing.id).subscribe({
+      next: () => {
+        this.toastService.success('Đã báo hỏng sách và tạo khoản phạt đền bù!');
+        this.returnForm.reset();
+        this.loadBorrowings();
+      },
+      error: (err) => this.toastService.error('Lỗi khi báo hỏng sách: ' + err.error?.message)
+    });
+  }
+
+  cancelReservationAsStaff(id: number) {
+    if (!confirm('Bạn có chắc chắn muốn hủy đặt chỗ này? Nếu sách đang được giữ, sách sẽ được nhường cho người tiếp theo trong hàng đợi.')) return;
+
+    this.reservationService.cancelReservation(id).subscribe({
+      next: () => {
+        this.toastService.success('Đã hủy đặt chỗ thành công!');
+        this.loadReservations();
+        this.loadBorrowings();
+      },
+      error: (err) => this.toastService.error('Lỗi khi hủy đặt chỗ: ' + (err.error?.message || ''))
     });
   }
 

@@ -35,4 +35,6 @@ public class CreateBookRequest {
 
     java.math.BigDecimal dailyFineAmount;
 
+    java.math.BigDecimal replacementFee;
+
 }

@@ -35,6 +35,7 @@ public class SecurityConfig {
             "/dashboard",
             "/about",
             "/contact",
+            "/rules",
             "/files/download/**"
     };
 

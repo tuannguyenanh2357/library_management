@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ReportService } from '../../services/report.service';
 import { WeeklyRevenueReport } from '../../models/report.model';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   selector: 'app-revenue-report',
@@ -62,6 +63,31 @@ export class RevenueReportComponent implements OnInit {
         console.error(err);
         this.errorMessage.set('Không thể tải báo cáo. Vui lòng thử lại.');
         this.isLoading.set(false);
+      }
+    });
+  }
+
+  isExporting = signal(false);
+
+  exportPdf(): void {
+    if (!this.report()) return;
+    this.isExporting.set(true);
+    this.reportService.exportRevenuePdf(this.fromDate(), this.toDate()).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `revenue_report_${this.fromDate()}_${this.toDate()}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+        this.isExporting.set(false);
+      },
+      error: (err) => {
+        console.error('Error exporting PDF', err);
+        this.errorMessage.set('Lỗi khi xuất PDF. Vui lòng thử lại.');
+        this.isExporting.set(false);
       }
     });
   }

@@ -54,4 +54,11 @@ public class BorrowingRequestController {
             @RequestParam String reason) {
         return ResponseEntity.ok(service.rejectRequest(id, reason));
     }
+
+    @PutMapping("/{id}/cancel")
+    @PreAuthorize("hasRole('MEMBER')")
+    public ResponseEntity<BorrowingRequestResponse> cancelRequest(@PathVariable Long id) {
+        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(service.cancelRequest(id, username));
+    }
 }

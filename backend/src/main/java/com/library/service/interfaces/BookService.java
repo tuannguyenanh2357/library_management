@@ -12,7 +12,6 @@ public interface BookService {
     BookResponse updateBook(Long bookId, UpdateBookRequest request);
     BookResponse getBookById(Long bookId);
     PageResponse<BookResponse> getAllBooks(Long id, String title, String author, String category, String publisher, String isbn, int page, int size);
-    List<BookResponse> getPopularBooks();
     List<TopBookProjection> getTop10MostBorrowedBooks();
     void deleteBook(Long bookId);
     List<String> getUniqueCategories();

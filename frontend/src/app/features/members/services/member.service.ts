@@ -1,6 +1,6 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 
 // ─── Models dùng chung cho Member ─────────────────────────────────────────────
@@ -77,6 +77,8 @@ export class MemberService {
   private http = inject(HttpClient);
   private apiUrl = `${environment.apiUrl}/members`;
 
+  public currentUserProfile = signal<Member | null>(null);
+
   // ── Admin: Quản lý toàn bộ member ──────────────────────────────────────────
 
   getAllMembers(): Observable<Member[]> {
@@ -107,12 +109,21 @@ export class MemberService {
 
   /** Lấy thông tin profile của member đang đăng nhập (/members/me) */
   getMyProfile(): Observable<Member> {
-    return this.http.get<Member>(`${this.apiUrl}/me`);
+    return this.http.get<Member>(`${this.apiUrl}/me`).pipe(
+      tap(member => this.currentUserProfile.set(member))
+    );
   }
 
   /** Cập nhật thông tin cá nhân (/members/me) */
   updateMyProfile(request: ProfileUpdateRequest): Observable<Member> {
-    return this.http.put<Member>(`${this.apiUrl}/me`, request);
+    return this.http.put<Member>(`${this.apiUrl}/me`, request).pipe(
+      tap(member => this.currentUserProfile.set(member))
+    );
+  }
+
+  /** Xóa thông tin cache profile khi logout */
+  clearUserProfile(): void {
+    this.currentUserProfile.set(null);
   }
 
   /** Đổi mật khẩu (/members/me/password) */

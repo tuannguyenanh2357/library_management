@@ -54,6 +54,11 @@ public class Book {
     @Builder.Default
     java.math.BigDecimal dailyFineAmount = new java.math.BigDecimal("5000.00");
 
+    // Phí đền bù khi bản sao của sách này bị báo mất/hỏng
+    @Column(name = "replacement_fee", precision = 10, scale = 2)
+    @Builder.Default
+    java.math.BigDecimal replacementFee = new java.math.BigDecimal("200000.00");
+
     @Column(name = "publication_year")
     Integer publicationYear;
     @Column(name = "created_at")

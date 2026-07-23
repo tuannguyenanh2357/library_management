@@ -16,4 +16,7 @@ public interface BorrowingService {
     List<OverdueBookProjection> getOverdueBooksFromSP();
     List<BorrowingResponse> getByCopyId(Long copyId);
     void deleteBorrowing(Long borrowingId);
+    BorrowingResponse renewBorrowing(Long borrowingId, String username);
+    BorrowingResponse reportLost(Long borrowingId);
+    BorrowingResponse reportDamaged(Long borrowingId);
 }

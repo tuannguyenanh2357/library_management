@@ -1,0 +1,240 @@
+<main class="rules-main">
+  <!-- Hero Section -->
+  <section class="rules-hero">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+      <span class="hero-badge">📜 Quy Định & Hướng Dẫn</span>
+      <h1>Nội Quy Thư Viện LIBRAHUB</h1>
+      <p>Nhằm xây dựng môi trường học tập, nghiên cứu văn minh, hiện đại và công bằng cho tất cả độc giả.</p>
+    </div>
+  </section>
+
+  <!-- Quick Highlight Cards -->
+  <section class="quick-highlights-section">
+    <div class="rules-container">
+      <div class="highlights-grid">
+        <div class="highlight-card">
+          <div class="highlight-icon blue">📚</div>
+          <div class="highlight-info">
+            <span class="highlight-value">5 Cuốn</span>
+            <span class="highlight-label">Hạn mức mượn tối đa</span>
+          </div>
+        </div>
+
+        <div class="highlight-card">
+          <div class="highlight-icon green">⏱️</div>
+          <div class="highlight-info">
+            <span class="highlight-value">14 Ngày</span>
+            <span class="highlight-label">Thời hạn mượn tiêu chuẩn</span>
+          </div>
+        </div>
+
+        <div class="highlight-card">
+          <div class="highlight-icon orange">🔄</div>
+          <div class="highlight-info">
+            <span class="highlight-value">1 Lần / 7 Ngày</span>
+            <span class="highlight-label">Gia hạn trực tuyến</span>
+          </div>
+        </div>
+
+        <div class="highlight-card">
+          <div class="highlight-icon red">💸</div>
+          <div class="highlight-info">
+            <span class="highlight-value">10.000đ / Ngày</span>
+            <span class="highlight-label">Phí trễ hạn / cuốn</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Rules Content with Tabs -->
+  <section class="rules-content-section">
+    <div class="rules-container">
+
+      <!-- Category Tabs -->
+      <div class="tabs-header">
+        @for (cat of categories; track cat.id) {
+        <button class="tab-btn" [class.active]="activeTab() === cat.id" (click)="selectTab(cat.id)">
+          <span class="tab-icon">{{ cat.icon }}</span>
+          <span class="tab-title">{{ cat.title }}</span>
+        </button>
+        }
+      </div>
+
+      <!-- Tab Content Cards -->
+      <div class="tab-content-wrapper">
+
+        <!-- Tab 1: Quy Định Chung -->
+        @if (activeTab() === 'general') {
+        <div class="rule-card-group fade-in">
+          <div class="rule-card">
+            <div class="rule-header">
+              <span class="rule-num">01</span>
+              <h3>Thẻ Độc Giả & Tài Khoản</h3>
+            </div>
+            <p>Mỗi độc giả cần xuất trình thẻ thư viện (hoặc tài khoản cá nhân trên ứng dụng LIBRAHUB) khi vào thư viện
+              và khi thực hiện các giao dịch mượn/trả sách.</p>
+            <ul class="rule-checklist">
+              <li>Không mượn thẻ hoặc dùng tài khoản cá nhân cho người khác sử dụng.</li>
+              <li>Mọi giao dịch thực hiện qua tài khoản sẽ tính trách nhiệm cho chủ tài khoản.</li>
+              <li>Khi mất thẻ, cần thông báo ngay cho ban quản lý để tạm khóa tài khoản.</li>
+            </ul>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <span class="rule-num">02</span>
+              <h3>Trang Phục & Ứng Xử</h3>
+            </div>
+            <p>Thư viện là môi trường học thuật văn minh, độc giả cần tuân thủ các chuẩn mực tác phong chung.</p>
+            <ul class="rule-checklist">
+              <li>Mặc trang phục lịch sự, kín đáo, đúng quy định khi vào không gian thư viện.</li>
+              <li>Giao tiếp lịch sự, nhẹ nhàng với thủ thư và các độc giả khác.</li>
+              <li>Tự bảo quản tài sản cá nhân (tiền mặt, điện thoại, máy tính...). Thư viện không chịu trách nhiệm với
+                mất mát cá nhân.</li>
+            </ul>
+          </div>
+        </div>
+        }
+
+        <!-- Tab 2: Mượn & Trả Sách -->
+        @if (activeTab() === 'borrowing') {
+        <div class="rule-card-group fade-in">
+          <div class="rule-card">
+            <div class="rule-header">
+              <span class="rule-num">01</span>
+              <h3>Quy Trình & Hạn Mức Mượn</h3>
+            </div>
+            <p>Độc giả tra cứu mã sách trên hệ thống LIBRAHUB và thực hiện mượn sách tại quầy phục vụ hoặc đặt mượn trực
+              tuyến.</p>
+            <ul class="rule-checklist">
+              <li>Tối đa mượn <strong>05 cuốn sách</strong> cùng một thời điểm.</li>
+              <li>Thời hạn giữ sách: <strong>theo mong muốn của độc giả</strong> kể từ ngày mượn.</li>
+              <li>Kiểm tra kỹ tình trạng sách (rách, thiếu trang, gạch xóa) trước khi rời quầy mượn.</li>
+            </ul>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <span class="rule-num">02</span>
+              <h3>Gia Hạn & Đặt Trước Sách</h3>
+            </div>
+            <p>Hệ thống hỗ trợ tính năng gia hạn trực tuyến tiện lợi cho độc giả.</p>
+            <ul class="rule-checklist">
+              <li>Được gia hạn <strong>01 lần (thêm 07 ngày)</strong> nếu sách chưa có độc giả khác đặt trước.</li>
+              <li>Việc gia hạn phải thực hiện trước ngày hết hạn mượn ít nhất 01 ngày.</li>
+              <li>Nếu sách đang có người đặt trước, độc giả bắt buộc phải trả đúng hạn.</li>
+            </ul>
+          </div>
+        </div>
+        }
+
+        <!-- Tab 3: Xử Lý Vi Phạm -->
+        @if (activeTab() === 'fines') {
+        <div class="rule-card-group fade-in">
+          <div class="rule-card alert-border">
+            <div class="rule-header">
+              <span class="rule-num warning">01</span>
+              <h3>Mượn Sách Quá Hạn</h3>
+            </div>
+            <p>Trường hợp trả sách sau thời hạn quy định, hệ thống tự động ghi nhận phí trễ hạn vào tài khoản độc giả.
+            </p>
+            <ul class="rule-checklist warning-list">
+              <li>Mức phạt trễ hạn: <strong>Tuỳ vào cuốn sách / 01 cuốn / 01 ngày</strong> trễ.</li>
+              <li>Tài khoản bị tạm khóa tính năng mượn mới khi chưa thanh toán phạt trễ.</li>
+              <li>Trễ quá 30 ngày: Chuyển sang danh sách vi phạm nghiêm trọng và hủy quyền mượn sách.</li>
+            </ul>
+          </div>
+
+          <div class="rule-card alert-border">
+            <div class="rule-header">
+              <span class="rule-num warning">02</span>
+              <h3>Hư Hỏng & Mất Sách</h3>
+            </div>
+            <p>Độc giả có nghĩa vụ bảo vệ tài sản tài liệu của thư viện.</p>
+            <ul class="rule-checklist warning-list">
+              <li>Vẽ bẩn, gạch xóa, làm rách: Phạt 20% - 50% giá trị cuốn sách tùy mức độ.</li>
+              <li>Làm mất sách: Mua đền bù đúng cuốn sách mới cùng loại hoặc đền <strong>200% giá trị niêm yết</strong>.
+              </li>
+              <li>Tự ý mang sách ra khỏi thư viện không qua làm thủ tục: Đình chỉ thẻ mượn từ 03 - 06 tháng.</li>
+            </ul>
+          </div>
+        </div>
+        }
+
+        <!-- Tab 4: Không Gian & Văn Hóa Đọc -->
+        @if (activeTab() === 'space') {
+        <div class="rule-card-group fade-in">
+          <div class="rule-card">
+            <div class="rule-header">
+              <span class="rule-num">01</span>
+              <h3>Giữ Yên Lặng & Vệ Sinh</h3>
+            </div>
+            <p>Không gian đọc sách cần duy trì sự yên tĩnh tối đa để đảm bảo sự tập trung cho mọi người.</p>
+            <ul class="rule-checklist">
+              <li>Vui lòng chuyển điện thoại sang chế độ rung/im lặng khi vào phòng đọc.</li>
+              <li>Không trao đổi thảo luận to tiếng tại khu vực đọc yên tĩnh (dùng phòng thảo luận nhóm nếu cần).</li>
+              <li>Không mang đồ ăn, thức uống có màu/mùi vào khu vực lưu trữ và đọc sách.</li>
+            </ul>
+          </div>
+
+          <div class="rule-card">
+            <div class="rule-header">
+              <span class="rule-num">02</span>
+              <h3>Sử Dụng Thiết Bị & Cơ Sở Vật Chất</h3>
+            </div>
+            <p>Mọi thiết bị máy tính, bàn ghế, hệ thống chiếu sáng đều là tài sản chung của thư viện.</p>
+            <ul class="rule-checklist">
+              <li>Xếp lại sách gọn gàng sau khi sử dụng xong.</li>
+              <li>Không tự ý di chuyển đồ đạc thiết bị điện khỏi vị trí ban đầu.</li>
+              <li>Báo ngay cho nhân viên kĩ thuật nếu thiết bị gặp sự cố.</li>
+            </ul>
+          </div>
+        </div>
+        }
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq-section">
+    <div class="rules-container">
+      <div class="section-title-wrapper">
+        <span class="sub-title">Giải Đáp Thắc Mắc</span>
+        <h2>Câu Hỏi Thường Gặp (FAQ)</h2>
+        <p>Những thắc mắc phổ biến nhất của độc giả khi trải nghiệm dịch vụ thư viện.</p>
+      </div>
+
+      <div class="faq-list">
+        @for (faq of faqs; track $index) {
+        <div class="faq-item" [class.open]="faq.isOpen">
+          <button class="faq-question" (click)="toggleFaq($index)">
+            <span>{{ faq.question }}</span>
+            <span class="faq-toggle-icon">{{ faq.isOpen ? '−' : '+' }}</span>
+          </button>
+          @if (faq.isOpen) {
+          <div class="faq-answer fade-in">
+            <p>{{ faq.answer }}</p>
+          </div>
+          }
+        </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Call to Action Banner -->
+  <section class="rules-cta-section">
+    <div class="rules-container text-center">
+      <h2>Bạn Đã Sẵn Sàng Khám Phá Tri Thức?</h2>
+      <p>Tra cứu ngay hàng nghìn đầu sách hấp dẫn đang sẵn sàng phục vụ tại LIBRAHUB.</p>
+      <div class="cta-actions">
+        <a routerLink="/books" class="btn btn-primary-cta">📖 Khám Phá Kho Sách</a>
+        <a routerLink="/dashboard" class="btn btn-secondary-cta">🏠 Trở Về Trang Chủ</a>
+      </div>
+    </div>
+  </section>
+
+</main>

@@ -15,4 +15,11 @@ export class ReportService {
     if (to)   params = params.set('to', to);
     return this.http.get<WeeklyRevenueReport>(`${this.apiUrl}/revenue`, { params });
   }
+
+  exportRevenuePdf(from?: string, to?: string): Observable<Blob> {
+    let params = new HttpParams();
+    if (from) params = params.set('from', from);
+    if (to)   params = params.set('to', to);
+    return this.http.get(`${this.apiUrl}/revenue/export`, { params, responseType: 'blob' });
+  }
 }

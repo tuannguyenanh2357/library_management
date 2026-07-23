@@ -4,20 +4,30 @@ import com.library.dto.response.report.*;
 import com.library.repository.ReportRepository;
 import com.library.service.interfaces.ReportService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import net.sf.jasperreports.engine.*;
+import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ReportServiceImpl implements ReportService {
 
     private final ReportRepository reportRepository;
+    private final JasperReport revenueReportTemplate;
+    private final JasperReport topOffendersSubReport;
+    private final JasperReport topBooksSubReport;
 
     @Override
     public WeeklyRevenueReportResponse getRevenueReport(LocalDate fromDate, LocalDate toDate) {
@@ -126,5 +136,50 @@ public class ReportServiceImpl implements ReportService {
             case "sunday"    -> "Chủ Nhật";
             default          -> englishName;
         };
+    }
+
+    @Override
+    public byte[] exportRevenuePdf(LocalDate fromDate, LocalDate toDate) {
+        try {
+            // 1. Get the data
+            WeeklyRevenueReportResponse data = getRevenueReport(fromDate, toDate);
+
+            // 2. Prepare Data Sources
+            JRBeanCollectionDataSource dailyDataSource =
+                    new JRBeanCollectionDataSource(data.getDailyBreakdown());
+            JRBeanCollectionDataSource topOffendersSource =
+                    new JRBeanCollectionDataSource(data.getTopOffenders());
+            JRBeanCollectionDataSource topBooksSource =
+                    new JRBeanCollectionDataSource(data.getTopBooks());
+
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+            // 3. Prepare parameters
+            Map<String, Object> parameters = new HashMap<>();
+            parameters.put("fromDate", fromDate.format(dtf));
+            parameters.put("toDate", toDate.format(dtf));
+            parameters.put("rangeDays", data.getRangeDays());
+            parameters.put("collectedAmount", data.getCollectedAmount());
+            parameters.put("collectedCount", data.getCollectedCount());
+            parameters.put("pendingAmount", data.getPendingAmount());
+            parameters.put("pendingCount", data.getPendingCount());
+            parameters.put("totalBorrowings", data.getTotalBorrowings());
+            parameters.put("prevCollectedAmount", data.getPrevCollectedAmount());
+            parameters.put("growthPercent", data.getGrowthPercent());
+            parameters.put("topOffendersData", topOffendersSource);
+            parameters.put("topBooksData", topBooksSource);
+            parameters.put("topOffendersSub", topOffendersSubReport);
+            parameters.put("topBooksSub", topBooksSubReport);
+
+            // 4. Fill report
+            JasperPrint jasperPrint = JasperFillManager.fillReport(revenueReportTemplate, parameters, dailyDataSource);
+
+            // 5. Export to PDF
+            return JasperExportManager.exportReportToPdf(jasperPrint);
+            
+        } catch (JRException e) {
+            log.error("Error generating revenue report PDF", e);
+            throw new RuntimeException("Lỗi tạo file báo cáo PDF: " + e.getMessage());
+        }
     }
 }

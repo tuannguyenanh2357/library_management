@@ -24,6 +24,7 @@ public class BookController {
     public ResponseEntity<List<TopBookProjection>> getTop10MostBorrowedBooks() {
         return ResponseEntity.ok(bookService.getTop10MostBorrowedBooks());
     }
+
     @GetMapping("/{id}")
     public ResponseEntity<BookResponse> getBookById(@PathVariable Long id) {
         return ResponseEntity.ok(bookService.getBookById(id));
@@ -54,10 +55,6 @@ public class BookController {
         return ResponseEntity.ok(bookService.getUniqueCategories());
     }
 
-    @GetMapping("/popular")
-    public ResponseEntity<List<BookResponse>> getPopularBooks() {
-        return ResponseEntity.ok(bookService.getPopularBooks());
-    }
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
@@ -68,7 +65,8 @@ public class BookController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
-    public ResponseEntity<BookResponse> updateBook(@PathVariable Long id, @Valid @RequestBody UpdateBookRequest bookRequest) {
+    public ResponseEntity<BookResponse> updateBook(@PathVariable Long id,
+            @Valid @RequestBody UpdateBookRequest bookRequest) {
         BookResponse updatedBook = bookService.updateBook(id, bookRequest);
         return ResponseEntity.ok(updatedBook);
     }

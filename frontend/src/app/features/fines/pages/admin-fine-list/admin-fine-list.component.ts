@@ -24,8 +24,8 @@ export class AdminFineListComponent implements OnInit {
   isLoading = signal<boolean>(true);
   errorMessage = signal<string>('');
 
-  // Tab: 'UNPAID' | 'PAID'
-  activeTab = signal<'UNPAID' | 'PAID'>('UNPAID');
+  // Tab: 'UNPAID' | 'PAID' | 'CANCELLED'
+  activeTab = signal<'UNPAID' | 'PAID' | 'CANCELLED'>('UNPAID');
 
   // Filters
   filterMemberName = signal<string>('');
@@ -35,6 +35,7 @@ export class AdminFineListComponent implements OnInit {
   // Stats
   totalUnpaid = computed(() => this.fines().filter(f => f.status === 'UNPAID').length);
   totalPaid = computed(() => this.fines().filter(f => f.status === 'PAID').length);
+  totalCancelled = computed(() => this.fines().filter(f => f.status === 'CANCELLED').length);
   totalUnpaidAmount = computed(() =>
     this.fines()
       .filter(f => f.status === 'UNPAID')
@@ -82,7 +83,7 @@ export class AdminFineListComponent implements OnInit {
     }
   }
 
-  switchTab(tab: 'UNPAID' | 'PAID'): void {
+  switchTab(tab: 'UNPAID' | 'PAID' | 'CANCELLED'): void {
     this.activeTab.set(tab);
     this.filterMemberName.set('');
     this.filterDateFrom.set('');
@@ -147,6 +148,30 @@ export class AdminFineListComponent implements OnInit {
         error: (err) => {
           console.error('Lỗi khi thanh toán khoản phạt:', err);
           this.toastService.error('Thanh toán thất bại! Vui lòng thử lại.');
+        }
+      });
+    }
+  }
+
+  async cancelFine(fine: FineResponse): Promise<void> {
+    const reason = prompt(`Nhập lý do miễn khoản phạt của "${fine.memberName}" (sách: ${fine.bookTitle}):`);
+    if (reason === null) return;
+
+    const isConfirmed = await this.confirmService.confirm(
+      `Xác nhận miễn khoản phạt ${Number(fine.amount).toLocaleString('vi-VN')} VND của độc giả "${fine.memberName}"?`
+    );
+    if (isConfirmed) {
+      this.fineService.cancelFine(fine.id, reason).subscribe({
+        next: (updatedFine) => {
+          this.fines.update(list =>
+            list.map(f => f.id === fine.id ? updatedFine : f)
+          );
+          this.toastService.success(`✅ Đã miễn khoản phạt cho ${fine.memberName}`);
+          this.switchTab('CANCELLED');
+        },
+        error: (err) => {
+          console.error('Lỗi khi miễn khoản phạt:', err);
+          this.toastService.error('Miễn phạt thất bại! Vui lòng thử lại.');
         }
       });
     }

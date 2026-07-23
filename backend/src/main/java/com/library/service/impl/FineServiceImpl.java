@@ -58,4 +58,18 @@ public class FineServiceImpl implements FineService {
         repository.save(fine);
         return mapper.toResponse(fine);
     }
+
+    @Override
+    public FineResponse cancelFine(Long fineId, String reason) {
+        Fines fine = repository.findById(fineId).orElseThrow(() -> new RuntimeException("Fine not found"));
+        if (fine.getStatus() != FineStatus.UNPAID) {
+            throw new RuntimeException("Chỉ có thể miễn khoản phạt chưa thanh toán");
+        }
+        fine.setStatus(FineStatus.CANCELLED);
+        if (reason != null && !reason.isBlank()) {
+            fine.setReason(fine.getReason() + " [Miễn phạt: " + reason + "]");
+        }
+        repository.save(fine);
+        return mapper.toResponse(fine);
+    }
 }

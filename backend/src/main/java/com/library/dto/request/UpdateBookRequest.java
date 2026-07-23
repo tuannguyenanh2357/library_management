@@ -32,4 +32,6 @@ public class UpdateBookRequest {
 
     java.math.BigDecimal dailyFineAmount;
 
+    java.math.BigDecimal replacementFee;
+
 }

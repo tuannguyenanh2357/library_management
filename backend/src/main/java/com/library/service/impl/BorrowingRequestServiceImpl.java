@@ -13,12 +13,13 @@ import com.library.mapper.BorrowingRequestMapper;
 import com.library.repository.BookCopyRepository;
 import com.library.repository.BookRepository;
 import com.library.repository.BorrowingRequestRepository;
+import com.library.repository.FineRepository;
 import com.library.repository.MemberRepository;
 import com.library.service.interfaces.BorrowingRequestService;
 import com.library.service.interfaces.BorrowingService;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-
+import com.library.entity.enums.BookCopyStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,6 +37,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
     final MemberRepository memberRepository;
     final BookRepository bookRepository;
     final BookCopyRepository bookCopyRepository;
+    final FineRepository fineRepository;
     final BorrowingService borrowingService;
     final BorrowingRequestMapper mapper;
 
@@ -43,6 +45,15 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
     public BorrowingRequestResponse createRequest(BorrowingRequestCreationRequest dto) {
         Member member = memberRepository.findById(dto.getMemberId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy độc giả"));
+
+        if (member.hasOverdueBorrowings()) {
+            throw new RuntimeException("Không thể gửi yêu cầu mượn mới khi đang có sách quá hạn chưa trả");
+        }
+        if (fineRepository.existsByBorrowing_Member_IdAndStatus(member.getId(),
+                com.library.entity.enums.FineStatus.UNPAID)) {
+            throw new RuntimeException("Không thể gửi yêu cầu mượn mới khi đang có khoản phạt chưa thanh toán");
+        }
+
         Book book = bookRepository.findById(dto.getBookId())
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy đầu sách"));
 
@@ -56,7 +67,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                 .build();
 
         BorrowingRequest saved = requestRepository.save(request);
-        long count = bookCopyRepository.countByBook_IdAndStatus(book.getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE);
+        long count = bookCopyRepository.countByBook_IdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
         return mapper.toResponse(saved, count);
     }
 
@@ -64,7 +75,8 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
     public List<BorrowingRequestResponse> getPendingRequests() {
         return requestRepository.findByStatusWithRelations(BorrowingRequestStatus.PENDING)
                 .stream()
-                .map(r -> mapper.toResponse(r, bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE)))
+                .map(r -> mapper.toResponse(r,
+                        bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(), BookCopyStatus.AVAILABLE)))
                 .collect(Collectors.toList());
     }
 
@@ -72,7 +84,8 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
     public List<BorrowingRequestResponse> getHistoryRequests() {
         return requestRepository.findHistoryWithRelations()
                 .stream()
-                .map(r -> mapper.toResponse(r, bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE)))
+                .map(r -> mapper.toResponse(r,
+                        bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(), BookCopyStatus.AVAILABLE)))
                 .collect(Collectors.toList());
     }
 
@@ -80,7 +93,8 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
     public List<BorrowingRequestResponse> getRequestsByMember(Long memberId) {
         return requestRepository.findByMemberIdWithRelations(memberId)
                 .stream()
-                .map(r -> mapper.toResponse(r, bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE)))
+                .map(r -> mapper.toResponse(r,
+                        bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(), BookCopyStatus.AVAILABLE)))
                 .collect(Collectors.toList());
     }
 
@@ -90,26 +104,26 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                 .orElseThrow(() -> new RuntimeException("Request not found"));
 
         if (request.getStatus() != BorrowingRequestStatus.PENDING) {
-            throw new RuntimeException("Only pending requests can be approved");
+            throw new RuntimeException("Chỉ có thể phê duyệt yêu cầu đang chờ xử lý");
         }
 
-        // Auto-assign the first available copy
-        BookCopy bookCopy = bookCopyRepository.findFirstByBook_IdAndStatus(request.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE)
+        // gán bản sao đầu tiên có sẵn
+        BookCopy bookCopy = bookCopyRepository
+                .findFirstByBook_IdAndStatus(request.getBook().getId(), BookCopyStatus.AVAILABLE)
                 .orElseThrow(() -> new RuntimeException("Không còn cuốn sách nào khả dụng trong kho"));
 
-        // Use expected due date and notes from request
+        // Sử dụng ngày dự kiến trả và ghi chú từ yêu cầu
         BorrowingCreationRequest borrowingDto = new BorrowingCreationRequest(
                 request.getMember().getId(),
                 bookCopy.getId(),
                 request.getExpectedDueDate(),
-                request.getNotes()
-        );
+                request.getNotes());
         borrowingService.borrowBook(borrowingDto);
 
         request.setStatus(BorrowingRequestStatus.APPROVED);
         request.setProcessedDate(LocalDateTime.now());
-        
-        long count = bookCopyRepository.countByBook_IdAndStatus(request.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE);
+
+        long count = bookCopyRepository.countByBook_IdAndStatus(request.getBook().getId(), BookCopyStatus.AVAILABLE);
         return mapper.toResponse(requestRepository.save(request), count);
     }
 
@@ -126,7 +140,26 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         request.setProcessedDate(LocalDateTime.now());
         request.setNotes(reason);
 
-        long count = bookCopyRepository.countByBook_IdAndStatus(request.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE);
+        long count = bookCopyRepository.countByBook_IdAndStatus(request.getBook().getId(), BookCopyStatus.AVAILABLE);
+        return mapper.toResponse(requestRepository.save(request), count);
+    }
+
+    @Override
+    public BorrowingRequestResponse cancelRequest(Long requestId, String username) {
+        BorrowingRequest request = requestRepository.findById(requestId)
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy yêu cầu"));
+
+        if (!request.getMember().getUsername().equals(username)) {
+            throw new RuntimeException("Bạn không có quyền hủy yêu cầu này");
+        }
+        if (request.getStatus() != BorrowingRequestStatus.PENDING) {
+            throw new RuntimeException("Chỉ có thể hủy yêu cầu đang chờ duyệt");
+        }
+
+        request.setStatus(BorrowingRequestStatus.CANCELLED);
+        request.setProcessedDate(LocalDateTime.now());
+
+        long count = bookCopyRepository.countByBook_IdAndStatus(request.getBook().getId(), BookCopyStatus.AVAILABLE);
         return mapper.toResponse(requestRepository.save(request), count);
     }
 }

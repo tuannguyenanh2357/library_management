@@ -64,4 +64,23 @@ public class BorrowingController {
         return ResponseEntity.ok(borrowingService.getByCopyId(copyId));
     }
 
+    @PutMapping("/{borrowingId}/renew")
+    @PreAuthorize("hasRole('MEMBER')")
+    public ResponseEntity<BorrowingResponse> renewBorrowing(@PathVariable Long borrowingId) {
+        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(borrowingService.renewBorrowing(borrowingId, username));
+    }
+
+    @PutMapping("/{borrowingId}/report-lost")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    public ResponseEntity<BorrowingResponse> reportLost(@PathVariable Long borrowingId) {
+        return ResponseEntity.ok(borrowingService.reportLost(borrowingId));
+    }
+
+    @PutMapping("/{borrowingId}/report-damaged")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    public ResponseEntity<BorrowingResponse> reportDamaged(@PathVariable Long borrowingId) {
+        return ResponseEntity.ok(borrowingService.reportDamaged(borrowingId));
+    }
+
 }

@@ -120,7 +120,11 @@
             <label>Mã vạch cuốn sách:</label>
             <input type="text" formControlName="barcode" placeholder="Quét mã vạch sách cần trả..." class="modern-input">
           </div>
-          <button type="submit" class="btn-submit" [disabled]="returnForm.invalid">Xác nhận trả</button>
+          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="submit" class="btn-submit" [disabled]="returnForm.invalid">Xác nhận trả</button>
+            <button type="button" class="btn-reject-large" [disabled]="returnForm.invalid" (click)="reportLost()">Báo Mất</button>
+            <button type="button" class="btn-reject-large" [disabled]="returnForm.invalid" (click)="reportDamaged()">Báo Hỏng</button>
+          </div>
         </form>
       </div>
     }
@@ -140,12 +144,13 @@
                 <th class="text-center">Ngày xếp hàng</th>
                 <th class="text-center">Trạng thái</th>
                 <th class="text-center">Ghi chú (Dự kiến / Hạn lấy)</th>
+                <th class="text-center">Hành động</th>
               </tr>
             </thead>
             <tbody>
               @if (reservations().length === 0) {
                 <tr>
-                  <td colspan="5" class="text-center" style="padding: 24px; color: #64748b;">Chưa có dữ liệu đặt chỗ nào.</td>
+                  <td colspan="6" class="text-center" style="padding: 24px; color: #64748b;">Chưa có dữ liệu đặt chỗ nào.</td>
                 </tr>
               } @else {
                 @for (res of reservations(); track res.id) {
@@ -154,8 +159,8 @@
                     <td><strong>{{ res.bookTitle }}</strong><br><small class="text-muted">ID Sách: {{ res.bookId }}</small></td>
                     <td class="text-center">{{ res.requestDate | date:'short' }}</td>
                     <td class="text-center">
-                      <span class="status-badge" 
-                            [class.pending]="res.status === 'PENDING'" 
+                      <span class="status-badge"
+                            [class.pending]="res.status === 'PENDING'"
                             [class.returned]="res.status === 'FULFILLED' || res.status === 'COMPLETED'"
                             [class.rejected]="res.status === 'CANCELLED' || res.status === 'EXPIRED'">
                         {{ res.status }}
@@ -168,6 +173,13 @@
                         <span style="color: #3b82f6; font-weight: 600;">Dự kiến có: {{ res.expectedAvailableDate | date:'dd/MM/yyyy' }}</span>
                       } @else if (res.status === 'PENDING') {
                         <span class="text-muted">Chưa rõ ngày trả</span>
+                      } @else {
+                        <span class="text-muted">-</span>
+                      }
+                    </td>
+                    <td class="text-center">
+                      @if (res.status === 'PENDING' || res.status === 'FULFILLED') {
+                        <button class="btn-reject-large" style="padding: 6px 12px; font-size: 0.85rem;" (click)="cancelReservationAsStaff(res.id)">Hủy</button>
                       } @else {
                         <span class="text-muted">-</span>
                       }

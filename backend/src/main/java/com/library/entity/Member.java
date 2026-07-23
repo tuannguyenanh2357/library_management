@@ -53,10 +53,7 @@ public class Member {
     String email;
 
     @NotBlank(message = "Phone number is required")
-    @Pattern(
-            regexp = "^(\\+84|0)[3-9]\\d{8}$",
-            message = "Invalid Vietnamese phone number"
-    )
+    @Pattern(regexp = "^(\\+84|0)[3-9]\\d{8}$", message = "Invalid Vietnamese phone number")
     @Column(nullable = false, unique = true)
     String phone;
 
@@ -80,11 +77,11 @@ public class Member {
     @Column(name = "role", nullable = false)
     MemberRole role;
 
-    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     @Builder.Default
     List<Borrowing> borrowings = new ArrayList<>();
 
-    @OneToMany(mappedBy = "member", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     @Builder.Default
     List<BorrowingRequest> borrowingRequests = new ArrayList<>();
 
@@ -97,11 +94,11 @@ public class Member {
     protected void prePersist() {
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
-        if(joiningDate == null) {
+        if (joiningDate == null) {
             joiningDate = LocalDate.now();
         }
 
-        if(isActive == null) {
+        if (isActive == null) {
             isActive = true;
         }
 
@@ -130,7 +127,7 @@ public class Member {
     }
 
     // có tổng bao nhiêu phiếu quá hạn
-    public long countOverdueBorrowings(){
+    public long countOverdueBorrowings() {
         return borrowings.stream().filter(Borrowing::isCurrentlyOverdue).count();
     }
 

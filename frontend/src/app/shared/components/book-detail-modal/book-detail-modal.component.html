@@ -1,80 +1,79 @@
 @if (isOpen && book) {
-  <div class="modal-overlay-detail" (click)="onClose()">
-    <div class="modal-container-detail" (click)="$event.stopPropagation()">
-      <div class="modal-header-detail">
-        <h3>📖 Chi Tiết Cuốn Sách</h3>
-        <button class="btn-close-header" (click)="onClose()">&times;</button>
+<div class="modal-overlay-detail" (click)="onClose()">
+  <div class="modal-container-detail" (click)="$event.stopPropagation()">
+    <div class="modal-header-detail">
+      <h3>📖 Chi Tiết Cuốn Sách</h3>
+      <button class="btn-close-header" (click)="onClose()">&times;</button>
+    </div>
+
+    <div class="modal-body-detail">
+      <div class="detail-cover">
+        <img [src]="book.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400'"
+          [alt]="book.title" />
       </div>
+      <div class="detail-info">
+        <h2 class="detail-title">{{ book.title }}</h2>
+        <p class="detail-author">Tác giả: <strong>{{ book.author }}</strong></p>
 
-      <div class="modal-body-detail">
-        <div class="detail-cover">
-          <img [src]="book.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400'" [alt]="book.title" />
-        </div>
-        <div class="detail-info">
-          <h2 class="detail-title">{{ book.title }}</h2>
-          <p class="detail-author">Tác giả: <strong>{{ book.author }}</strong></p>
-
-          @if (!isBorrowingMode) {
-            <div class="detail-meta-grid">
-              <div><span>Thể loại:</span><strong class="badge-category">{{ book.category }}</strong></div>
-              <div><span>ISBN:</span><strong>{{ book.isbn }}</strong></div>
-              <div><span>Nhà xuất bản:</span><strong>{{ book.publisher || 'Chưa cập nhật' }}</strong></div>
-              <div><span>Năm xuất bản:</span><strong>{{ book.publicationYear }}</strong></div>
-              <div><span>Phí phạt quá hạn:</span><strong style="color: #e74c3c;">{{ book.dailyFineAmount | currency:'VND':'symbol' }}/ngày</strong></div>
-              <div><span>Số lượng:</span>
-                @if (book.availableCopiesCount && book.availableCopiesCount > 0) {
-                  <strong style="color: #10b981;">Còn {{ book.availableCopiesCount }} trong kho</strong>
-                } @else {
-                  <strong style="color: #ef4444;">Hết sách (Có thể đặt chỗ)</strong>
-                }
-              </div>
-            </div>
-            <div class="detail-description">
-              <h4>Mô tả sách:</h4>
-              <p>{{ book.description || 'Không có mô tả chi tiết cho cuốn sách này.' }}</p>
-            </div>
-          } @else {
-            <div class="borrow-form-container">
-              <h4 class="form-title">Đăng Ký Mượn Sách</h4>
-              <p class="form-desc">Vui lòng điền thông tin để thủ thư chuẩn bị sách cho bạn.</p>
-
-              <div class="form-group">
-                <label>Mong muốn mượn đến ngày (Hạn trả):</label>
-                <input type="date" [(ngModel)]="expectedDueDate" class="modern-input">
-              </div>
-
-              <div class="form-group mt-3">
-                <label>Lời nhắn cho thủ thư (tùy chọn):</label>
-                <textarea
-                  [(ngModel)]="notes"
-                  class="modern-input"
-                  rows="3"
-                  placeholder="Ví dụ: Tôi muốn mượn sách mới một chút, đừng đưa cho tôi cuốn sách bị rách nhé..."></textarea>
-              </div>
-            </div>
-          }
-        </div>
-      </div>
-
-      <div class="modal-footer-detail">
         @if (!isBorrowingMode) {
-          @if (book.availableCopiesCount && book.availableCopiesCount > 0) {
-            <button class="btn-borrow-modal" (click)="enterBorrowMode()">
-              📝 Đăng Ký Mượn Sách
-            </button>
-          } @else {
-            <button class="btn-borrow-modal" style="background-color: #8b5cf6;" (click)="submitReserve()">
-              ⏳ Đặt Chỗ (Xếp Hàng)
-            </button>
-          }
-          <button class="btn-close-modal" (click)="onClose()">Đóng</button>
+        <div class="detail-meta-grid">
+          <div><span>Thể loại:</span><strong class="badge-category">{{ book.category }}</strong></div>
+          <div><span>ISBN:</span><strong>{{ book.isbn }}</strong></div>
+          <div><span>Nhà xuất bản:</span><strong>{{ book.publisher || 'Chưa cập nhật' }}</strong></div>
+          <div><span>Năm xuất bản:</span><strong>{{ book.publicationYear }}</strong></div>
+          <div><span>Phí phạt quá hạn:</span><strong style="color: #e74c3c;">{{ book.dailyFineAmount |
+              currency:'VND':'symbol' }}/ngày</strong></div>
+          <div><span>Số lượng:</span>
+            @if (book.availableCopiesCount && book.availableCopiesCount > 0) {
+            <strong style="color: #10b981;">{{ book.availableCopiesCount }}</strong>
+            } @else {
+            <strong style="color: #ef4444;">Hết sách (Có thể đặt chỗ)</strong>
+            }
+          </div>
+        </div>
+        <div class="detail-description">
+          <h4>Mô tả sách:</h4>
+          <p>{{ book.description || 'Không có mô tả chi tiết cho cuốn sách này.' }}</p>
+        </div>
         } @else {
-          <button class="btn-cancel" (click)="cancelBorrowMode()">Quay lại</button>
-          <button class="btn-submit-borrow" (click)="submitBorrow()" [disabled]="!expectedDueDate">
-            Gửi Yêu Cầu
-          </button>
+        <div class="borrow-form-container">
+          <h4 class="form-title">Đăng Ký Mượn Sách</h4>
+          <p class="form-desc">Vui lòng điền thông tin để thủ thư chuẩn bị sách cho bạn.</p>
+
+          <div class="form-group">
+            <label>Mong muốn mượn đến ngày (Hạn trả):</label>
+            <input type="date" [(ngModel)]="expectedDueDate" class="modern-input">
+          </div>
+
+          <div class="form-group mt-3">
+            <label>Lời nhắn cho thủ thư (tùy chọn):</label>
+            <textarea [(ngModel)]="notes" class="modern-input" rows="3"
+              placeholder="Ví dụ: Tôi muốn mượn sách mới một chút, đừng đưa cho tôi cuốn sách bị rách nhé..."></textarea>
+          </div>
+        </div>
         }
       </div>
     </div>
+
+    <div class="modal-footer-detail">
+      @if (!isBorrowingMode) {
+      @if (book.availableCopiesCount && book.availableCopiesCount > 0) {
+      <button class="btn-borrow-modal" (click)="enterBorrowMode()">
+        📝 Đăng Ký Mượn Sách
+      </button>
+      } @else {
+      <button class="btn-borrow-modal" style="background-color: #8b5cf6;" (click)="submitReserve()">
+        ⏳ Đặt Chỗ (Xếp Hàng)
+      </button>
+      }
+      <button class="btn-close-modal" (click)="onClose()">Đóng</button>
+      } @else {
+      <button class="btn-cancel" (click)="cancelBorrowMode()">Quay lại</button>
+      <button class="btn-submit-borrow" (click)="submitBorrow()" [disabled]="!expectedDueDate">
+        Gửi Yêu Cầu
+      </button>
+      }
+    </div>
   </div>
+</div>
 }

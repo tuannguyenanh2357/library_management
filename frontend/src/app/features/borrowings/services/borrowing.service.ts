@@ -46,4 +46,16 @@ export class BorrowingService {
   returnBook(borrowingId: number): Observable<BorrowingResponse> {
     return this.http.put<BorrowingResponse>(`${this.apiUrl}/${borrowingId}/return`, {});
   }
+
+  renewBorrowing(borrowingId: number): Observable<BorrowingResponse> {
+    return this.http.put<BorrowingResponse>(`${this.apiUrl}/${borrowingId}/renew`, {});
+  }
+
+  reportLost(borrowingId: number): Observable<BorrowingResponse> {
+    return this.http.put<BorrowingResponse>(`${this.apiUrl}/${borrowingId}/report-lost`, {});
+  }
+
+  reportDamaged(borrowingId: number): Observable<BorrowingResponse> {
+    return this.http.put<BorrowingResponse>(`${this.apiUrl}/${borrowingId}/report-damaged`, {});
+  }
 }

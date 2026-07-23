@@ -26,4 +26,6 @@ public interface FineRepository extends JpaRepository<Fines, Long> {
     @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member " + "JOIN FETCH b.bookCopy bc "
             + "JOIN FETCH bc.book " + "WHERE f.status = :status")
     List<Fines> findByStatusWithRelations(@Param("status") FineStatus status);
+
+    boolean existsByBorrowing_Member_IdAndStatus(Long memberId, FineStatus status);
 }

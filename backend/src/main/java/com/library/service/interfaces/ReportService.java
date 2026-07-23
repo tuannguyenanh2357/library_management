@@ -6,4 +6,6 @@ import java.time.LocalDate;
 
 public interface ReportService {
     WeeklyRevenueReportResponse getRevenueReport(LocalDate fromDate, LocalDate toDate);
+
+    byte[] exportRevenuePdf(LocalDate fromDate, LocalDate toDate);
 }

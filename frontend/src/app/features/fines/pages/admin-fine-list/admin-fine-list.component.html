@@ -73,6 +73,16 @@
         <span class="tab-badge paid-badge">{{ totalPaid() }}</span>
       }
     </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'CANCELLED'"
+      (click)="switchTab('CANCELLED')"
+    >
+      🚫 Đã miễn
+      @if (totalCancelled() > 0) {
+        <span class="tab-badge">{{ totalCancelled() }}</span>
+      }
+    </button>
   </div>
 
   <!-- Filters -->
@@ -193,17 +203,20 @@
               }
               <td>
                 <span class="status-badge" [class.paid]="fine.status === 'PAID'" [class.unpaid]="fine.status === 'UNPAID'">
-                  {{ fine.status === 'PAID' ? '✓ Đã thu' : '• Chưa thu' }}
+                  {{ fine.status === 'PAID' ? '✓ Đã thu' : (fine.status === 'CANCELLED' ? '🚫 Đã miễn' : '• Chưa thu') }}
                 </span>
               </td>
               @if (activeTab() === 'UNPAID') {
-                <td>
+                <td style="display: flex; gap: 6px;">
                   <button class="btn btn-pay btn-sm" (click)="payFine(fine)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                       <line x1="12" y1="1" x2="12" y2="23"></line>
                       <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
                     </svg>
                     Thu tiền
+                  </button>
+                  <button class="btn btn-outline btn-sm" (click)="cancelFine(fine)">
+                    🚫 Miễn phạt
                   </button>
                 </td>
               }

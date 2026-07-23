@@ -101,12 +101,19 @@
           >
             🔒 Đổi Mật Khẩu
           </button>
-          <button 
-            class="tab-link" 
-            [class.active]="activeTab() === 'reservations'" 
+          <button
+            class="tab-link"
+            [class.active]="activeTab() === 'reservations'"
             (click)="activeTab.set('reservations')"
           >
             ⏳ Hàng Đợi Của Tôi
+          </button>
+          <button
+            class="tab-link"
+            [class.active]="activeTab() === 'fines'"
+            (click)="activeTab.set('fines')"
+          >
+            💰 Khoản Phạt Của Tôi
           </button>
         </div>
 
@@ -129,6 +136,7 @@
                         <th>Hạn Trả Mong Muốn</th>
                         <th>Trạng Thái</th>
                         <th>Lời Nhắn / Lý Do</th>
+                        <th>Hành Động</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -147,6 +155,13 @@
                               <span class="text-danger">Từ chối: {{ r.notes || 'Không rõ lý do' }}</span>
                             } @else {
                               <span class="text-muted">{{ r.notes || '-' }}</span>
+                            }
+                          </td>
+                          <td>
+                            @if (r.status === 'PENDING') {
+                              <button class="btn-retry" style="background-color: #ef4444;" (click)="cancelOnlineRequest(r.id)">Hủy Yêu Cầu</button>
+                            } @else {
+                              <span class="text-muted">-</span>
                             }
                           </td>
                         </tr>
@@ -174,6 +189,7 @@
                         <th>Hạn Trả</th>
                         <th>Ngày Trả</th>
                         <th>Trạng Thái</th>
+                        <th>Hành Động</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -188,6 +204,13 @@
                             <span class="status-badge" [ngClass]="getBorrowingStatus(b)">
                               {{ getStatusText(b) }}
                             </span>
+                          </td>
+                          <td>
+                            @if (canRenew(b)) {
+                              <button class="btn-retry" (click)="renewBorrowing(b)">Gia Hạn (+7 ngày)</button>
+                            } @else {
+                              <span class="text-muted">-</span>
+                            }
                           </td>
                         </tr>
                       }
@@ -246,6 +269,49 @@
                               <span class="text-muted">-</span>
                             }
                           </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Tab 1.6: My Fines -->
+          @if (activeTab() === 'fines') {
+            <div class="history-section">
+              <h3 class="section-title">Khoản Phạt Của Tôi</h3>
+              @if (myFines().length === 0) {
+                <div class="empty-borrowings">
+                  <p>Bạn không có khoản phạt nào. 🎉</p>
+                </div>
+              } @else {
+                <div class="table-responsive">
+                  <table class="borrow-table">
+                    <thead>
+                      <tr>
+                        <th>Tên Sách</th>
+                        <th>Lý Do</th>
+                        <th>Số Tiền</th>
+                        <th>Ngày Lập</th>
+                        <th>Trạng Thái</th>
+                        <th>Ngày Thanh Toán</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (f of myFines(); track f.id) {
+                        <tr>
+                          <td class="book-title-cell"><strong>{{ f.bookTitle }}</strong></td>
+                          <td>{{ f.reason }}</td>
+                          <td>{{ f.amount | number:'1.0-0' }} VND</td>
+                          <td>{{ f.issuedDate }}</td>
+                          <td>
+                            <span class="status-badge" [ngClass]="getFineStatusClass(f.status)">
+                              {{ getFineStatusText(f.status) }}
+                            </span>
+                          </td>
+                          <td>{{ f.paidDate || '-' }}</td>
                         </tr>
                       }
                     </tbody>
