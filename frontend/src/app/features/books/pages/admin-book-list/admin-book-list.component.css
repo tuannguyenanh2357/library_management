@@ -1,0 +1,748 @@
+/* book-list.component.css - Phiên bản đẹp hơn, hiện đại */
+
+.book-list-container {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 4rem auto 2rem auto;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.header-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.title-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.btn-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 0.9rem;
+}
+
+.btn-back:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.header-section h2 {
+
+  margin: 0;
+  color: #1e2937;
+  font-size: 1.85rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-section h2::before {
+  content: "📚";
+  font-size: 2rem;
+}
+
+/* Button Thêm sách */
+.btn-primary {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.4);
+}
+
+/* Table */
+.table-responsive {
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.book-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+}
+
+.book-table thead th {
+  background-color: #f8fafc;
+  color: #334155;
+  font-weight: 600;
+  padding: 16px 12px;
+  text-align: left;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.book-table td {
+  padding: 16px 12px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.book-table tr:hover {
+  background-color: #f8fafc;
+  transition: background 0.2s;
+}
+
+/* Ảnh bìa */
+.book-table td img {
+  width: 50px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+/* Category Badge */
+.category-badge {
+  padding: 6px 14px;
+  background: #e0f2fe;
+  color: #0369a1;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-block;
+}
+
+/* Action Buttons */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-action {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s;
+}
+
+.btn-edit {
+  background-color: #fbbf24;
+  color: #1e2937;
+}
+
+.btn-action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(100%);
+}
+
+.btn-delete {
+  background-color: #ef4444;
+  color: white;
+}
+
+.btn-edit:hover {
+  background-color: #f59e0b;
+  transform: scale(1.05);
+}
+
+.btn-delete:hover {
+  background-color: #dc2626;
+  transform: scale(1.05);
+}
+
+/* States */
+.loading-state, .empty-state {
+  padding: 80px 20px;
+  text-align: center;
+  color: #64748b;
+}
+
+.error-state {
+  padding: 40px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #e2e8f0;
+  border-top-color: #3b82f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 20px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .book-list-container {
+    padding: 16px;
+  }
+}
+/* Backdrop - Phủ đen mờ nền đằng sau */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Khung nội dung form */
+.modal-content {
+  background: white;
+  width: 100%;
+  max-width: 750px;
+  padding: 28px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.modal-content h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #1f2937;
+  font-size: 1.4rem;
+}
+
+/* Định dạng Form Group */
+.form-group {
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+
+.form-group input,
+.form-group textarea {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  border-color: #3b82f6;
+}
+
+.form-group input:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Khung chứa các nút Lưu/Hủy */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Pagination Styles */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 12px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.page-btn {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.page-btn:disabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 6px;
+}
+
+.num-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.num-btn.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Tabs Navigation */
+.tabs-navigation {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.tab-btn.active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  box-shadow: inset 0 -2px 0 #2563eb;
+}
+
+/* Indigo Button */
+.btn-indigo {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-indigo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+/* Copy Status Badge */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.available {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.borrowed {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.lost {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Form Select Dropdown */
+.form-select {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.form-select:focus {
+  border-color: #6366f1;
+}
+
+/* History Action Button */
+.btn-history {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-history:hover {
+  background-color: #2563eb;
+  transform: scale(1.05);
+}
+
+/* Damaged Status Badge */
+.status-badge.damaged {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* Borrowing Status Badges */
+.status-badge.returned {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+
+
+.form-group input:disabled {
+  background-color: #f3f4f6;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Khung chứa các nút Lưu/Hủy */
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* Pagination Styles */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 24px;
+  padding: 12px 0;
+  border-top: 1px solid #f1f5f9;
+}
+
+.page-btn {
+  padding: 8px 14px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+.page-btn:hover:not(:disabled) {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.page-btn:disabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+}
+
+.page-numbers {
+  display: flex;
+  gap: 6px;
+}
+
+.num-btn {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+
+.num-btn.active {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  color: white;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+/* Tabs Navigation */
+.tabs-navigation {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 8px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  padding: 10px 18px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.tab-btn:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.tab-btn.active {
+  background-color: #eff6ff;
+  color: #2563eb;
+  box-shadow: inset 0 -2px 0 #2563eb;
+}
+
+/* Indigo Button */
+.btn-indigo {
+  background: linear-gradient(135deg, #6366f1, #4f46e5);
+  color: white;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.btn-indigo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+/* Copy Status Badge */
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-badge.available {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.borrowed {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.reserved {
+  background-color: #fdf4ff;
+  color: #c026d3;
+}
+
+.status-badge.lost {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+/* Form Select Dropdown */
+.form-select {
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  outline: none;
+  background-color: white;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+
+.form-select:focus {
+  border-color: #6366f1;
+}
+
+/* History Action Button */
+.btn-history {
+  background-color: #3b82f6;
+  color: white;
+}
+
+.btn-history:hover {
+  background-color: #2563eb;
+  transform: scale(1.05);
+}
+
+/* Damaged Status Badge */
+.status-badge.damaged {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+/* Borrowing Status Badges */
+.status-badge.returned {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.status-badge.borrowed {
+  background-color: #dbeafe;
+  color: #1e40af;
+}
+
+.status-badge.reserved {
+  background-color: #fdf4ff;
+  color: #c026d3;
+}
+
+/* Search Filter Panel */
+.search-filter-panel {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 24px;
+}
+
+.search-filter-panel h4 {
+  margin-top: 0;
+  margin-bottom: 16px;
+  color: #334155;
+  font-size: 1.1rem;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.filter-item label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #475569;
+}
+
+.filter-item input,
+.filter-item select {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  outline: none;
+  font-size: 0.9rem;
+  transition: all 0.2s;
+}
+
+.filter-item input:focus,
+.filter-item select:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+}
