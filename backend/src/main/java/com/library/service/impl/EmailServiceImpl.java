@@ -1,0 +1,34 @@
+package com.library.service.impl;
+
+import com.library.service.interfaces.EmailService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.stereotype.Service;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class EmailServiceImpl implements EmailService {
+
+    private final JavaMailSender mailSender;
+
+    @Override
+    @Async
+    public void sendEmail(String to, String subject, String text) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setFrom("tuannguyenanh2357@gmail.com");
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(text);
+            
+            mailSender.send(message);
+            log.info("Email đã được gửi thành công đến: {}", to);
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi email đến {}: {}", to, e.getMessage());
+        }
+    }
+}

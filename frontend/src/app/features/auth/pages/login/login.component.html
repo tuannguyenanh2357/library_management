@@ -1,0 +1,63 @@
+<div class="login-container">
+  <div class="glass-bg-overlay"></div>
+  <div class="login-card">
+    <div class="login-header">
+      <div class="logo-icon">📚</div>
+      <h2>LIBRAHUB</h2>
+      <p>Hệ thống Quản lý Thư viện thông minh</p>
+    </div>
+
+    @if (errorMessage()) {
+      <div class="error-alert">
+        <span>⚠️ {{ errorMessage() }}</span>
+      </div>
+    }
+
+    <form (ngSubmit)="onSubmit()" class="login-form">
+      <div class="form-group">
+        <label for="username">Tên đăng nhập</label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input 
+            type="text" 
+            id="username" 
+            name="username"
+            [(ngModel)]="username" 
+            placeholder="Nhập tên đăng nhập..." 
+            required 
+            [disabled]="loading()"
+          />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Mật khẩu</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input 
+            type="password" 
+            id="password" 
+            name="password"
+            [(ngModel)]="password" 
+            placeholder="Nhập mật khẩu..." 
+            required
+            [disabled]="loading()"
+          />
+        </div>
+      </div>
+
+      <button type="submit" class="btn-submit" [disabled]="loading()">
+        @if (loading()) {
+          <span class="spinner"></span> Đang đăng nhập...
+        } @else {
+          Đăng Nhập 🚀
+        }
+      </button>
+
+      <div class="form-footer">
+        <span>Chưa có tài khoản? </span>
+        <a routerLink="/register">Đăng ký ngay</a>
+      </div>
+    </form>
+  </div>
+</div>

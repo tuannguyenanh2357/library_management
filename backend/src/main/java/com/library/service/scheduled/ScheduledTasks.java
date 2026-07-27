@@ -1,0 +1,133 @@
+package com.library.service.scheduled;
+
+import com.library.entity.BookCopy;
+import com.library.entity.Borrowing;
+import com.library.entity.BorrowingRequest;
+import com.library.entity.Reservation;
+import com.library.entity.enums.BorrowingRequestStatus;
+import com.library.entity.enums.ReservationStatus;
+import com.library.repository.BorrowingRepository;
+import com.library.repository.BorrowingRequestRepository;
+import com.library.repository.ReservationRepository;
+import com.library.service.interfaces.EmailService;
+import com.library.service.interfaces.ReservationService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class ScheduledTasks {
+
+    private final ReservationRepository reservationRepository;
+    private final ReservationService reservationService;
+    private final BorrowingRepository borrowingRepository;
+    private final BorrowingRequestRepository borrowingRequestRepository;
+    private final EmailService emailService;
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+    // Hết hạn các reservation đã được giữ chỗ (FULFILLED) quá 48h mà độc giả chưa
+    // đến lấy
+    @Scheduled(cron = "0 5 0 * * *")
+    @Transactional
+    public void expireFulfilledReservations() {
+        List<Reservation> expired;
+        try {
+            expired = reservationRepository.findExpiredFulfilledReservations();
+        } catch (Exception e) {
+            log.error("[ScheduledTasks] Lỗi khi truy vấn reservation hết hạn: {}", e.getMessage());
+            return;
+        }
+
+        for (Reservation reservation : expired) {
+            try {
+                BookCopy copy = reservation.getFulfilledCopy();
+                reservation.setStatus(ReservationStatus.EXPIRED);
+                reservationRepository.save(reservation);
+
+                if (copy != null) {
+                    reservationService.fulfillNextReservationIfAny(reservation.getBook().getId(), copy);
+                }
+                log.info("[ScheduledTasks] Đã hủy giữ chỗ quá hạn cho reservation id={}", reservation.getId());
+            } catch (Exception e) {
+                log.error("[ScheduledTasks] Lỗi khi xử lý reservation id={}: {}", reservation.getId(), e.getMessage());
+            }
+        }
+    }
+
+    // Gửi email nhắc nhở cho các phiếu mượn đang quá hạn chưa trả
+    @Scheduled(cron = "0 0 8 * * *")
+    // @Scheduled(initialDelay = 3000, fixedRate = 30000)
+    @Transactional
+    public void sendOverdueReminders() {
+        List<Borrowing> overdue;
+        try {
+            overdue = borrowingRepository.findOverdueBorrowings(LocalDate.now());
+        } catch (Exception e) {
+            log.error("[ScheduledTasks] Lỗi khi truy vấn phiếu mượn quá hạn: {}", e.getMessage());
+            return;
+        }
+
+        for (Borrowing borrowing : overdue) {
+            try {
+                long daysOverdue = java.time.temporal.ChronoUnit.DAYS.between(borrowing.getDueDate(), LocalDate.now());
+                var book = borrowing.getBookCopy().getBook();
+                java.math.BigDecimal dailyFine = book.getDailyFineAmount() != null
+                        ? book.getDailyFineAmount()
+                        : java.math.BigDecimal.valueOf(5000);
+
+                String subject = "THÔNG BÁO: Sách mượn đã quá hạn trả";
+                String text = String.format("Kính gửi %s,\n\n" +
+                        "Cuốn sách '%s' bạn mượn đã quá hạn trả %d ngày (hạn trả: %s).\n" +
+                        "Mức phạt hiện tại là %s VNĐ/ngày quá hạn. Vui lòng mang sách đến trả sớm để tránh phát sinh thêm phí phạt.\n\n"
+                        +
+                        "Trân trọng,\nBan Quản lý Thư viện",
+                        borrowing.getMember().getName(),
+                        book.getTitle(),
+                        daysOverdue,
+                        borrowing.getDueDate().format(DATE_FORMATTER),
+                        dailyFine.toPlainString());
+
+                emailService.sendEmail(borrowing.getMember().getEmail(), subject, text);
+            } catch (Exception e) {
+                log.error("[ScheduledTasks] Lỗi khi gửi nhắc quá hạn cho borrowing id={}: {}", borrowing.getId(),
+                        e.getMessage());
+            }
+        }
+    }
+
+    // Tự động hủy các yêu cầu mượn PENDING quá 3 ngày không được nhân viên xử lý
+    @Scheduled(cron = "0 15 0 * * *")
+    @Transactional
+    public void cancelStalePendingRequests() {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(3);
+        List<BorrowingRequest> stale;
+        try {
+            stale = borrowingRequestRepository.findStalePendingRequests(cutoff);
+        } catch (Exception e) {
+            log.error("[ScheduledTasks] Lỗi khi truy vấn yêu cầu mượn tồn đọng: {}", e.getMessage());
+            return;
+        }
+
+        for (BorrowingRequest request : stale) {
+            try {
+                request.setStatus(BorrowingRequestStatus.CANCELLED);
+                request.setProcessedDate(LocalDateTime.now());
+                request.setNotes("Tự động hủy do quá 3 ngày không được Quản lý xử lý");
+                borrowingRequestRepository.save(request);
+                log.info("[ScheduledTasks] Đã tự động hủy yêu cầu mượn id={}", request.getId());
+            } catch (Exception e) {
+                log.error("[ScheduledTasks] Lỗi khi hủy yêu cầu mượn id={}: {}", request.getId(), e.getMessage());
+            }
+        }
+    }
+}

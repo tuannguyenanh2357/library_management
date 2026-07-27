@@ -56,6 +56,15 @@ public class Borrowing {
     @Column(name = "updated_at")
     LocalDate updatedAt;
 
+    // Số lần đã gia hạn (tối đa 1 lần/lượt mượn)
+    @Column(name = "renewal_count")
+    @Builder.Default
+    Integer renewalCount = 0;
+
+    public Integer getRenewalCount() {
+        return renewalCount != null ? renewalCount : 0;
+    }
+
     @PrePersist
     protected void prePersist() {
         this.createdAt = LocalDate.now();
