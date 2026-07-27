@@ -35,7 +35,6 @@ public class Book {
     @Column(nullable = false)
     String publisher;
 
-    @Nationalized
     @Column(nullable = false, unique = true)
     String isbn;
 

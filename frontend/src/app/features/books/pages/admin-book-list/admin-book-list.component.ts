@@ -431,7 +431,7 @@ export class AdminBookListComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.toastService.error('Thêm bản sao thất bại!');
+        this.toastService.error('Trùng mã BARCODE với bản sao khác!');
       }
     });
   }

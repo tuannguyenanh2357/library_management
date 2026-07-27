@@ -30,7 +30,6 @@ public class Member {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
-    @Nationalized
     @Column(name = "member_code", nullable = false, unique = true)
     String memberCode;
 
@@ -39,11 +38,9 @@ public class Member {
     @Column(nullable = false)
     String name;
 
-    @Nationalized
     @Column(nullable = false, unique = true, length = 50)
     String username;
 
-    @Nationalized
     @Column(nullable = false, length = 60)
     String password;
 

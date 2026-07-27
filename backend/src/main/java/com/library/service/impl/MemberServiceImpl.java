@@ -70,6 +70,7 @@ public class MemberServiceImpl implements MemberService {
     public MemberResponse createMember(MemberCreationRequest request) {
         Member member = memberMapper.toMember(request);
         member.setPassword(passwordEncoder.encode(member.getPassword()));
+        member.setAvatar(sanitizeAvatar(member.getAvatar()));
         member = memberRepository.save(member);
         return memberMapper.toMemberResponse(member);
     }
@@ -96,6 +97,7 @@ public class MemberServiceImpl implements MemberService {
         if (newPassword != null && !newPassword.isBlank()) {
             member.setPassword(passwordEncoder.encode(newPassword));
         }
+        member.setAvatar(sanitizeAvatar(member.getAvatar()));
         
         member = memberRepository.save(member);
         return memberMapper.toMemberResponse(member);
@@ -142,7 +144,7 @@ public class MemberServiceImpl implements MemberService {
         if (request.getEmail() != null) member.setEmail(request.getEmail());
         if (request.getPhone() != null) member.setPhone(request.getPhone());
         if (request.getAddress() != null) member.setAddress(request.getAddress());
-        if (request.getAvatar() != null) member.setAvatar(request.getAvatar());
+        if (request.getAvatar() != null) member.setAvatar(sanitizeAvatar(request.getAvatar()));
 
         member = memberRepository.save(member);
         return memberMapper.toMemberResponse(member);
@@ -164,5 +166,19 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public List<com.library.dto.response.UnpaidMemberProjection> getMembersWithUnpaidFines() {
         return memberRepository.getMembersWithUnpaidFines();
+    }
+
+    private String sanitizeAvatar(String avatar) {
+        if (avatar == null || avatar.isBlank()) {
+            return null;
+        }
+        String trimmed = avatar.trim();
+        if (trimmed.startsWith("data:image/")) {
+            return null; // Bỏ qua base64
+        }
+        if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/files/download/")) {
+            return trimmed;
+        }
+        return null; // Các trường hợp không hợp lệ khác cũng để null
     }
 }
