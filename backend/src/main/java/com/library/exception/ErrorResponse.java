@@ -19,6 +19,7 @@ import java.util.Map;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class ErrorResponse {
+    Integer code;
     LocalDateTime timestamp;
     int status;
     String error;

@@ -8,6 +8,7 @@ import com.library.entity.Fines;
 import com.library.entity.Member;
 import com.library.entity.enums.BookCopyStatus;
 import com.library.entity.enums.BorrowingStatus;
+import com.library.entity.enums.ReservationStatus;
 import com.library.entity.enums.FineStatus;
 import com.library.mapper.BorrowingMapper;
 import com.library.repository.BookCopyRepository;
@@ -15,8 +16,17 @@ import com.library.repository.BorrowingRepository;
 import com.library.repository.FineRepository;
 import com.library.repository.MemberRepository;
 import com.library.service.interfaces.BorrowingService;
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
+import com.library.exception.MemberNotFoundException;
+import com.library.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import com.library.config.RabbitMQConfig;
+import com.library.dto.event.BorrowingCreatedEvent;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import com.library.service.interfaces.ReservationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +37,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @Transactional
 public class BorrowingServiceImpl implements BorrowingService {
@@ -35,39 +46,45 @@ public class BorrowingServiceImpl implements BorrowingService {
     final MemberRepository memberRepository;
     final BookCopyRepository bookCopyRepository;
     final FineRepository fineRepository;
-    final com.library.service.interfaces.ReservationService reservationService;
+    final ReservationService reservationService;
     final BorrowingMapper mapper;
+    final RabbitTemplate rabbitTemplate;
+    static final int MAX_RENEWALS = 1;
+    static final int RENEWAL_EXTENSION_DAYS = 7;
 
     @Override
     public BorrowingResponse borrowBook(BorrowingCreationRequest request) {
 
         Member member = memberRepository.findById(request.getMemberId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy độc giả"));
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
 
         if (member.hasOverdueBorrowings()) {
-            throw new RuntimeException("Không thể mượn sách mới khi đang có sách quá hạn chưa trả");
+            throw new AppException(ErrorCode.HAS_OVERDUE_BOOKS);
         }
         if (fineRepository.existsByBorrowing_Member_IdAndStatus(member.getId(), FineStatus.UNPAID)) {
-            throw new RuntimeException("Không thể mượn sách mới khi đang có khoản phạt chưa thanh toán");
+            throw new AppException(ErrorCode.HAS_UNPAID_FINES);
         }
 
         BookCopy bookCopy = bookCopyRepository.findById(request.getBookCopyId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy bản sao sách"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND,
+                        "Không tìm thấy bản sao sách"));
 
         if (bookCopy.getStatus() != BookCopyStatus.AVAILABLE) {
             if (bookCopy.getStatus() == BookCopyStatus.RESERVED) {
                 // Kiểm tra xem người đang mượn có phải là người đã đặt trước cuốn này không
                 boolean isReservedForThisMember = reservationService.getMyReservations(member.getUsername()).stream()
-                        .anyMatch(res -> res.getStatus() == com.library.entity.enums.ReservationStatus.FULFILLED && res.getFulfilledCopyId().equals(bookCopy.getId()));
-                
+                        .anyMatch(res -> res.getStatus() == ReservationStatus.FULFILLED
+                                && res.getFulfilledCopyId().equals(bookCopy.getId()));
+
                 if (!isReservedForThisMember) {
-                    throw new RuntimeException("Bản sao này đã được giữ chỗ cho một độc giả khác.");
+                    throw new AppException(ErrorCode.BOOK_NOT_AVAILABLE,
+                            "Bản sao này đã được giữ chỗ cho một độc giả khác.");
                 }
-                
+
                 // Nếu đúng người, cần hoàn tất reservation
                 reservationService.completeReservationByCopyId(bookCopy.getId());
             } else {
-                throw new RuntimeException("Book is not available");
+                throw new AppException(ErrorCode.BOOK_NOT_AVAILABLE);
             }
         }
 
@@ -75,11 +92,11 @@ public class BorrowingServiceImpl implements BorrowingService {
         LocalDate dueDate = request.getDueDate() != null ? request.getDueDate() : borrowDate.plusDays(14);
 
         if (dueDate.isBefore(borrowDate)) {
-            throw new RuntimeException("Due date cannot be in the past");
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Ngày hẹn trả không thể ở trong quá khứ");
         }
 
         if (ChronoUnit.DAYS.between(borrowDate, dueDate) > 30) {
-            throw new RuntimeException("Borrowing duration cannot exceed 30 days");
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Thời hạn mượn sách không được vượt quá 30 ngày");
         }
 
         Borrowing borrowing = Borrowing.builder()
@@ -95,6 +112,26 @@ public class BorrowingServiceImpl implements BorrowingService {
         borrowingRepository.save(borrowing);
         bookCopyRepository.save(bookCopy);
 
+        // Bắn sự kiện RabbitMQ bất đồng bộ để gửi Email thông báo mượn sách thành công
+        BorrowingCreatedEvent event = BorrowingCreatedEvent.builder()
+                .borrowingId(borrowing.getId())
+                .memberEmail(member.getEmail())
+                .memberName(member.getName())
+                .bookTitle(bookCopy.getBook().getTitle())
+                .borrowDate(borrowDate)
+                .dueDate(dueDate)
+                .build();
+
+        try {
+            rabbitTemplate.convertAndSend(
+                    RabbitMQConfig.RESERVATION_EXCHANGE,
+                    RabbitMQConfig.BORROWING_CREATED_ROUTING_KEY,
+                    event);
+            log.info("[RABBITMQ PRODUCER] Đã gửi BorrowingCreatedEvent cho phiếu mượn ID: {}", borrowing.getId());
+        } catch (Exception e) {
+            log.error("Lỗi khi gửi RabbitMQ event cho phiếu mượn ID {}: {}", borrowing.getId(), e.getMessage());
+        }
+
         return mapper.toResponse(borrowing);
     }
 
@@ -102,18 +139,16 @@ public class BorrowingServiceImpl implements BorrowingService {
     public BorrowingResponse returnBook(Long borrowingId) {
 
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
-                .orElseThrow(() -> new RuntimeException("Borrowing not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
 
         if (borrowing.getStatus() == BorrowingStatus.RETURNED) {
-            throw new RuntimeException("Book already returned");
+            throw new AppException(ErrorCode.BORROWING_ACTION_FAILED, "Book already returned");
         }
 
         borrowing.setReturnDate(LocalDate.now());
         borrowing.setStatus(BorrowingStatus.RETURNED);
 
         BookCopy bookCopy = borrowing.getBookCopy();
-        // Xóa dòng markAsReturned() vì ReservationService sẽ lo việc này
-
 
         if (borrowing.getReturnDate().isAfter(borrowing.getDueDate())) {
 
@@ -121,9 +156,9 @@ public class BorrowingServiceImpl implements BorrowingService {
                     borrowing.getDueDate(),
                     borrowing.getReturnDate());
 
-            java.math.BigDecimal dailyFine = bookCopy.getBook().getDailyFineAmount() != null
+            BigDecimal dailyFine = bookCopy.getBook().getDailyFineAmount() != null
                     ? bookCopy.getBook().getDailyFineAmount()
-                    : java.math.BigDecimal.valueOf(5000);
+                    : BigDecimal.valueOf(5000);
             BigDecimal amount = dailyFine.multiply(BigDecimal.valueOf(overdueDays));
 
             Fines fine = Fines.builder()
@@ -138,9 +173,11 @@ public class BorrowingServiceImpl implements BorrowingService {
         }
 
         borrowingRepository.save(borrowing);
-        
-        // Thay vì tự động set thành AVAILABLE, chuyển quyền định đoạt cho ReservationService
-        // Nếu có người đang xếp hàng chờ, sách sẽ đổi thành RESERVED. Ngược lại nó sẽ thành AVAILABLE.
+
+        // Thay vì tự động set thành AVAILABLE, chuyển quyền định đoạt cho
+        // ReservationService
+        // Nếu có người đang xếp hàng chờ, sách sẽ đổi thành RESERVED. Ngược lại nó sẽ
+        // thành AVAILABLE.
         reservationService.fulfillNextReservationIfAny(bookCopy.getBook().getId(), bookCopy);
 
         return mapper.toResponse(borrowing);
@@ -151,8 +188,7 @@ public class BorrowingServiceImpl implements BorrowingService {
 
         return mapper.toResponse(
                 borrowingRepository.findById(id)
-                        .orElseThrow(() -> new RuntimeException("Borrowing not found"))
-        );
+                        .orElseThrow(() -> new RuntimeException("Borrowing not found")));
     }
 
     @Override
@@ -175,12 +211,12 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     @Override
     public List<BorrowingResponse> getOverdueBorrowings() {
-    
-    return borrowingRepository.findOverdueBorrowings(LocalDate.now())
-            .stream()
-            .map(mapper::toResponse)
-            .toList();
-}
+
+        return borrowingRepository.findOverdueBorrowings(LocalDate.now())
+                .stream()
+                .map(mapper::toResponse)
+                .toList();
+    }
 
     @Override
     public List<BorrowingResponse> getByCopyId(Long copyId) {
@@ -204,30 +240,28 @@ public class BorrowingServiceImpl implements BorrowingService {
         borrowingRepository.delete(borrowing);
     }
 
-    private static final int MAX_RENEWALS = 1;
-    private static final int RENEWAL_EXTENSION_DAYS = 7;
-
     @Override
     public BorrowingResponse renewBorrowing(Long borrowingId, String username) {
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
-                .orElseThrow(() -> new RuntimeException("Borrowing not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
 
         if (!borrowing.getMember().getUsername().equals(username)) {
-            throw new RuntimeException("Bạn không có quyền gia hạn phiếu mượn này");
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Bạn không có quyền gia hạn phiếu mượn này");
         }
         if (borrowing.getStatus() != BorrowingStatus.ACTIVE) {
-            throw new RuntimeException("Phiếu mượn không còn hoạt động");
+            throw new AppException(ErrorCode.CANNOT_EXTEND_BORROWING, "Phiếu mượn không còn hoạt động");
         }
         if (LocalDate.now().isAfter(borrowing.getDueDate())) {
-            throw new RuntimeException("Không thể gia hạn sách đã quá hạn");
+            throw new AppException(ErrorCode.CANNOT_EXTEND_BORROWING, "Không thể gia hạn sách đã quá hạn");
         }
         if (borrowing.getRenewalCount() >= MAX_RENEWALS) {
-            throw new RuntimeException("Bạn chỉ được gia hạn một lần cho mỗi lượt mượn");
+            throw new AppException(ErrorCode.CANNOT_EXTEND_BORROWING, "Bạn chỉ được gia hạn một lần cho mỗi lượt mượn");
         }
 
         Long bookId = borrowing.getBookCopy().getBook().getId();
         if (reservationService.hasPendingReservations(bookId)) {
-            throw new RuntimeException("Không thể gia hạn vì đang có độc giả khác chờ mượn cuốn sách này");
+            throw new AppException(ErrorCode.CANNOT_EXTEND_BORROWING,
+                    "Không thể gia hạn vì đang có độc giả khác chờ mượn cuốn sách này");
         }
 
         borrowing.setDueDate(borrowing.getDueDate().plusDays(RENEWAL_EXTENSION_DAYS));
@@ -249,10 +283,11 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     private BorrowingResponse closeWithReplacementFee(Long borrowingId, boolean lost) {
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
-                .orElseThrow(() -> new RuntimeException("Borrowing not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
 
         if (borrowing.getStatus() != BorrowingStatus.ACTIVE) {
-            throw new RuntimeException("Chỉ có thể báo mất/hỏng với phiếu mượn đang hoạt động");
+            throw new AppException(ErrorCode.BORROWING_ACTION_FAILED,
+                    "Chỉ có thể báo mất/hỏng với phiếu mượn đang hoạt động");
         }
 
         BookCopy bookCopy = borrowing.getBookCopy();
@@ -279,9 +314,6 @@ public class BorrowingServiceImpl implements BorrowingService {
                 .status(FineStatus.UNPAID)
                 .build();
         fineRepository.save(fine);
-
-        // Không gọi fulfillNextReservationIfAny: bản sách mất/hỏng không thể giao cho ai,
-        // reservation đang chờ tiếp tục đợi bản khác.
 
         return mapper.toResponse(borrowing);
     }

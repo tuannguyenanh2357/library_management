@@ -6,6 +6,8 @@ import com.library.dto.response.BookResponse;
 import com.library.dto.response.PageResponse;
 import com.library.dto.response.TopBookProjection;
 import com.library.entity.Book;
+import com.library.exception.ErrorCode;
+import com.library.exception.ResourceNotFoundException;
 import com.library.repository.BookRepository;
 import com.library.repository.BookCopyRepository;
 import com.library.mapper.BookMapper;
@@ -83,7 +85,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public BookResponse updateBook(Long bookId, UpdateBookRequest request) {
         Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
 
         bookMapper.updateBookFromRequest(request, book);
         book = bookRepository.save(book);
@@ -93,7 +95,8 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public BookResponse getBookById(Long bookId) {
-        Book book = bookRepository.findById(bookId).orElseThrow(() -> new RuntimeException("Book not found"));
+        Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
         return mapToResponse(book);
     }
 

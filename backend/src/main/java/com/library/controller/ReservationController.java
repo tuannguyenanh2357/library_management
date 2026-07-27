@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -27,7 +28,7 @@ public class ReservationController {
     @GetMapping("/me")
     @PreAuthorize("hasRole('MEMBER')")
     public ResponseEntity<List<ReservationResponse>> getMyReservations() {
-        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(reservationService.getMyReservations(username));
     }
 
@@ -46,7 +47,7 @@ public class ReservationController {
     @PutMapping("/{id}/cancel")
     @PreAuthorize("hasAnyRole('MEMBER', 'LIBRARIAN', 'ADMIN')")
     public ResponseEntity<Void> cancelReservation(@PathVariable Long id) {
-        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         reservationService.cancelReservation(id, username);
         return ResponseEntity.ok().build();
     }

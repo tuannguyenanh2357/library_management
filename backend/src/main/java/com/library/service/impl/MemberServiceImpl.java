@@ -22,6 +22,8 @@ import com.library.dto.request.MemberCreationRequest;
 import com.library.dto.request.MemberUpdateRequest;
 import com.library.entity.Member;
 import com.library.entity.enums.MemberRole;
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
 import com.library.exception.MemberNotFoundException;
 
 @Service
@@ -85,7 +87,7 @@ public class MemberServiceImpl implements MemberService {
                     .anyMatch(a -> a.getAuthority().equals("ROLE_LIBRARIAN"));
 
             if (!hasAdmin && hasLibrarian && member.getRole() != MemberRole.MEMBER) {
-                throw new RuntimeException("Thủ thư chỉ có quyền cập nhật thông tin tài khoản Độc giả (MEMBER).");
+                throw new AppException(ErrorCode.UNAUTHORIZED, "Thủ thư chỉ có quyền cập nhật thông tin tài khoản Độc giả (MEMBER).");
             }
         }
 
@@ -105,7 +107,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
         
         if (member.getRole() == MemberRole.ADMIN) {
-            throw new RuntimeException("Không thể xóa tài khoản Quản trị viên (ADMIN).");
+            throw new AppException(ErrorCode.CANNOT_DELETE_ADMIN);
         }
         
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -113,12 +115,12 @@ public class MemberServiceImpl implements MemberService {
             boolean hasAdmin = auth.getAuthorities().stream()
                     .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
             if (!hasAdmin) {
-                throw new RuntimeException("Chỉ Quản trị viên (ADMIN) mới có quyền xóa tài khoản.");
+                throw new AppException(ErrorCode.UNAUTHORIZED, "Chỉ Quản trị viên (ADMIN) mới có quyền xóa tài khoản.");
             }
         }
 
         if (member.hasBorrowedBooks()) {
-            throw new RuntimeException("Không thể xóa độc giả vì họ đang mượn sách chưa trả.");
+            throw new AppException(ErrorCode.CANNOT_DELETE_MEMBER_WITH_BOOKS);
         }
         
         memberRepository.delete(member);
@@ -152,7 +154,7 @@ public class MemberServiceImpl implements MemberService {
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
         
         if (!passwordEncoder.matches(request.getOldPassword(), member.getPassword())) {
-            throw new RuntimeException("Mật khẩu cũ không chính xác");
+            throw new AppException(ErrorCode.INVALID_PASSWORD);
         }
         
         member.setPassword(passwordEncoder.encode(request.getNewPassword()));

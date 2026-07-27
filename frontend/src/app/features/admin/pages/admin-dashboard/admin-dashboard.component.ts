@@ -48,7 +48,7 @@ export class AdminDashboardComponent implements OnInit {
           return {
             id: index + 1,
             type: isReturned ? 'return' : 'borrow',
-            user: 'Thành viên: ' + (b.memberName || 'thành viên').replace(/\s+/g, '').toLowerCase(),
+            user: 'Thành viên: ' + (b.memberName || 'thành viên').replace(/\s + /g, '').toLowerCase(),
             action: isReturned ? 'vừa trả sách' : 'vừa mượn sách',
             detail: b.bookTitle,
             time: isReturned ? (b.returnDate || 'Gần đây') : (b.borrowDate || 'Gần đây'),

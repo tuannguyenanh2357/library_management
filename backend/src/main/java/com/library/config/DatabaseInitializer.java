@@ -53,7 +53,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .isActive(true)
                     .build();
             memberRepository.save(admin);
-            log.info("Default ADMIN account created: {} / {}", adminUsername, adminPassword);
+            log.info("Tài khoản ADMIN mặc định đã được tạo: {} / {}", adminUsername, adminPassword);
         }
 
         // Tạo tài khoản Librarian
@@ -69,7 +69,7 @@ public class DatabaseInitializer implements ApplicationRunner {
                     .isActive(true)
                     .build();
             memberRepository.save(librarian);
-            log.info("Default LIBRARIAN account created: {} / {}", librarianUsername, librarianPassword);
+            log.info("Tài khoản THƯ VIỆN mặc định đã được tạo: {} / {}", librarianUsername, librarianPassword);
         }
     }
 
@@ -79,10 +79,9 @@ public class DatabaseInitializer implements ApplicationRunner {
             populator.addScript(new ClassPathResource("sql/stored_procedures.sql"));
             populator.setSeparator("GO");
             populator.execute(dataSource);
-            log.info("Stored Procedures initialized successfully from sql/stored_procedures.sql.");
+            log.info("Thủ tục lưu trữ đã được khởi tạo thành công từ sql/stored_procedures.sql.");
         } catch (Exception e) {
-            log.error("Failed to initialize Stored Procedures: {}", e.getMessage(), e);
+            log.error("Không thể khởi tạo thủ tục lưu trữ.: {}", e.getMessage(), e);
         }
     }
 }
-

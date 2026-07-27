@@ -18,6 +18,10 @@ import com.library.service.interfaces.ReservationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
+import com.library.exception.MemberNotFoundException;
+import com.library.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,17 +51,17 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public ReservationResponse createReservation(ReservationCreationRequest request) {
         Member member = memberRepository.findById(request.getMemberId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy độc giả"));
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
 
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đầu sách"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
 
         // Check if member already has an active reservation for this book
         boolean exists = reservationRepository.existsByMemberIdAndBookIdAndStatusIn(
                 member.getId(), book.getId(), Arrays.asList(ReservationStatus.PENDING, ReservationStatus.FULFILLED));
 
         if (exists) {
-            throw new RuntimeException("Bạn đã đặt trước cuốn sách này rồi.");
+            throw new AppException(ErrorCode.RESERVATION_FAILED, "Bạn đã đặt trước cuốn sách này rồi.");
         }
 
         // Check if there are available copies. If there is an available copy, user
@@ -65,7 +69,7 @@ public class ReservationServiceImpl implements ReservationService {
         // Actually, Reservation is for when it's out of stock.
         long availableCount = bookCopyRepository.countByBook_IdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
         if (availableCount > 0) {
-            throw new RuntimeException("Sách này vẫn còn bản sao sẵn sàng. Vui lòng mượn trực tiếp thay vì đặt trước.");
+            throw new AppException(ErrorCode.RESERVATION_FAILED, "Sách này vẫn còn bản sao sẵn sàng. Vui lòng mượn trực tiếp thay vì đặt trước.");
         }
 
         Reservation reservation = Reservation.builder()
@@ -81,7 +85,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public List<ReservationResponse> getMyReservations(String username) {
         Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thành viên"));
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên"));
 
         return reservationRepository.findByMemberIdOrderByRequestDateDesc(member.getId())
                 .stream()
@@ -117,17 +121,17 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public void cancelReservation(Long reservationId, String username) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông tin đặt trước"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND, "Không tìm thấy thông tin đặt trước"));
 
         // Only the owner or an admin should cancel. We'll simplify to just checking the
         // owner if it's not an admin API.
         Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy người dùng"));
 
         if (!reservation.getMember().getId().equals(member.getId())
                 && member.getRole() != com.library.entity.enums.MemberRole.ADMIN
                 && member.getRole() != com.library.entity.enums.MemberRole.LIBRARIAN) {
-            throw new RuntimeException("Bạn không có quyền hủy đặt chỗ này");
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Bạn không có quyền hủy đặt chỗ này");
         }
 
         if (reservation.getStatus() == ReservationStatus.FULFILLED) {
@@ -145,7 +149,7 @@ public class ReservationServiceImpl implements ReservationService {
             reservation.setStatus(ReservationStatus.CANCELLED);
             reservationRepository.save(reservation);
         } else {
-            throw new RuntimeException("Không thể hủy ở trạng thái hiện tại");
+            throw new AppException(ErrorCode.RESERVATION_FAILED, "Không thể hủy ở trạng thái hiện tại");
         }
     }
 

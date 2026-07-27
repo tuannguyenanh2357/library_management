@@ -8,6 +8,8 @@ import com.library.dto.response.IntrospectResponse;
 import com.library.dto.response.MemberResponse;
 import com.library.entity.Member;
 import com.library.entity.enums.MemberRole;
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
 import com.library.mapper.MemberMapper;
 import com.library.repository.MemberRepository;
 import com.library.service.interfaces.AuthenticationService;
@@ -15,10 +17,8 @@ import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jose.JWSObject;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
@@ -37,7 +37,6 @@ import java.util.Date;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Transactional
-@Data
 public class AuthenticationServiceImpl implements AuthenticationService {
     MemberRepository memberRepository;
     MemberMapper memberMapper;
@@ -69,14 +68,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String rawPassword = request.getPassword();
 
         if (username == null || username.isBlank() || rawPassword == null) {
-            throw new RuntimeException("Username and password are required");
+            throw new AppException(ErrorCode.INVALID_REQUEST);
         }
 
         Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Username or password incorrect"));
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_CREDENTIALS));
 
         if (!passwordEncoder.matches(rawPassword, member.getPassword())) {
-            throw new RuntimeException("Username or password incorrect");
+            throw new AppException(ErrorCode.INVALID_CREDENTIALS);
         }
 
         String token = generateToken(member);
@@ -89,14 +88,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     public MemberResponse register(RegisterRequest request) {
         if (memberRepository.existsByUsername(request.getUsername())) {
-            throw new RuntimeException("Username already exists");
+            throw new AppException(ErrorCode.USER_EXISTED);
         }
         if (memberRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
         }
         String phoneStr = request.getPhone() != null ? request.getPhone().trim() : "";
         if (!phoneStr.isBlank() && memberRepository.existsByPhone(phoneStr)) {
-            throw new RuntimeException("Phone number already exists");
+            throw new AppException(ErrorCode.PHONE_EXISTED);
         }
 
         Member member = Member.builder()

@@ -18,14 +18,21 @@ public class RabbitMQConfig {
 
     // Tên Queue (Hàng đợi chứa tin nhắn)
     public static final String RESERVATION_FULFILLED_QUEUE = "library.reservation.fulfilled.queue";
+    public static final String BORROWING_CREATED_QUEUE = "library.borrowing.created.queue";
 
     // Routing Key (Mã định tuyến / Địa chỉ thư)
     public static final String RESERVATION_FULFILLED_ROUTING_KEY = "reservation.fulfilled";
+    public static final String BORROWING_CREATED_ROUTING_KEY = "borrowing.created";
 
     // Tạo Queue với durable = true (Tin nhắn không bị mất khi sập server)
     @Bean
     public Queue reservationFulfilledQueue() {
         return new Queue(RESERVATION_FULFILLED_QUEUE, true);
+    }
+
+    @Bean
+    public Queue borrowingCreatedQueue() {
+        return new Queue(BORROWING_CREATED_QUEUE, true);
     }
 
     // Tạo Direct Exchange
@@ -40,6 +47,13 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(reservationFulfilledQueue)
                 .to(reservationExchange)
                 .with(RESERVATION_FULFILLED_ROUTING_KEY);
+    }
+
+    @Bean
+    public Binding bindingBorrowingCreated(Queue borrowingCreatedQueue, DirectExchange reservationExchange) {
+        return BindingBuilder.bind(borrowingCreatedQueue)
+                .to(reservationExchange)
+                .with(BORROWING_CREATED_ROUTING_KEY);
     }
 
     // Chuyển đổi dữ liệu Java Object sang định dạng JSON để truyền qua mạng

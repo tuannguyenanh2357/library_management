@@ -13,6 +13,9 @@ import com.library.repository.BookRepository;
 import com.library.service.interfaces.BookCopyService;
 import com.library.service.interfaces.ReservationService;
 
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
+import com.library.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
@@ -62,7 +65,8 @@ public class BookCopyServiceImpl implements BookCopyService {
         BookCopy bookCopy = bookCopyMapper.toBookCopy(request);
         bookCopy.setBook(book);
         if (bookCopy.getBarCode() == null || bookCopy.getBarCode().isBlank()) {
-            bookCopy.setBarCode("BC-" + UUID.randomUUID().toString().replace("-", "").substring(0, 24));
+            int randomNum = java.util.concurrent.ThreadLocalRandom.current().nextInt(100000, 1000000);
+            bookCopy.setBarCode("BC-" + randomNum);
         }
 
         BookCopy savedBookCopy = bookCopyRepository.save(bookCopy);
@@ -76,12 +80,12 @@ public class BookCopyServiceImpl implements BookCopyService {
     @Override
     public BookCopyResponse updateBookCopy(Long bookCopyId, BookCopyUpdateRequest request) {
         BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
-                .orElseThrow(() -> new RuntimeException("Book copy not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND));
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
 
         if (existingBookCopy.getStatus() == BookCopyStatus.BORROWED) {
-            throw new RuntimeException("Không thể cập nhật trạng thái của bản sao đang được mượn.");
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Không thể cập nhật trạng thái của bản sao đang được mượn.");
         }
 
         bookCopyMapper.updateBookCopy(existingBookCopy, request);
@@ -94,10 +98,10 @@ public class BookCopyServiceImpl implements BookCopyService {
     @Override
     public void deleteBookCopy(Long bookCopyId) {
         BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
-                .orElseThrow(() -> new RuntimeException("Book copy not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND));
 
         if (existingBookCopy.getStatus() == BookCopyStatus.BORROWED) {
-            throw new RuntimeException("Không thể xóa bản sao đang được mượn.");
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Không thể xóa bản sao đang được mượn.");
         }
 
         bookCopyRepository.deleteById(bookCopyId);

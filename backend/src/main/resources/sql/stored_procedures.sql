@@ -82,10 +82,8 @@ BEGIN
 END;
 GO
 
-
--- ===================================================
 -- Báo cáo doanh thu phạt theo khoảng thời gian
--- ===================================================
+
 
 -- 1. Thống kê tổng quan
 IF OBJECT_ID('dbo.GetRevenueReportSummary', 'P') IS NOT NULL
