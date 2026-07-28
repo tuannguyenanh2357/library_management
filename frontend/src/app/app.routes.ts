@@ -64,6 +64,10 @@ export const routes: Routes = [
         loadComponent: () => import('@features/rules/pages/rules/rules.component').then(m => m.RulesComponent) 
       },
       { 
+        path: 'forbidden', 
+        loadComponent: () => import('@features/errors/pages/forbidden/forbidden.component').then(m => m.ForbiddenComponent) 
+      },
+      { 
         path: 'profile', 
         loadComponent: () => import('@features/profile/pages/profile/profile.component').then(m => m.ProfileComponent), 
         canActivate: [authGuard] 
