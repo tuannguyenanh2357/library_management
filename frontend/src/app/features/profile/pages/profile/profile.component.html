@@ -1,0 +1,423 @@
+
+
+<main class="profile-main">
+  <div class="profile-container">
+    @if (loading()) {
+      <div class="loading-state">
+        <div class="spinner"></div>
+        <p>Đang tải thông tin cá nhân của bạn...</p>
+      </div>
+    } @else if (errorMessage()) {
+      <div class="error-state">
+        <p>⚠️ {{ errorMessage() }}</p>
+        <button class="btn-retry" (click)="loadProfileAndHistory()">Thử lại</button>
+      </div>
+    } @else if (profile()) {
+      <!-- User Profile Header Card -->
+      <div class="profile-header-card">
+        <div class="header-card-bg"></div>
+        <div class="header-card-content">
+          <div class="avatar-wrapper">
+            @if (profile()?.avatar) {
+              <img [src]="profile()?.avatar" alt="Avatar" class="user-avatar" />
+            } @else {
+              <div class="user-avatar-initials">
+                {{ profile()?.name?.substring(0, 1)?.toUpperCase() || 'U' }}
+              </div>
+            }
+          </div>
+          <div class="user-meta">
+            <div class="user-name-row">
+              <h2>{{ profile()?.name }}</h2>
+              <span class="role-badge">{{ profile()?.role }}</span>
+            </div>
+            <p class="user-username">&#64;{{ profile()?.username }}</p>
+            <div class="user-subinfo">
+              <span>Mã độc giả: <strong>{{ profile()?.memberCode }}</strong></span>
+              <span class="separator">•</span>
+              <span>Địa chỉ: {{ profile()?.address || 'Chưa cập nhật' }}</span>
+            </div>
+          </div>
+          <button class="btn-logout-header" (click)="logout()">Đăng Xuất 🚪</button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="metrics-grid">
+        <div class="metric-card metric-total">
+          <div class="metric-icon">📊</div>
+          <div class="metric-info">
+            <span class="metric-label">Tổng lượt mượn</span>
+            <h3 class="metric-value">{{ totalBorrowingsCount() }}</h3>
+          </div>
+        </div>
+
+        <div class="metric-card metric-borrowing">
+          <div class="metric-icon">📖</div>
+          <div class="metric-info">
+            <span class="metric-label">Đang mượn</span>
+            <h3 class="metric-value">{{ currentlyBorrowedCount() }}</h3>
+          </div>
+        </div>
+
+        <div class="metric-card metric-returned">
+          <div class="metric-icon">✅</div>
+          <div class="metric-info">
+            <span class="metric-label">Đã trả sách</span>
+            <h3 class="metric-value">{{ returnedCount() }}</h3>
+          </div>
+        </div>
+
+        <div class="metric-card metric-overdue">
+          <div class="metric-icon">⏰</div>
+          <div class="metric-info">
+            <span class="metric-label">Quá hạn trả</span>
+            <h3 class="metric-value">{{ overdueCount() }}</h3>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detail Tabs Layout -->
+      <div class="profile-details-wrapper">
+        <div class="tabs-nav">
+          <button 
+            class="tab-link" 
+            [class.active]="activeTab() === 'history'" 
+            (click)="activeTab.set('history')"
+          >
+            📋 Lịch Sử Mượn Sách
+          </button>
+          <button 
+            class="tab-link" 
+            [class.active]="activeTab() === 'edit'" 
+            (click)="activeTab.set('edit')"
+          >
+            ⚙️ Cập Nhật Thông Tin
+          </button>
+          <button 
+            class="tab-link" 
+            [class.active]="activeTab() === 'password'" 
+            (click)="activeTab.set('password')"
+          >
+            🔒 Đổi Mật Khẩu
+          </button>
+          <button
+            class="tab-link"
+            [class.active]="activeTab() === 'reservations'"
+            (click)="activeTab.set('reservations')"
+          >
+            ⏳ Hàng Đợi Của Tôi
+          </button>
+          <button
+            class="tab-link"
+            [class.active]="activeTab() === 'fines'"
+            (click)="activeTab.set('fines')"
+          >
+            💰 Khoản Phạt Của Tôi
+          </button>
+        </div>
+
+        <div class="tab-content">
+          <!-- Tab 1: Borrowing History Table -->
+          @if (activeTab() === 'history') {
+            <div class="history-section">
+              <h3 class="section-title">Yêu cầu mượn sách Online</h3>
+              @if (onlineRequests().length === 0) {
+                <div class="empty-borrowings">
+                  <p>Bạn chưa gửi yêu cầu mượn sách nào.</p>
+                </div>
+              } @else {
+                <div class="table-responsive">
+                  <table class="borrow-table">
+                    <thead>
+                      <tr>
+                        <th>Tên Sách</th>
+                        <th>Ngày Yêu Cầu</th>
+                        <th>Hạn Trả Mong Muốn</th>
+                        <th>Trạng Thái</th>
+                        <th>Lời Nhắn / Lý Do</th>
+                        <th>Hành Động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (r of onlineRequests(); track r.id) {
+                        <tr>
+                          <td class="book-title-cell"><strong>{{ r.bookTitle }}</strong></td>
+                          <td>{{ r.requestDate | date:'yyyy-MM-dd' }}</td>
+                          <td>{{ r.expectedDueDate | date:'yyyy-MM-dd' }}</td>
+                          <td>
+                            <span class="status-badge" [ngClass]="getRequestStatusClass(r.status)">
+                              {{ getRequestStatusText(r.status) }}
+                            </span>
+                          </td>
+                          <td>
+                            @if (r.status === 'REJECTED') {
+                              <span class="text-danger">Từ chối: {{ r.notes || 'Không rõ lý do' }}</span>
+                            } @else {
+                              <span class="text-muted">{{ r.notes || '-' }}</span>
+                            }
+                          </td>
+                          <td>
+                            @if (r.status === 'PENDING') {
+                              <button class="btn-retry" style="background-color: #ef4444;" (click)="cancelOnlineRequest(r.id)">Hủy Yêu Cầu</button>
+                            } @else {
+                              <span class="text-muted">-</span>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+
+            <div class="history-section" style="margin-top: 32px;">
+              <h3 class="section-title">Lịch sử mượn sách (Thực tế)</h3>
+              @if (borrowings().length === 0) {
+                <div class="empty-borrowings">
+                  <p>Bạn chưa mượn cuốn sách nào từ thư viện.</p>
+                </div>
+              } @else {
+                <div class="table-responsive">
+                  <table class="borrow-table">
+                    <thead>
+                      <tr>
+                        <th>Tên Sách</th>
+                        <th>Mã bản sách</th>
+                        <th>Ngày Mượn</th>
+                        <th>Hạn Trả</th>
+                        <th>Ngày Trả</th>
+                        <th>Trạng Thái</th>
+                        <th>Hành Động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (b of borrowings(); track b.id) {
+                        <tr>
+                          <td class="book-title-cell"><strong>{{ b.bookTitle }}</strong></td>
+                          <td><code>{{ b.barCode }}</code></td>
+                          <td>{{ b.borrowDate }}</td>
+                          <td>{{ b.dueDate }}</td>
+                          <td>{{ b.returnDate || '-' }}</td>
+                          <td>
+                            <span class="status-badge" [ngClass]="getBorrowingStatus(b)">
+                              {{ getStatusText(b) }}
+                            </span>
+                          </td>
+                          <td>
+                            @if (canRenew(b)) {
+                              <button class="btn-retry" (click)="renewBorrowing(b)">Gia Hạn (+7 ngày)</button>
+                            } @else {
+                              <span class="text-muted">-</span>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Tab 1.5: My Reservations -->
+          @if (activeTab() === 'reservations') {
+            <div class="history-section">
+              <h3 class="section-title">Danh Sách Xếp Hàng & Đặt Trước</h3>
+              @if (myReservations().length === 0) {
+                <div class="empty-borrowings">
+                  <p>Bạn chưa đặt trước cuốn sách nào.</p>
+                </div>
+              } @else {
+                <div class="table-responsive">
+                  <table class="borrow-table">
+                    <thead>
+                      <tr>
+                        <th>Tên Sách</th>
+                        <th>Ngày Đặt</th>
+                        <th>Trạng Thái</th>
+                        <th>Ghi Chú (Hạn Lấy / Dự Kiến)</th>
+                        <th>Hành Động</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (res of myReservations(); track res.id) {
+                        <tr>
+                          <td class="book-title-cell"><strong>{{ res.bookTitle }}</strong></td>
+                          <td>{{ res.requestDate | date:'yyyy-MM-dd HH:mm' }}</td>
+                          <td>
+                            <span class="status-badge" [ngClass]="getReservationStatusClass(res.status)">
+                              {{ getReservationStatusText(res.status) }}
+                            </span>
+                          </td>
+                          <td>
+                            @if (res.status === 'FULFILLED') {
+                              <span class="text-danger">Đến trước {{ res.expiryDate | date:'yyyy-MM-dd HH:mm' }}</span>
+                            } @else if (res.status === 'PENDING' && res.expectedAvailableDate) {
+                              <span style="color: #3b82f6; font-weight: 600;">Dự kiến: {{ res.expectedAvailableDate | date:'yyyy-MM-dd' }}</span>
+                            } @else if (res.status === 'PENDING') {
+                              <span class="text-muted">Chưa rõ ngày trả</span>
+                            } @else {
+                              <span class="text-muted">-</span>
+                            }
+                          </td>
+                          <td>
+                            @if (res.status === 'PENDING' || res.status === 'FULFILLED') {
+                              <button class="btn-retry" style="background-color: #ef4444;" (click)="cancelReservation(res.id)">Hủy Đặt Chỗ</button>
+                            } @else {
+                              <span class="text-muted">-</span>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Tab 1.6: My Fines -->
+          @if (activeTab() === 'fines') {
+            <div class="history-section">
+              <h3 class="section-title">Khoản Phạt Của Tôi</h3>
+              @if (myFines().length === 0) {
+                <div class="empty-borrowings">
+                  <p>Bạn không có khoản phạt nào. 🎉</p>
+                </div>
+              } @else {
+                <div class="table-responsive">
+                  <table class="borrow-table">
+                    <thead>
+                      <tr>
+                        <th>Tên Sách</th>
+                        <th>Lý Do</th>
+                        <th>Số Tiền</th>
+                        <th>Ngày Lập</th>
+                        <th>Trạng Thái</th>
+                        <th>Ngày Thanh Toán</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (f of myFines(); track f.id) {
+                        <tr>
+                          <td class="book-title-cell"><strong>{{ f.bookTitle }}</strong></td>
+                          <td>{{ f.reason }}</td>
+                          <td>{{ f.amount | number:'1.0-0' }} VND</td>
+                          <td>{{ f.issuedDate }}</td>
+                          <td>
+                            <span class="status-badge" [ngClass]="getFineStatusClass(f.status)">
+                              {{ getFineStatusText(f.status) }}
+                            </span>
+                          </td>
+                          <td>{{ f.paidDate || '-' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Tab 2: Edit Info Form -->
+          @if (activeTab() === 'edit') {
+            <form class="edit-profile-form" (ngSubmit)="onUpdateProfile()">
+              <h3 class="form-title">Chỉnh Sửa Thông Tin Cá Nhân</h3>
+              
+              @if (updateSuccess()) {
+                <div class="alert alert-success">
+                  🎉 Cập nhật thông tin tài khoản thành công!
+                </div>
+              }
+              @if (updateError()) {
+                <div class="alert alert-danger">
+                  ⚠️ {{ updateError() }}
+                </div>
+              }
+
+              <div class="form-grid">
+                <div class="form-group">
+                  <label>Họ và tên <span class="req">*</span></label>
+                  <input type="text" [(ngModel)]="editForm().name" name="name" required />
+                </div>
+
+                <div class="form-group">
+                  <label>Địa chỉ Email <span class="req">*</span></label>
+                  <input type="email" [(ngModel)]="editForm().email" name="email" required />
+                </div>
+
+                <div class="form-group">
+                  <label>Số điện thoại</label>
+                  <input type="text" [(ngModel)]="editForm().phone" name="phone" />
+                </div>
+
+                <div class="form-group">
+                  <label>Địa chỉ thường trú</label>
+                  <input type="text" [(ngModel)]="editForm().address" name="address" />
+                </div>
+
+                <div class="form-group full-width">
+                  <label>URL Ảnh đại diện (Avatar)</label>
+                  <div class="upload-wrapper" style="display: flex; gap: 8px;">
+                    <input type="text" [(ngModel)]="editForm().avatar" name="avatar" placeholder="Nhập link ảnh (VD: https://...)" style="flex: 1;" />
+                    <button type="button" class="btn-secondary" style="white-space: nowrap; padding: 0 12px; font-size: 14px;" (click)="fileInput.click()">Tải lên</button>
+                    <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" style="display: none;" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn-save-profile" [disabled]="updating()">
+                  {{ updating() ? 'Đang cập nhật...' : 'Lưu Thay Đổi 💾' }}
+                </button>
+              </div>
+            </form>
+          }
+
+          <!-- Tab 3: Change Password Form -->
+          @if (activeTab() === 'password') {
+            <form class="edit-profile-form password-form" (ngSubmit)="onChangePassword()">
+              <h3 class="form-title">Đổi Mật Khẩu</h3>
+              
+              @if (passwordSuccess()) {
+                <div class="alert alert-success">
+                  🎉 Đổi mật khẩu thành công!
+                </div>
+              }
+              @if (passwordError()) {
+                <div class="alert alert-danger">
+                  ⚠️ {{ passwordError() }}
+                </div>
+              }
+
+              <div class="form-group full-width">
+                <label>Mật khẩu cũ <span class="req">*</span></label>
+                <input type="password" [(ngModel)]="passwordForm().oldPassword" name="oldPassword" placeholder="Nhập mật khẩu cũ..." required />
+              </div>
+
+              <div class="form-group full-width">
+                <label>Mật khẩu mới <span class="req">*</span></label>
+                <input type="password" [(ngModel)]="passwordForm().newPassword" name="newPassword" placeholder="Nhập mật khẩu mới..." required />
+              </div>
+
+              <div class="form-group full-width">
+                <label>Xác nhận mật khẩu mới <span class="req">*</span></label>
+                <input type="password" [(ngModel)]="passwordForm().confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu mới..." required />
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn-save-profile btn-danger" [disabled]="changingPassword()">
+                  {{ changingPassword() ? 'Đang xử lý...' : 'Xác Nhận Đổi Mật Khẩu 🔒' }}
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</main>
+
+

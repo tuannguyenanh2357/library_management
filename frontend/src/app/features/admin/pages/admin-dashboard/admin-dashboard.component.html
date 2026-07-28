@@ -1,0 +1,262 @@
+<div class="admin-dashboard">
+  <!-- Welcome Banner Card -->
+  <div class="welcome-banner">
+    <div class="welcome-bg-overlay"></div>
+    <div class="welcome-content">
+      <div class="welcome-left">
+        <span class="welcome-badge">🛡️ HỆ THỐNG QUẢN TRỊ</span>
+        <h2>{{ greeting() }}, Admin!</h2>
+        <p>Hôm nay là một ngày tuyệt vời, hãy tận hưởng ngày hôm nay nhé baby^^</p>
+      </div>
+      <div class="welcome-right">
+        <div class="date-widget">
+          <span class="calendar-icon">📅</span>
+          <div class="date-text">
+            <span class="day-label">{{ currentDate() }}</span>
+            <span class="status-pulse-label"><span class="pulse-dot"></span> Đang hoạt động</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading-state">
+      <div class="modern-spinner"></div>
+      <p>Đang tải dữ liệu hệ thống...</p>
+    </div>
+  } @else if (error()) {
+    <div class="error-state">
+      <div class="error-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <p>{{ error() }}</p>
+      <button class="btn-retry" (click)="loadStats()">Thử lại</button>
+    </div>
+  } @else if (stats()) {
+    <!-- KPI Cards (Glassmorphism Styled) -->
+    <div class="kpi-grid">
+      <!-- Total Books -->
+      <a routerLink="/admin/books" class="kpi-card glass-card border-blue clickable-card">
+        <div class="kpi-icon-wrapper bg-soft-blue">
+          <span class="kpi-emoji">📚</span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Tổng Đầu Sách</span>
+          <h3 class="kpi-value txt-blue">{{ stats()?.totalBooks }}</h3>
+          <span class="kpi-subtext">Trong thư viện</span>
+        </div>
+        <div class="card-action-btn">
+          <span>Xem →</span>
+        </div>
+      </a>
+
+      <!-- Total Book Copies -->
+      <a routerLink="/admin/books" class="kpi-card glass-card border-indigo clickable-card">
+        <div class="kpi-icon-wrapper bg-soft-indigo">
+          <span class="kpi-emoji">📖</span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Tổng Bản Sách</span>
+          <h3 class="kpi-value txt-indigo">{{ stats()?.totalBookCopies }}</h3>
+          <span class="kpi-subtext">Bản sao vật lý</span>
+        </div>
+        <div class="card-action-btn">
+          <span>Xem →</span>
+        </div>
+      </a>
+
+      <!-- Total Members -->
+      <a routerLink="/admin/members" class="kpi-card glass-card border-purple clickable-card">
+        <div class="kpi-icon-wrapper bg-soft-purple">
+          <span class="kpi-emoji">👥</span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Thành Viên Đăng Ký</span>
+          <h3 class="kpi-value txt-purple">{{ stats()?.totalMembers }}</h3>
+          <span class="kpi-subtext">Người dùng</span>
+        </div>
+        <div class="card-action-btn">
+          <span>Xem →</span>
+        </div>
+      </a>
+
+      <!-- Active Borrowings -->
+      <a routerLink="/admin/borrowings" class="kpi-card glass-card border-green clickable-card">
+        <div class="kpi-icon-wrapper bg-soft-green">
+          <span class="kpi-emoji">🔄</span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Đang Được Mượn</span>
+          <h3 class="kpi-value txt-green">{{ stats()?.activeBorrowings }}</h3>
+          <span class="kpi-subtext">Đã phát ra</span>
+        </div>
+        <div class="card-action-btn">
+          <span>Xem →</span>
+        </div>
+      </a>
+
+      <!-- Overdue Borrowings -->
+      <a routerLink="/admin/borrowings" class="kpi-card glass-card border-red clickable-card" [class.has-overdue]="(stats()?.overdueBorrowings || 0) > 0">
+        <div class="kpi-icon-wrapper bg-soft-red">
+          <span class="kpi-emoji">⏰</span>
+        </div>
+        <div class="kpi-info">
+          <span class="kpi-label">Đang trễ Hạn Trả Sách</span>
+          <h3 class="kpi-value txt-red">{{ stats()?.overdueBorrowings }}</h3>
+          <span class="kpi-subtext">Yêu cầu xử lý</span>
+        </div>
+        <div class="card-action-btn">
+          <span>Xem →</span>
+        </div>
+      </a>
+    </div>
+
+    <!-- Shortcuts & Side Panels Layout -->
+    <div class="dashboard-details-grid">
+      <!-- Left side: Shortcuts and System Health -->
+      <div class="details-left">
+        <div class="section-card">
+          <div class="section-title">
+            <h3>Lối Tắt Truy Cập</h3>
+            <div class="title-line"></div>
+          </div>
+          
+          <div class="actions-list">
+            <a routerLink="/admin/books" class="modern-action-card">
+              <div class="action-icon bg-soft-blue text-blue">📚</div>
+              <div class="action-content">
+                <h4>Quản Lý Sách</h4>
+                <p>Thêm mới, cập nhật và xóa sách trong hệ thống</p>
+              </div>
+              <div class="action-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </a>
+
+            <a routerLink="/admin/members" class="modern-action-card">
+              <div class="action-icon bg-soft-purple text-purple">👥</div>
+              <div class="action-content">
+                <h4>Quản Lý Độc Giả</h4>
+                <p>Quản lý tài khoản và lịch sử mượn trả của độc giả</p>
+              </div>
+              <div class="action-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </a>
+
+            <a routerLink="/admin/borrowings" class="modern-action-card">
+              <div class="action-icon bg-soft-green text-green">🔄</div>
+              <div class="action-content">
+                <h4>Quản Lý Mượn Trả</h4>
+                <p>Xử lý yêu cầu mượn, trả sách bằng mã vạch</p>
+              </div>
+              <div class="action-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </a>
+
+            <a routerLink="/admin/fines" class="modern-action-card">
+              <div class="action-icon bg-soft-red text-red">💰</div>
+              <div class="action-content">
+                <h4>Quản Lý Phạt & Trễ Hạn</h4>
+                <p>Theo dõi và thu tiền phạt quá hạn</p>
+              </div>
+              <div class="action-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </a>
+
+            <a routerLink="/admin/reports" class="modern-action-card">
+              <div class="action-icon bg-soft-amber text-amber">📊</div>
+              <div class="action-content">
+                <h4>Báo Cáo Doanh Thu</h4>
+                <p>Thống kê thu phạt theo tuần, top vi phạm & sách trễ hạn</p>
+              </div>
+              <div class="action-arrow">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right side: Recent Activity Logs & System Health -->
+      <div class="details-right">
+        <!-- Recent Activities -->
+        <div class="section-card">
+          <div class="section-title">
+            <h3>Nhật Ký Hoạt Động</h3>
+            <div class="title-line"></div>
+          </div>
+
+          <div class="activities-timeline">
+            @for (act of activities(); track act.id) {
+              <div class="timeline-item">
+                <div class="timeline-icon" [ngClass]="act.class">
+                  {{ act.icon }}
+                </div>
+                <div class="timeline-info">
+                  <p class="timeline-text">
+                    <span class="timeline-user">{{ act.user }}</span> {{ act.action }}
+                    <strong class="timeline-detail">"{{ act.detail }}"</strong>
+                  </p>
+                  <span class="timeline-time">{{ act.time }}</span>
+                </div>
+              </div>
+            }
+            @if (activities().length === 0) {
+              <div class="timeline-item" style="justify-content: center; color: #94a3b8; padding: 20px;">
+                <p>Chưa có hoạt động mượn trả nào gần đây.</p>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- System Health Widget -->
+        <!-- <div class="section-card system-health-card">
+          <div class="section-title">
+            <h3>Trạng Thái Hệ Thống</h3>
+            <div class="title-line"></div>
+          </div>
+
+          <div class="health-metrics">
+            <div class="health-item">
+              <span class="health-label">Kết nối Cơ sở dữ liệu:</span>
+              <span class="health-status connected">
+                <span class="pulse-dot"></span> {{ systemHealth().dbStatus }}
+              </span>
+            </div>
+            
+            <div class="health-item">
+              <span class="health-label">Tải máy chủ (CPU/RAM):</span>
+              <span class="health-value">{{ systemHealth().serverLoad }}</span>
+            </div>
+
+            <div class="health-item">
+              <span class="health-label">Phiên kết nối hoạt động:</span>
+              <span class="health-value"><strong>{{ systemHealth().activeSessions }}</strong> người dùng</span>
+            </div>
+
+            <div class="health-item">
+              <span class="health-label">Đồng bộ tự động:</span>
+              <span class="health-value text-muted">{{ systemHealth().syncTime }}</span>
+            </div>
+          </div>
+        </div> -->
+      </div>
+    </div>
+  }
+</div>

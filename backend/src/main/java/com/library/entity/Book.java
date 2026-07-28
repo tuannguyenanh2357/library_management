@@ -3,6 +3,7 @@ package com.library.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -16,25 +17,46 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "books")
+
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
+    @Nationalized
     @Column(nullable = false)
     String title;
+
+    @Nationalized
     @Column(nullable = false)
     String author;
+
+    @Nationalized
     @Column(nullable = false)
     String publisher;
 
     @Column(nullable = false, unique = true)
     String isbn;
 
+    @Nationalized
     String category;
 
+    @Nationalized
     @Column(columnDefinition = "NVARCHAR(MAX)")
     String description;
+
+    @Column(name = "image_url")
+    String imageUrl;
+
+
+    @Column(name = "daily_fine_amount", precision = 10, scale = 2)
+    @Builder.Default
+    java.math.BigDecimal dailyFineAmount = new java.math.BigDecimal("5000.00");
+
+    // Phí đền bù khi bản sao của sách này bị báo mất/hỏng
+    @Column(name = "replacement_fee", precision = 10, scale = 2)
+    @Builder.Default
+    java.math.BigDecimal replacementFee = new java.math.BigDecimal("200000.00");
 
     @Column(name = "publication_year")
     Integer publicationYear;
