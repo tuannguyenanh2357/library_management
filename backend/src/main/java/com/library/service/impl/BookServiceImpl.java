@@ -6,6 +6,7 @@ import com.library.dto.response.BookResponse;
 import com.library.dto.response.PageResponse;
 import com.library.dto.response.TopBookProjection;
 import com.library.entity.Book;
+import com.library.exception.AppException;
 import com.library.exception.ErrorCode;
 import com.library.exception.ResourceNotFoundException;
 import com.library.repository.BookRepository;
@@ -21,6 +22,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -28,92 +31,116 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Transactional
 public class BookServiceImpl implements BookService {
-    final BookRepository bookRepository;
-    final BookCopyRepository bookCopyRepository;
-    final BookMapper bookMapper;
+        final BookRepository bookRepository;
+        final BookCopyRepository bookCopyRepository;
+        final BookMapper bookMapper;
 
-    BookResponse mapToResponse(Book book) {
-        BookResponse response = bookMapper.toBookResponse(book);
-        long available = bookCopyRepository.countByBook_IdAndStatus(book.getId(),
-                com.library.entity.enums.BookCopyStatus.AVAILABLE);
-        response.setAvailableCopiesCount(available);
-        return response;
-    }
+        BookResponse mapToResponse(Book book) {
+                BookResponse response = bookMapper.toBookResponse(book);
+                long available = bookCopyRepository.countByBook_IdAndStatus(book.getId(),
+                                com.library.entity.enums.BookCopyStatus.AVAILABLE);
+                response.setAvailableCopiesCount(available);
+                return response;
+        }
 
-    @Override
-    public PageResponse<BookResponse> getAllBooks(Long id, String title, String author, String category,
-            String publisher, String isbn, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size,
-                Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        @Override
+        @Cacheable(value = "books", key = "{#id, #title, #author, #category, #publisher, #isbn, #page, #size}")
+        public PageResponse<BookResponse> getAllBooks(Long id, String title, String author, String category,
+                        String publisher, String isbn, int page, int size) {
+                Pageable pageable = PageRequest.of(page, size,
+                                Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
 
-        String titlePattern = (title != null && !title.trim().isEmpty()) ? "%" + title.trim().toLowerCase() + "%"
-                : null;
-        String authorPattern = (author != null && !author.trim().isEmpty()) ? "%" + author.trim().toLowerCase() + "%"
-                : null;
-        String categoryPattern = (category != null && !category.trim().isEmpty())
-                ? "%" + category.trim().toLowerCase() + "%"
-                : null;
-        String publisherPattern = (publisher != null && !publisher.trim().isEmpty())
-                ? "%" + publisher.trim().toLowerCase() + "%"
-                : null;
-        String isbnPattern = (isbn != null && !isbn.trim().isEmpty()) ? "%" + isbn.trim().toLowerCase() + "%" : null;
+                String titlePattern = (title != null && !title.trim().isEmpty())
+                                ? "%" + title.trim().toLowerCase() + "%"
+                                : null;
 
-        Page<Book> bookPage = bookRepository.findByFilters(id, titlePattern, authorPattern, categoryPattern,
-                publisherPattern, isbnPattern, pageable);
+                String authorPattern = (author != null && !author.trim().isEmpty())
+                                ? "%" + author.trim().toLowerCase() + "%"
+                                : null;
 
-        List<BookResponse> content = bookPage.getContent().stream()
-                .map(this::mapToResponse)
-                .collect(Collectors.toList());
+                String categoryPattern = (category != null && !category.trim().isEmpty())
+                                ? "%" + category.trim().toLowerCase() + "%"
+                                : null;
 
-        return PageResponse.<BookResponse>builder()
-                .content(content)
-                .pageNumber(bookPage.getNumber())
-                .pageSize(bookPage.getSize())
-                .totalElements(bookPage.getTotalElements())
-                .totalPages(bookPage.getTotalPages())
-                .build();
-    }
+                String publisherPattern = (publisher != null && !publisher.trim().isEmpty())
+                                ? "%" + publisher.trim().toLowerCase() + "%"
+                                : null;
 
-    @Override
-    public List<TopBookProjection> getTop10MostBorrowedBooks() {
-        return bookRepository.getTop10MostBorrowedBooks();
-    }
+                String isbnPattern = (isbn != null && !isbn.trim().isEmpty()) ? "%" + isbn.trim().toLowerCase() + "%"
+                                : null;
 
-    @Override
-    public BookResponse createBook(CreateBookRequest request) {
-        Book book = bookMapper.toBook(request);
-        book = bookRepository.save(book);
-        return mapToResponse(book);
-    }
+                Page<Book> bookPage = bookRepository.findByFilters(id, titlePattern, authorPattern, categoryPattern,
+                                publisherPattern, isbnPattern, pageable);
 
-    @Override
-    public BookResponse updateBook(Long bookId, UpdateBookRequest request) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
+                List<BookResponse> content = bookPage.getContent().stream()
+                                .map(this::mapToResponse)
+                                .collect(Collectors.toList());
 
-        bookMapper.updateBookFromRequest(request, book);
-        book = bookRepository.save(book);
+                return PageResponse.<BookResponse>builder()
+                                .content(content)
+                                .pageNumber(bookPage.getNumber())
+                                .pageSize(bookPage.getSize())
+                                .totalElements(bookPage.getTotalElements())
+                                .totalPages(bookPage.getTotalPages())
+                                .build();
+        }
 
-        return mapToResponse(book);
-    }
+        @Override
+        @Cacheable(value = "topBooks")
+        public List<TopBookProjection> getTop10MostBorrowedBooks() {
+                return bookRepository.getTop10MostBorrowedBooks();
+        }
 
-    @Override
-    public BookResponse getBookById(Long bookId) {
-        Book book = bookRepository.findById(bookId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
-        return mapToResponse(book);
-    }
+        @Override
+        @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
+        @Transactional(rollbackFor = Exception.class)
+        public BookResponse createBook(CreateBookRequest request) {
+                Book book = bookMapper.toBook(request);
+                book = bookRepository.save(book);
+                return mapToResponse(book);
+        }
 
-    @Override
-    public void deleteBook(Long bookId) {
-        bookRepository.deleteById(bookId);
-    }
+        @Override
+        @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
+        @Transactional(rollbackFor = Exception.class)
+        public BookResponse updateBook(Long bookId, UpdateBookRequest request) {
+                Book book = bookRepository.findById(bookId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
 
-    @Override
-    public List<String> getUniqueCategories() {
-        return bookRepository.findUniqueCategories();
-    }
+                bookMapper.updateBookFromRequest(request, book);
+                book = bookRepository.save(book);
+
+                return mapToResponse(book);
+        }
+
+        @Override
+        @Cacheable(value = "books", key = "#bookId")
+        public BookResponse getBookById(Long bookId) {
+                Book book = bookRepository.findById(bookId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
+                return mapToResponse(book);
+        }
+
+        @Override
+        @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
+        @Transactional(rollbackFor = Exception.class)
+        public void deleteBook(Long bookId) {
+                Book book = bookRepository.findById(bookId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
+
+                if (!book.getCopies().isEmpty()) {
+                        throw new AppException(ErrorCode.INVALID_REQUEST,
+                                        "Không thể xóa đầu sách này vì vẫn còn bản sao trong hệ thống. Vui lòng xóa hoặc xử lý các bản sao trước.");
+                }
+
+                bookRepository.delete(book);
+        }
+
+        @Override
+        @Cacheable(value = "categories")
+        public List<String> getUniqueCategories() {
+                return bookRepository.findUniqueCategories();
+        }
 
 }

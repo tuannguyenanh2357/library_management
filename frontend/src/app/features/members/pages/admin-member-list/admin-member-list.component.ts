@@ -2,13 +2,14 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { MemberService, Member, MemberCreationRequest, MemberUpdateRequest, UnpaidMemberProjection } from '../../services/member.service';
+import { MemberService, MemberCreationRequest, MemberUpdateRequest, UnpaidMemberProjection } from '../../services/member.service';
+import { Member } from '@core/models/member.model';
 
 import { BorrowingService } from '../../../borrowings/services/borrowing.service';
-import { BorrowingResponse } from '../../../../core/models/borrowing.model';
+import { BorrowingResponse } from '../../../borrowings/models/borrowing.model';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
-import { AuthService } from '../../../auth/services/auth.service';
+import { AuthService } from '@core/services/auth.service';
 
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 

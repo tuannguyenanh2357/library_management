@@ -66,6 +66,16 @@
         ⏳ Đặt Chỗ (Xếp Hàng)
       </button>
       }
+      
+      @if (isLoggedIn) {
+      <button class="btn-borrow-modal" 
+              [style.background-color]="isFavorite() ? '#ec4899' : '#f3f4f6'" 
+              [style.color]="isFavorite() ? 'white' : '#374151'"
+              (click)="toggleFavorite()">
+        {{ isFavorite() ? '❤️ Đã yêu thích' : '🤍 Thêm vào yêu thích' }}
+      </button>
+      }
+
       <button class="btn-close-modal" (click)="onClose()">Đóng</button>
       } @else {
       <button class="btn-cancel" (click)="cancelBorrowMode()">Quay lại</button>

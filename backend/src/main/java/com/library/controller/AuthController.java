@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/auth")
@@ -23,9 +25,34 @@ public class AuthController {
     AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
-        AuthenticationResponse response = authenticationService.authenticate(request);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request,
+            HttpServletResponse response) {
+        AuthenticationResponse authResponse = authenticationService.authenticate(request);
+
+        Cookie cookie = new Cookie("auth_token", authResponse.getToken());
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false); // đặt thành true nếu sử dụng HTTPS
+        cookie.setPath("/");
+        cookie.setMaxAge(90 * 60); // 90 phút
+
+        response.addCookie(cookie);
+
+        // Xóa token khỏi response body
+        authResponse.setToken(null);
+
+        return ResponseEntity.ok(authResponse);
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletResponse response) {
+        Cookie cookie = new Cookie("auth_token", null);
+        cookie.setHttpOnly(true);
+        cookie.setSecure(false);
+        cookie.setPath("/");
+        cookie.setMaxAge(0); // Xóa cookie
+
+        response.addCookie(cookie);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/register")

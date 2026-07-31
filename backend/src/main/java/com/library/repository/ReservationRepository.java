@@ -12,19 +12,19 @@ import java.util.Optional;
 @Repository
 public interface ReservationRepository extends JpaRepository<Reservation, Long> {
     
-    // Tìm reservation của member
+    // Lấy danh sách yêu cầu đặt trước của một thành viên, sắp xếp mới nhất lên đầu
     List<Reservation> findByMemberIdOrderByRequestDateDesc(Long memberId);
     
-    // Tìm người đặt sớm nhất cho một đầu sách đang chờ (PENDING)
+    // Tìm yêu cầu đặt trước sớm nhất (người xếp hàng đầu tiên) cho một đầu sách theo trạng thái
     Optional<Reservation> findFirstByBookIdAndStatusOrderByRequestDateAsc(Long bookId, ReservationStatus status);
     
-    // Tìm các đặt chỗ đang chờ của 1 quyển sách
+    // Lấy toàn bộ danh sách xếp hàng đặt trước của một đầu sách theo trạng thái
     List<Reservation> findByBookIdAndStatusOrderByRequestDateAsc(Long bookId, ReservationStatus status);
 
-    // Kiểm tra xem độc giả đã đặt sách này chưa
+    // Kiểm tra xem một thành viên đã đặt trước cuốn sách này với các trạng thái tương ứng hay chưa
     boolean existsByMemberIdAndBookIdAndStatusIn(Long memberId, Long bookId, List<ReservationStatus> statuses);
     
-    // Tìm các reservation quá hạn để cronjob hủy (EXPIRED)
+    // Tìm các yêu cầu đặt trước đã được đáp ứng (sách đã về) nhưng người dùng không đến lấy và đã quá hạn, để hệ thống tự động hủy
     @Query("SELECT r FROM Reservation r WHERE r.status = 'FULFILLED' AND r.expiryDate < CURRENT_TIMESTAMP")
     List<Reservation> findExpiredFulfilledReservations();
 }

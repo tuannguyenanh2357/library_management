@@ -1,8 +1,8 @@
 import { Component, inject, signal, HostListener, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router, RouterLinkActive } from '@angular/router';
-import { AuthService } from '../../../features/auth/services/auth.service';
-import { MemberService } from '../../../features/members/services/member.service';
+import { AuthService } from '@core/services/auth.service';
+import { CurrentUserService } from '@core/services/current-user.service';
 
 @Component({
   selector: 'app-header',
@@ -13,7 +13,7 @@ import { MemberService } from '../../../features/members/services/member.service
 })
 export class HeaderComponent implements OnInit {
   protected authService = inject(AuthService);
-  protected memberService = inject(MemberService);
+  protected currentUserService = inject(CurrentUserService);
   private router = inject(Router);
 
   protected isDropdownOpen = signal<boolean>(false);
@@ -26,8 +26,8 @@ export class HeaderComponent implements OnInit {
   }
 
   loadUserProfile(): void {
-    if (!this.memberService.currentUserProfile()) {
-      this.memberService.getMyProfile().subscribe({
+    if (!this.currentUserService.currentUserProfile()) {
+      this.currentUserService.getMyProfile().subscribe({
         next: () => this.avatarLoadError.set(false),
         error: (err) => console.error('Failed to fetch profile for header:', err)
       });
@@ -49,7 +49,7 @@ export class HeaderComponent implements OnInit {
   }
 
   getUsernameInitial(): string {
-    const profile = this.memberService.currentUserProfile();
+    const profile = this.currentUserService.currentUserProfile();
     if (profile?.name) {
       return profile.name.substring(0, 1).toUpperCase();
     }
@@ -58,12 +58,8 @@ export class HeaderComponent implements OnInit {
   }
 
   onLogout(): void {
-    this.memberService.clearUserProfile();
+    this.currentUserService.clearUserProfile();
     this.authService.logout();
-    this.router.navigate(['/dashboard']).then(() => {
-      if (typeof window !== 'undefined') {
-        window.location.reload();
-      }
-    });
+    this.router.navigate(['/dashboard']);
   }
 }

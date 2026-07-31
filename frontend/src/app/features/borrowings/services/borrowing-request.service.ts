@@ -1,12 +1,12 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { 
-  BorrowingRequestResponse, 
+import {
+  BorrowingRequestResponse,
   BorrowingRequestCreationRequest,
   BorrowingRequestApprovalRequest
 } from '../models/borrowing-request.model';
-import { environment } from '../../../environments/environment';
+import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root'

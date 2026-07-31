@@ -39,7 +39,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
-@Transactional
 public class BorrowingServiceImpl implements BorrowingService {
 
     final BorrowingRepository borrowingRepository;
@@ -53,6 +52,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     static final int RENEWAL_EXTENSION_DAYS = 7;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BorrowingResponse borrowBook(BorrowingCreationRequest request) {
 
         Member member = memberRepository.findById(request.getMemberId())
@@ -136,6 +136,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BorrowingResponse returnBook(Long borrowingId) {
 
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
@@ -174,8 +175,6 @@ public class BorrowingServiceImpl implements BorrowingService {
 
         borrowingRepository.save(borrowing);
 
-        // Thay vì tự động set thành AVAILABLE, chuyển quyền định đoạt cho
-        // ReservationService
         // Nếu có người đang xếp hàng chờ, sách sẽ đổi thành RESERVED. Ngược lại nó sẽ
         // thành AVAILABLE.
         reservationService.fulfillNextReservationIfAny(bookCopy.getBook().getId(), bookCopy);
@@ -232,15 +231,22 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteBorrowing(Long borrowingId) {
 
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
                 .orElseThrow(() -> new RuntimeException("Borrowing not found"));
 
+        if (borrowing.getFine() != null && borrowing.getFine().getStatus() == FineStatus.UNPAID) {
+            throw new AppException(ErrorCode.INVALID_REQUEST,
+                    "Không thể xóa phiếu mượn vì độc giả chưa thanh toán tiền phạt đính kèm.");
+        }
+
         borrowingRepository.delete(borrowing);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BorrowingResponse renewBorrowing(Long borrowingId, String username) {
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
@@ -272,11 +278,13 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BorrowingResponse reportLost(Long borrowingId) {
         return closeWithReplacementFee(borrowingId, true);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BorrowingResponse reportDamaged(Long borrowingId) {
         return closeWithReplacementFee(borrowingId, false);
     }

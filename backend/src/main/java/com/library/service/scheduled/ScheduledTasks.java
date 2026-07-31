@@ -13,6 +13,7 @@ import com.library.service.interfaces.EmailService;
 import com.library.service.interfaces.ReservationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,7 +39,8 @@ public class ScheduledTasks {
     // Hết hạn các reservation đã được giữ chỗ (FULFILLED) quá 48h mà độc giả chưa
     // đến lấy
     @Scheduled(cron = "0 5 0 * * *")
-    @Transactional
+    @SchedulerLock(name = "expireFulfilledReservationsTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
+    @Transactional(rollbackFor = Exception.class)
     public void expireFulfilledReservations() {
         List<Reservation> expired;
         try {
@@ -66,8 +68,8 @@ public class ScheduledTasks {
 
     // Gửi email nhắc nhở cho các phiếu mượn đang quá hạn chưa trả
     @Scheduled(cron = "0 0 8 * * *")
-    // @Scheduled(initialDelay = 3000, fixedRate = 30000)
-    @Transactional
+    @SchedulerLock(name = "sendOverdueRemindersTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
+    @Transactional(rollbackFor = Exception.class)
     public void sendOverdueReminders() {
         List<Borrowing> overdue;
         try {
@@ -107,7 +109,8 @@ public class ScheduledTasks {
 
     // Tự động hủy các yêu cầu mượn PENDING quá 3 ngày không được nhân viên xử lý
     @Scheduled(cron = "0 15 0 * * *")
-    @Transactional
+    @SchedulerLock(name = "cancelStalePendingRequestsTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
+    @Transactional(rollbackFor = Exception.class)
     public void cancelStalePendingRequests() {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(3);
         List<BorrowingRequest> stale;

@@ -1,7 +1,9 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, Input, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { BooksResponse } from '../../../features/books/models/books.model';
+import { BooksResponse } from '../../models/book.model';
+import { CurrentUserService } from '@core/services/current-user.service';
+import { AuthService } from '@core/services/auth.service';
 
 @Component({
   selector: 'app-book-detail-modal',
@@ -11,6 +13,9 @@ import { BooksResponse } from '../../../features/books/models/books.model';
   styleUrl: './book-detail-modal.component.css'
 })
 export class BookDetailModalComponent {
+  private currentUserService = inject(CurrentUserService);
+  private authService = inject(AuthService);
+
   @Input() isOpen = false;
   @Input() book: BooksResponse | null = null;
   
@@ -57,6 +62,25 @@ export class BookDetailModalComponent {
     if (this.book) {
       this.reserve.emit({ bookId: this.book.id });
       this.onClose();
+    }
+  }
+
+  get isLoggedIn(): boolean {
+    return this.authService.isLoggedIn();
+  }
+
+  isFavorite(): boolean {
+    if (!this.book || !this.isLoggedIn) return false;
+    return this.currentUserService.favoriteBooks().some(b => b.id === this.book!.id);
+  }
+
+  toggleFavorite(): void {
+    if (!this.book || !this.isLoggedIn) return;
+    
+    if (this.isFavorite()) {
+      this.currentUserService.removeFavoriteBook(this.book.id).subscribe();
+    } else {
+      this.currentUserService.addFavoriteBook(this.book.id).subscribe();
     }
   }
 }

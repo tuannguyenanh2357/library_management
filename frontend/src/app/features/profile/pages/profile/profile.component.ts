@@ -2,28 +2,32 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { MemberService, Member, ProfileUpdateRequest, ChangePasswordRequest } from '../../../members/services/member.service';
+import { CurrentUserService } from '@core/services/current-user.service';
+import { Member, ProfileUpdateRequest } from '@core/models/member.model';
 import { BorrowingService } from '@features/borrowings/services/borrowing.service';
-import { AuthService } from '@features/auth/services/auth.service';
-import { BorrowingRequestService } from '@core/services/borrowing-request.service';
-import { BorrowingRequestResponse } from '@core/models/borrowing-request.model';
-import { BorrowingResponse } from '@core/models/borrowing.model';
+import { AuthService } from '@core/services/auth.service';
+import { BorrowingRequestService } from '@features/borrowings/services/borrowing-request.service';
+import { BorrowingRequestResponse } from '@features/borrowings/models/borrowing-request.model';
+import { BorrowingResponse } from '@features/borrowings/models/borrowing.model';
 import { ReservationService } from '../../../books/services/reservation.service';
 import { ReservationResponse } from '../../../books/models/reservation.model';
 import { FileService } from '@core/services/file.service';
 import { FineService } from '@features/fines/services/fine.service';
 import { FineResponse } from '@features/fines/models/fine.model';
+import { BookDetailModalComponent } from '@shared/components/book-detail-modal/book-detail-modal.component';
+import { ToastService } from '@shared/services/toast.service';
+import { BooksResponse } from '@shared/models/book.model';
 
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, BookDetailModalComponent],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.css'
 })
 export class ProfileComponent implements OnInit {
-  private memberService = inject(MemberService);
+  private currentUserService = inject(CurrentUserService);
   private borrowingService = inject(BorrowingService);
   private borrowingRequestService = inject(BorrowingRequestService);
   private reservationService = inject(ReservationService);
@@ -31,6 +35,7 @@ export class ProfileComponent implements OnInit {
   private fineService = inject(FineService);
   private authService = inject(AuthService);
   private router = inject(Router);
+  private toastService = inject(ToastService);
 
   // Profile data state
   protected profile = signal<Member | null>(null);
@@ -42,7 +47,12 @@ export class ProfileComponent implements OnInit {
   protected onlineRequests = signal<BorrowingRequestResponse[]>([]);
   protected myReservations = signal<ReservationResponse[]>([]);
   protected myFines = signal<FineResponse[]>([]);
-  protected activeTab = signal<string>('history'); // 'history' | 'edit' | 'password' | 'reservations' | 'fines'
+  protected favoriteBooks = this.currentUserService.favoriteBooks;
+  protected activeTab = signal<string>('history'); // 'history' | 'edit' | 'password' | 'reservations' | 'fines' | 'favorites'
+
+  // Detail Modal states
+  protected isDetailModalOpen = signal<boolean>(false);
+  protected selectedBook = signal<BooksResponse | null>(null);
 
   // Form edit states
   protected editForm = signal<ProfileUpdateRequest>({
@@ -78,7 +88,7 @@ export class ProfileComponent implements OnInit {
     this.loading.set(true);
     this.errorMessage.set('');
 
-    this.memberService.getMyProfile().subscribe({
+    this.currentUserService.getMyProfile().subscribe({
       next: (member) => {
         this.profile.set(member);
         // Initialize form fields
@@ -137,6 +147,17 @@ export class ProfileComponent implements OnInit {
             this.checkLoadingComplete();
           }
         });
+
+        // Fetch favorite books
+        this.currentUserService.getFavoriteBooks().subscribe({
+          next: () => {
+            this.checkLoadingComplete();
+          },
+          error: (err) => {
+            console.error('Lỗi khi tải danh sách sách yêu thích:', err);
+            this.checkLoadingComplete();
+          }
+        });
       },
       error: (err) => {
         console.error('Lỗi khi tải thông tin cá nhân:', err);
@@ -150,7 +171,7 @@ export class ProfileComponent implements OnInit {
   private loadCount = 0;
   private checkLoadingComplete() {
     this.loadCount++;
-    if (this.loadCount >= 4) {
+    if (this.loadCount >= 5) {
       this.loading.set(false);
       this.loadCount = 0;
     }
@@ -313,7 +334,7 @@ export class ProfileComponent implements OnInit {
       avatar: data.avatar
     };
 
-    this.memberService.updateMyProfile(request).subscribe({
+    this.currentUserService.updateMyProfile(request).subscribe({
       next: (updatedMember) => {
         this.profile.set(updatedMember);
         this.updating.set(false);
@@ -357,7 +378,7 @@ export class ProfileComponent implements OnInit {
     this.passwordSuccess.set(false);
     this.passwordError.set('');
 
-    this.memberService.changePassword({
+    this.currentUserService.changePassword({
       oldPassword: data.oldPassword,
       newPassword: data.newPassword
     }).subscribe({
@@ -376,5 +397,69 @@ export class ProfileComponent implements OnInit {
   protected logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']);
+  }
+
+  protected removeFavorite(bookId: number): void {
+    this.currentUserService.removeFavoriteBook(bookId).subscribe();
+  }
+
+  protected openDetailModal(book: any): void { // Using 'any' or 'BooksResponse'
+    this.selectedBook.set(book as BooksResponse);
+    this.isDetailModalOpen.set(true);
+  }
+
+  protected closeDetailModal(): void {
+    this.selectedBook.set(null);
+    this.isDetailModalOpen.set(false);
+  }
+
+  protected onBorrowBook(event: { bookId: number, expectedDueDate: string, notes: string }): void {
+    const memberId = this.authService.getCurrentUserId();
+    if (!memberId) {
+      this.toastService.warning('Không lấy được thông tin tài khoản. Vui lòng đăng nhập lại.');
+      return;
+    }
+
+    const payload = {
+      memberId: memberId,
+      bookId: event.bookId,
+      expectedDueDate: event.expectedDueDate,
+      notes: event.notes
+    };
+
+    this.borrowingRequestService.createRequest(payload).subscribe({
+      next: () => {
+        this.toastService.success('Đăng ký mượn sách thành công! Yêu cầu của bạn đã được gửi tới thủ thư.');
+        this.closeDetailModal();
+        this.loadProfileAndHistory();
+      },
+      error: (err) => {
+        this.toastService.error('Lỗi: ' + (err.error?.message || 'Không thể gửi yêu cầu'));
+      }
+    });
+  }
+
+  protected onReserveBook(event: { bookId: number }): void {
+    const memberId = this.authService.getCurrentUserId();
+    if (!memberId) {
+      this.toastService.warning('Không lấy được thông tin tài khoản. Vui lòng đăng nhập lại.');
+      return;
+    }
+
+    const payload = {
+      memberId: memberId,
+      bookId: event.bookId
+    };
+
+    this.reservationService.createReservation(payload).subscribe({
+      next: () => {
+        this.toastService.success('Đặt chỗ thành công! Bạn sẽ được ưu tiên nhận sách khi có người trả.');
+        this.closeDetailModal();
+        this.loadProfileAndHistory();
+      },
+      error: (err) => {
+        this.toastService.error('Lỗi: ' + (err.error?.message || 'Không thể đặt chỗ.'));
+      }
+    });
   }
 }

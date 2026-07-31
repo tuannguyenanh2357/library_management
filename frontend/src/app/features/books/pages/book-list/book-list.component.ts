@@ -2,9 +2,9 @@ import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angula
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BookService } from '@features/books/services/book.service';
-import { BooksResponse } from '@features/books/models/books.model';
-import { AuthService } from '@features/auth/services/auth.service';
-import { BorrowingRequestService } from '@core/services/borrowing-request.service';
+import { BooksResponse } from '@shared/models/book.model';
+import { AuthService } from '@core/services/auth.service';
+import { BorrowingRequestService } from '@features/borrowings/services/borrowing-request.service';
 import { ReservationService } from '../../services/reservation.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { SearchPanelComponent } from '@shared/components/search-panel/search-panel.component';
@@ -35,6 +35,7 @@ export class BookListComponent implements OnInit {
 
   // States
   protected books = signal<BooksResponse[]>([]);
+  protected categories = signal<string[]>([]);
   protected loading = signal<boolean>(true);
   protected errorMessage = signal<string>('');
 
@@ -65,6 +66,10 @@ export class BookListComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadBooksAndFilter();
+    this.bookService.getCategories().subscribe({
+      next: (data) => this.categories.set(data),
+      error: (err) => console.error('Lỗi khi tải danh sách thể loại:', err)
+    });
   }
 
   loadBooksAndFilter(): void {

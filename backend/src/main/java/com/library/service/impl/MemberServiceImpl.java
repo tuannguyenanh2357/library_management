@@ -29,11 +29,13 @@ import com.library.exception.MemberNotFoundException;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Transactional
 public class MemberServiceImpl implements MemberService {
     final MemberRepository memberRepository;
     final MemberMapper memberMapper;
     final PasswordEncoder passwordEncoder;
+    final com.library.repository.BookRepository bookRepository;
+    final com.library.mapper.BookMapper bookMapper;
+    final com.library.repository.BookCopyRepository bookCopyRepository;
 
     @Override
     public List<MemberResponse> getAllMembers() {
@@ -67,6 +69,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MemberResponse createMember(MemberCreationRequest request) {
         Member member = memberMapper.toMember(request);
         member.setPassword(passwordEncoder.encode(member.getPassword()));
@@ -76,6 +79,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MemberResponse updateMember(Long memberId, MemberUpdateRequest request) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
@@ -104,6 +108,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteMember(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
@@ -136,6 +141,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MemberResponse updateMyProfile(String username, com.library.dto.request.MyProfileUpdateRequest request) {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
@@ -151,6 +157,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void changePassword(String username, com.library.dto.request.ChangePasswordRequest request) {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
@@ -166,6 +173,41 @@ public class MemberServiceImpl implements MemberService {
     @Override
     public List<com.library.dto.response.UnpaidMemberProjection> getMembersWithUnpaidFines() {
         return memberRepository.getMembersWithUnpaidFines();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addFavoriteBook(String username, Long bookId) {
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        com.library.entity.Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new com.library.exception.ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
+        member.getFavoriteBooks().add(book);
+        memberRepository.save(member);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void removeFavoriteBook(String username, Long bookId) {
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        com.library.entity.Book book = bookRepository.findById(bookId)
+                .orElseThrow(() -> new com.library.exception.ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
+        member.getFavoriteBooks().remove(book);
+        memberRepository.save(member);
+    }
+
+    @Override
+    public List<com.library.dto.response.BookResponse> getFavoriteBooks(String username) {
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        return member.getFavoriteBooks().stream().map(book -> {
+            com.library.dto.response.BookResponse response = bookMapper.toBookResponse(book);
+            long available = bookCopyRepository.countByBook_IdAndStatus(book.getId(),
+                    com.library.entity.enums.BookCopyStatus.AVAILABLE);
+            response.setAvailableCopiesCount(available);
+            return response;
+        }).collect(Collectors.toList());
     }
 
     private String sanitizeAvatar(String avatar) {

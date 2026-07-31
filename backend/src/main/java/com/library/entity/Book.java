@@ -8,6 +8,7 @@ import org.hibernate.annotations.Nationalized;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.math.BigDecimal;
 
 @Entity
 @Getter
@@ -16,8 +17,10 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "books")
-
+@Table(name = "books", indexes = {
+    @Index(name = "idx_book_title", columnList = "title"),
+    @Index(name = "idx_book_author", columnList = "author")
+})
 public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,15 +51,14 @@ public class Book {
     @Column(name = "image_url")
     String imageUrl;
 
-
     @Column(name = "daily_fine_amount", precision = 10, scale = 2)
     @Builder.Default
-    java.math.BigDecimal dailyFineAmount = new java.math.BigDecimal("5000.00");
+    BigDecimal dailyFineAmount = new BigDecimal("5000.00");
 
     // Phí đền bù khi bản sao của sách này bị báo mất/hỏng
     @Column(name = "replacement_fee", precision = 10, scale = 2)
     @Builder.Default
-    java.math.BigDecimal replacementFee = new java.math.BigDecimal("200000.00");
+    BigDecimal replacementFee = new BigDecimal("200000.00");
 
     @Column(name = "publication_year")
     Integer publicationYear;

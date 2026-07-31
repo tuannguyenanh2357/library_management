@@ -6,6 +6,9 @@ export interface AuthenticationRequest {
 export interface AuthenticationResponse {
   token: string;
   authenticated: boolean;
+  username: string;
+  role: string;
+  memberId: number;
 }
 
 export interface RegisterRequest {

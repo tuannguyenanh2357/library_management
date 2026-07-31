@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '@core/services/auth.service';
 
 @Component({
   selector: 'app-login',
@@ -48,7 +48,16 @@ export class LoginComponent {
       error: (err) => {
         console.error(err);
         this.loading.set(false);
-        this.errorMessage.set('Tên đăng nhập hoặc mật khẩu không đúng!');
+        
+        if (err.status === 0) {
+          this.errorMessage.set('Không thể kết nối đến máy chủ. Máy chủ có thể đang tắt!');
+        } else if (err.status === 500) {
+          this.errorMessage.set('Máy chủ đang gặp sự cố (Lỗi 500). Vui lòng thử lại sau!');
+        } else if (err.status === 401 || err.status === 403 || err.status === 400) {
+          this.errorMessage.set('Tên đăng nhập hoặc mật khẩu không đúng!');
+        } else {
+          this.errorMessage.set(err.error?.message || 'Đã có lỗi xảy ra, vui lòng thử lại!');
+        }
       }
     });
   }

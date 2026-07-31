@@ -115,6 +115,13 @@
           >
             💰 Khoản Phạt Của Tôi
           </button>
+          <button
+            class="tab-link"
+            [class.active]="activeTab() === 'favorites'"
+            (click)="activeTab.set('favorites')"
+          >
+            ❤️ Sách Yêu Thích
+          </button>
         </div>
 
         <div class="tab-content">
@@ -321,6 +328,35 @@
             </div>
           }
 
+          <!-- Tab 1.7: Favorite Books -->
+          @if (activeTab() === 'favorites') {
+            <div class="history-section">
+              <h3 class="section-title">Sách Yêu Thích Của Tôi</h3>
+              @if (favoriteBooks().length === 0) {
+                <div class="empty-borrowings">
+                  <p>Bạn chưa thêm cuốn sách nào vào danh sách yêu thích.</p>
+                </div>
+              } @else {
+                <div class="favorites-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; padding: 20px 0;">
+                  @for (book of favoriteBooks(); track book.id) {
+                    <div class="favorite-card" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: white; transition: box-shadow 0.2s; cursor: pointer;" (click)="openDetailModal(book)">
+                      <img [src]="book.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400'" 
+                           [alt]="book.title" 
+                           style="width: 100%; height: 280px; object-fit: cover; border-bottom: 1px solid #e5e7eb;"/>
+                      <div class="favorite-card-body" style="padding: 12px;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="book.title">{{ book.title }}</h4>
+                        <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">{{ book.author }}</p>
+                        <button class="btn-retry" style="width: 100%; background-color: #f3f4f6; color: #ef4444;" (click)="$event.stopPropagation(); removeFavorite(book.id)">
+                          Bỏ Yêu Thích
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
           <!-- Tab 2: Edit Info Form -->
           @if (activeTab() === 'edit') {
             <form class="edit-profile-form" (ngSubmit)="onUpdateProfile()">
@@ -420,4 +456,11 @@
   </div>
 </main>
 
+<app-book-detail-modal
+  [isOpen]="isDetailModalOpen()"
+  [book]="selectedBook()"
+  (close)="closeDetailModal()"
+  (borrow)="onBorrowBook($event)"
+  (reserve)="onReserveBook($event)"
+></app-book-detail-modal>
 

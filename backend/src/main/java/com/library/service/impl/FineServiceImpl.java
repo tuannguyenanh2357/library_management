@@ -22,7 +22,6 @@ import java.util.List;
 @Setter
 @Service
 @RequiredArgsConstructor
-@Transactional
 public class FineServiceImpl implements FineService {
     private final FineRepository repository;
     private final FineMapper mapper;
@@ -54,6 +53,7 @@ public class FineServiceImpl implements FineService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public FineResponse payFine(Long fineId) {
         Fines fine = repository.findById(fineId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Khoản phạt không tồn tại"));
@@ -64,6 +64,7 @@ public class FineServiceImpl implements FineService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public FineResponse cancelFine(Long fineId, String reason) {
         Fines fine = repository.findById(fineId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Khoản phạt không tồn tại"));

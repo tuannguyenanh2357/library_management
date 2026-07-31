@@ -19,8 +19,8 @@
             <a routerLink="/admin/dashboard" class="btn btn-admin">Trang Quản Trị</a>
           }
           <div class="avatar-circle" (click)="toggleDropdown($event)">
-            @if (memberService.currentUserProfile()?.avatar && !avatarLoadError()) {
-              <img [src]="memberService.currentUserProfile()?.avatar" alt="Avatar" class="avatar-img" (error)="onAvatarError()" />
+            @if (currentUserService.currentUserProfile()?.avatar && !avatarLoadError()) {
+              <img [src]="currentUserService.currentUserProfile()?.avatar" alt="Avatar" class="avatar-img" (error)="onAvatarError()" />
             } @else {
               {{ getUsernameInitial() }}
             }
@@ -29,8 +29,8 @@
           @if (isDropdownOpen()) {
             <div class="profile-dropdown-menu" (click)="$event.stopPropagation()">
               <div class="dropdown-header">
-                <p class="dropdown-user-name">{{ memberService.currentUserProfile()?.name || authService.getUsername() }}</p>
-                <span class="dropdown-role-label">{{ memberService.currentUserProfile()?.role || authService.getUserRole() || 'MEMBER' }}</span>
+                <p class="dropdown-user-name">{{ currentUserService.currentUserProfile()?.name || authService.getUsername() }}</p>
+                <span class="dropdown-role-label">{{ currentUserService.currentUserProfile()?.role || authService.getUserRole() || 'MEMBER' }}</span>
               </div>
               <hr class="dropdown-divider" />
               <a routerLink="/profile" class="dropdown-item" (click)="closeDropdown()">👤 Trang cá nhân</a>

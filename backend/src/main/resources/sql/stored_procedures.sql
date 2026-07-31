@@ -17,8 +17,7 @@ BEGIN
         COUNT(br.id) AS BorrowCount
     FROM dbo.books b
     LEFT JOIN dbo.book_copies bc ON b.id = bc.book_id
-    -- LEFT JOIN dbo.borrowings br ON bc.id = br.book_copy_id
-    LEFT JOIN dbo.borrowings br ON bc.id = br.book_copy_id AND br.borrow_date >= DATEADD(day, -7, GETDATE())
+    LEFT JOIN dbo.borrowings br ON bc.id = br.book_copy_id AND br.borrow_date >= DATEADD(day, -30, GETDATE())
     GROUP BY b.id, b.title, b.author, b.category, b.image_url
     ORDER BY BorrowCount DESC;
 END;

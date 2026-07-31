@@ -3,10 +3,11 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of, catchError } from 'rxjs';
 import { BookService } from '@features/books/services/book.service';
-import { AuthService } from '@features/auth/services/auth.service';
-import { BorrowingRequestService } from '@core/services/borrowing-request.service';
+import { AuthService } from '@core/services/auth.service';
+import { BorrowingRequestService } from '@features/borrowings/services/borrowing-request.service';
 import { ReservationService } from '@features/books/services/reservation.service';
-import { BooksResponse, TopBookProjection } from '@features/books/models/books.model';
+import { TopBookProjection } from '@features/books/models/books.model';
+import { BooksResponse } from '@shared/models/book.model';
 import { SearchPanelComponent } from '@shared/components/search-panel/search-panel.component';
 import { BookDetailModalComponent } from '@shared/components/book-detail-modal/book-detail-modal.component';
 import { ToastService } from '@shared/services/toast.service';
@@ -33,6 +34,7 @@ export class DashboardComponent implements OnInit {
   // States
   protected books = signal<BooksResponse[]>([]);
   protected top10ProcedureBooks = signal<TopBookProjection[]>([]);
+  protected categories = signal<string[]>([]);
   protected loading = signal<boolean>(true);
   protected errorMessage = signal<string>('');
 
@@ -76,6 +78,10 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadBooks();
+    this.bookService.getCategories().subscribe({
+      next: (data) => this.categories.set(data),
+      error: (err) => console.error('Lỗi khi tải danh sách thể loại:', err)
+    });
   }
 
   loadBooks(): void {

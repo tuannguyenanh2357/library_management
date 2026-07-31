@@ -13,7 +13,9 @@ import org.hibernate.annotations.Nationalized;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Entity
@@ -81,6 +83,15 @@ public class Member {
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     @Builder.Default
     List<BorrowingRequest> borrowingRequests = new ArrayList<>();
+
+    @ManyToMany
+    @JoinTable(
+        name = "member_favorite_books",
+        joinColumns = @JoinColumn(name = "member_id"),
+        inverseJoinColumns = @JoinColumn(name = "book_id")
+    )
+    @Builder.Default
+    Set<Book> favoriteBooks = new HashSet<>();
 
     @Column(name = "created_at", updatable = false)
     LocalDateTime createdAt;

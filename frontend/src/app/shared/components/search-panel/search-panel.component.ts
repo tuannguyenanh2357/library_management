@@ -1,8 +1,7 @@
-import { Component, OnInit, inject, signal, DestroyRef } from '@angular/core';
+import { Component, Input, OnInit, inject, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { BookService } from '../../../features/books/services/book.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -13,24 +12,17 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   styleUrl: './search-panel.component.css'
 })
 export class SearchPanelComponent implements OnInit {
-  private bookService = inject(BookService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private destroyRef = inject(DestroyRef);
 
+  @Input() categories: string[] = [];
+
   protected searchTitle = '';
   protected searchAuthor = '';
   protected selectedCategory = '';
-  protected categories = signal<string[]>([]);
 
   ngOnInit(): void {
-    this.bookService.getCategories().subscribe({
-      next: (data) => {
-        this.categories.set(data);
-      },
-      error: (err) => console.error('Lỗi khi tải danh sách thể loại:', err)
-    });
-
     this.route.queryParams
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(params => {

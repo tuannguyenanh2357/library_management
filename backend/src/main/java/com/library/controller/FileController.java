@@ -31,13 +31,14 @@ public class FileController {
         try {
             Files.createDirectories(this.fileStorageLocation);
         } catch (Exception ex) {
-            throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
+            throw new RuntimeException("Không thể tạo thư mục để lưu trữ các tệp đã tải lên..", ex);
         }
     }
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
-        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "");
+        String originalFileName = StringUtils
+                .cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "");
         String fileName = UUID.randomUUID().toString() + "_" + originalFileName;
 
         try {
@@ -55,7 +56,8 @@ public class FileController {
 
             return ResponseEntity.ok(Map.of("url", fileDownloadUri, "fileName", fileName));
         } catch (IOException ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not store file " + fileName + ". Please try again!");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Could not store file " + fileName + ". Please try again!");
         }
     }
 
@@ -74,7 +76,7 @@ public class FileController {
                 } else if (fileName.toLowerCase().endsWith(".gif")) {
                     contentType = "image/gif";
                 }
-                
+
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_TYPE, contentType)
                         .body(resource);

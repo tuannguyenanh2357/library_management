@@ -24,6 +24,7 @@ import com.library.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import com.library.entity.enums.BookCopyStatus;
+import com.library.entity.enums.FineStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,7 +34,6 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class BorrowingRequestServiceImpl implements BorrowingRequestService {
 
@@ -46,6 +46,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         final BorrowingRequestMapper mapper;
 
         @Override
+        @Transactional(rollbackFor = Exception.class)
         public BorrowingRequestResponse createRequest(BorrowingRequestCreationRequest dto) {
                 Member member = memberRepository.findById(dto.getMemberId())
                                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
@@ -54,8 +55,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                         throw new AppException(ErrorCode.HAS_OVERDUE_BOOKS,
                                         "Bạn không thể gửi yêu cầu mượn mới khi đang có sách quá hạn chưa trả");
                 }
-                if (fineRepository.existsByBorrowing_Member_IdAndStatus(member.getId(),
-                                com.library.entity.enums.FineStatus.UNPAID)) {
+                if (fineRepository.existsByBorrowing_Member_IdAndStatus(member.getId(), FineStatus.UNPAID)) {
                         throw new AppException(ErrorCode.HAS_UNPAID_FINES,
                                         "Bạn không thể gửi yêu cầu mượn mới khi đang có khoản phạt chưa thanh toán");
                 }
@@ -109,6 +109,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         }
 
         @Override
+        @Transactional(rollbackFor = Exception.class)
         public BorrowingRequestResponse approveRequest(Long requestId,
                         BorrowingRequestApprovalRequest approvalRequest) {
                 BorrowingRequest request = requestRepository.findById(requestId)
@@ -143,6 +144,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         }
 
         @Override
+        @Transactional(rollbackFor = Exception.class)
         public BorrowingRequestResponse rejectRequest(Long requestId, String reason) {
                 BorrowingRequest request = requestRepository.findById(requestId)
                                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
@@ -162,6 +164,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         }
 
         @Override
+        @Transactional(rollbackFor = Exception.class)
         public BorrowingRequestResponse cancelRequest(Long requestId, String username) {
                 BorrowingRequest request = requestRepository.findById(requestId)
                                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,

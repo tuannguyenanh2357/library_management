@@ -29,7 +29,6 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Transactional
 public class BookCopyServiceImpl implements BookCopyService {
     BookCopyRepository bookCopyRepository;
     BookRepository bookRepository;
@@ -58,6 +57,7 @@ public class BookCopyServiceImpl implements BookCopyService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BookCopyResponse createBookCopy(BookCopyCreationRequest request) {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
@@ -78,6 +78,7 @@ public class BookCopyServiceImpl implements BookCopyService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public BookCopyResponse updateBookCopy(Long bookCopyId, BookCopyUpdateRequest request) {
         BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND));
@@ -96,12 +97,17 @@ public class BookCopyServiceImpl implements BookCopyService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteBookCopy(Long bookCopyId) {
         BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND));
 
         if (existingBookCopy.getStatus() == BookCopyStatus.BORROWED) {
             throw new AppException(ErrorCode.INVALID_REQUEST, "Không thể xóa bản sao đang được mượn.");
+        }
+
+        if (existingBookCopy.getBorrowings() != null && !existingBookCopy.getBorrowings().isEmpty()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Không thể xóa bản sao vì đã có lịch sử mượn (sẽ làm mất dữ liệu lịch sử). Khuyến nghị cập nhật trạng thái thành LOST hoặc DAMAGED.");
         }
 
         bookCopyRepository.deleteById(bookCopyId);

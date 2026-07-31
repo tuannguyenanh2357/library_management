@@ -37,7 +37,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Transactional
 public class ReservationServiceImpl implements ReservationService {
 
     ReservationRepository reservationRepository;
@@ -49,6 +48,7 @@ public class ReservationServiceImpl implements ReservationService {
     RabbitTemplate rabbitTemplate;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public ReservationResponse createReservation(ReservationCreationRequest request) {
         Member member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
@@ -56,7 +56,7 @@ public class ReservationServiceImpl implements ReservationService {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
 
-        // Check if member already has an active reservation for this book
+        // Kiểm tra xem độc giả đã có đặt chỗ đang hoạt động cho sách này chưa
         boolean exists = reservationRepository.existsByMemberIdAndBookIdAndStatusIn(
                 member.getId(), book.getId(), Arrays.asList(ReservationStatus.PENDING, ReservationStatus.FULFILLED));
 
@@ -64,12 +64,13 @@ public class ReservationServiceImpl implements ReservationService {
             throw new AppException(ErrorCode.RESERVATION_FAILED, "Bạn đã đặt trước cuốn sách này rồi.");
         }
 
-        // Check if there are available copies. If there is an available copy, user
-        // should just borrow it directly or create BorrowingRequest.
-        // Actually, Reservation is for when it's out of stock.
+        // Kiểm tra xem có bản sao nào khả dụng không. Nếu có, người dùng
+        // nên mượn trực tiếp hoặc tạo Yêu cầu mượn (BorrowingRequest).
+        // Thực tế, Đặt chỗ (Reservation) dành cho trường hợp sách đã hết.
         long availableCount = bookCopyRepository.countByBook_IdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
         if (availableCount > 0) {
-            throw new AppException(ErrorCode.RESERVATION_FAILED, "Sách này vẫn còn bản sao sẵn sàng. Vui lòng mượn trực tiếp thay vì đặt trước.");
+            throw new AppException(ErrorCode.RESERVATION_FAILED,
+                    "Sách này vẫn còn bản sao sẵn sàng. Vui lòng mượn trực tiếp thay vì đặt trước.");
         }
 
         Reservation reservation = Reservation.builder()
@@ -119,12 +120,15 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void cancelReservation(Long reservationId, String username) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND, "Không tìm thấy thông tin đặt trước"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND,
+                        "Không tìm thấy thông tin đặt trước"));
 
-        // Only the owner or an admin should cancel. We'll simplify to just checking the
-        // owner if it's not an admin API.
+        // Chỉ người sở hữu hoặc admin mới được hủy. Chúng ta đơn giản hóa bằng cách chỉ
+        // kiểm tra
+        // người sở hữu nếu đó không phải là API của admin.
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy người dùng"));
 
@@ -154,18 +158,20 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void fulfillNextReservationIfAny(Long bookId, BookCopy returnedCopy) {
+        // 1. Tìm người đặt chỗ SỚM NHẤT đang ở trạng thái PENDING
         Optional<Reservation> nextReservation = reservationRepository
                 .findFirstByBookIdAndStatusOrderByRequestDateAsc(bookId, ReservationStatus.PENDING);
 
         if (nextReservation.isPresent()) {
             Reservation res = nextReservation.get();
-            res.setStatus(ReservationStatus.FULFILLED);
+            res.setStatus(ReservationStatus.FULFILLED); // đổi sang trạng thái đã có sách
             res.setFulfilledCopy(returnedCopy);
             res.setFulfilledDate(LocalDateTime.now());
             res.setExpiryDate(LocalDateTime.now().plusHours(48));
 
-            returnedCopy.setStatus(BookCopyStatus.RESERVED);
+            returnedCopy.setStatus(BookCopyStatus.RESERVED); // giữ sách lại
 
             reservationRepository.save(res);
             bookCopyRepository.save(returnedCopy);
@@ -194,6 +200,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void completeReservationByCopyId(Long copyId) {
         reservationRepository.findAll().stream()
                 .filter(r -> r.getStatus() == ReservationStatus.FULFILLED && r.getFulfilledCopy() != null

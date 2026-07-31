@@ -10,22 +10,30 @@ import java.util.List;
 
 public interface FineRepository extends JpaRepository<Fines, Long> {
 
-    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member m "
-            + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book "
-            + "WHERE b.member.id = :memberId AND f.status = :status")
-    List<Fines> findByBorrowing_Member_IdAndStatus(Long memberId, FineStatus status);
+        // Tìm danh sách phiếu phạt của một thành viên theo trạng thái phạt
+        @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member m "
+                        + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book "
+                        + "WHERE b.member.id = :memberId AND f.status = :status")
+        List<Fines> findByBorrowing_Member_IdAndStatus(Long memberId, FineStatus status);
 
-    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member " + "JOIN FETCH b.bookCopy bc "
-            + "JOIN FETCH bc.book")
-    List<Fines> findAllWithRelations();
+        // Lấy toàn bộ danh sách phạt và tải sẵn các thông tin liên quan để tối ưu truy
+        // vấn
+        @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member "
+                        + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book")
+        List<Fines> findAllWithRelations();
 
-    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member m "
-            + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book " + "WHERE b.member.id = :memberId")
-    List<Fines> findByMemberIdWithRelations(@Param("memberId") Long memberId);
+        // Lấy danh sách phạt của một thành viên cụ thể kèm theo thông tin chi tiết
+        @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member m "
+                        + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book " + "WHERE b.member.id = :memberId")
+        List<Fines> findByMemberIdWithRelations(@Param("memberId") Long memberId);
 
-    @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member " + "JOIN FETCH b.bookCopy bc "
-            + "JOIN FETCH bc.book " + "WHERE f.status = :status")
-    List<Fines> findByStatusWithRelations(@Param("status") FineStatus status);
+        // Lấy danh sách phạt theo trạng thái kèm theo thông tin chi tiết
+        @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member "
+                        + "JOIN FETCH b.bookCopy bc "
+                        + "JOIN FETCH bc.book " + "WHERE f.status = :status")
+        List<Fines> findByStatusWithRelations(@Param("status") FineStatus status);
 
-    boolean existsByBorrowing_Member_IdAndStatus(Long memberId, FineStatus status);
+        // Kiểm tra xem một thành viên có đang tồn tại khoản phạt với trạng thái cụ thể
+        // hay không
+        boolean existsByBorrowing_Member_IdAndStatus(Long memberId, FineStatus status);
 }

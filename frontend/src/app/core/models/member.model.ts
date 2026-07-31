@@ -1,4 +1,5 @@
-export interface MemberResponse {
+/** Dữ liệu member dùng chung cho cả admin CRUD lẫn current-user profile */
+export interface Member {
   id: number;
   name: string;
   username: string;
@@ -12,7 +13,8 @@ export interface MemberResponse {
   role: string;
 }
 
-export interface MemberUpdateRequest {
+/** Request cập nhật thông tin cá nhân của user đang đăng nhập */
+export interface ProfileUpdateRequest {
   name?: string;
   email?: string;
   phone?: string;
@@ -20,6 +22,7 @@ export interface MemberUpdateRequest {
   avatar?: string;
 }
 
+/** Request đổi mật khẩu */
 export interface ChangePasswordRequest {
   oldPassword?: string;
   newPassword?: string;

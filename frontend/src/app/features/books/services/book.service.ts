@@ -1,7 +1,8 @@
 import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable  } from "rxjs";
-import { BooksResponse, CreateBookRequest, UpdateBookRequest, TopBookProjection } from "../models/books.model";
+import { CreateBookRequest, UpdateBookRequest, TopBookProjection } from "../models/books.model";
+import { BooksResponse } from "../../../shared/models/book.model";
 import { PageResponse } from "../../../shared/models/page.model";
 import { environment } from '../../../../environments/environment';
 

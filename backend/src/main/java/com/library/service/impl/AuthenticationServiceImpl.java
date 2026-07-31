@@ -36,7 +36,6 @@ import java.util.Date;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Transactional
 public class AuthenticationServiceImpl implements AuthenticationService {
     MemberRepository memberRepository;
     MemberMapper memberMapper;
@@ -45,22 +44,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @NonFinal
     @Value("${jwt.signerKey}")
     protected String signerKey;
-
-    public IntrospectResponse introspect(IntrospectRequest request) throws Exception{
-        var token = request.getToken();
-
-        JWSVerifier verifier = new MACVerifier(signerKey.getBytes());
-
-        SignedJWT signedJWT = SignedJWT.parse(token);
-
-        Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-
-        var verified = signedJWT.verify(verifier);
-
-        return IntrospectResponse.builder()
-                .valid(verified && expiryTime.after(new Date()))
-                .build();
-    }
 
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
@@ -82,10 +65,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return AuthenticationResponse.builder()
                 .token(token)
                 .authenticated(true)
+                .username(member.getUsername())
+                .role(member.getRole() != null ? member.getRole().name() : "MEMBER")
+                .memberId(member.getId())
                 .build();
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public MemberResponse register(RegisterRequest request) {
         if (memberRepository.existsByUsername(request.getUsername())) {
             throw new AppException(ErrorCode.USER_EXISTED);
@@ -113,6 +100,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return memberMapper.toMemberResponse(member);
     }
 
+    // hàm tạo JWT Token sau khi người dùng đăng nhập thành công
     private String generateToken(Member member) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
@@ -123,8 +111,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .issuer("library-management")
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(90, ChronoUnit.MINUTES).toEpochMilli()
-                ))
+                        Instant.now().plus(90, ChronoUnit.MINUTES).toEpochMilli()))
                 .claim("scope", userRole)
                 .claim("memberId", member.getId())
                 .build();
@@ -135,8 +122,26 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             jwsObject.sign(new MACSigner(signerKey.getBytes()));
             return jwsObject.serialize();
         } catch (JOSEException e) {
-            log.error("Cannot create token", e);
+            log.error("Không thể tạo token", e);
             throw new RuntimeException(e);
         }
     }
+
+    // kiểm tra toke có đúng chữ ký không - token đã hết hạn chưa
+    public IntrospectResponse introspect(IntrospectRequest request) throws Exception {
+        var token = request.getToken();
+
+        JWSVerifier verifier = new MACVerifier(signerKey.getBytes());
+
+        SignedJWT signedJWT = SignedJWT.parse(token);
+
+        Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+        var verified = signedJWT.verify(verifier);
+
+        return IntrospectResponse.builder()
+                .valid(verified && expiryTime.after(new Date()))
+                .build();
+    }
+
 }

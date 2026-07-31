@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BorrowingResponse, BorrowingCreationRequest } from '../../../core/models/borrowing.model';
+import { BorrowingResponse, BorrowingCreationRequest } from '../models/borrowing.model';
 import { environment } from '../../../../environments/environment';
 
 export interface OverdueBookProjection {
