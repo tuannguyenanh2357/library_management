@@ -49,7 +49,7 @@ public class BookServiceImpl implements BookService {
         public PageResponse<BookResponse> getAllBooks(Long id, String title, String author, String category,
                         String publisher, String isbn, int page, int size) {
                 Pageable pageable = PageRequest.of(page, size,
-                                Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+                                Sort.by(Sort.Direction.DESC, "createdAt"));
 
                 String titlePattern = (title != null && !title.trim().isEmpty())
                                 ? "%" + title.trim().toLowerCase() + "%"

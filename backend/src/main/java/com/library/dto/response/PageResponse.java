@@ -13,7 +13,7 @@ import java.util.List;
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
-public class PageResponse<T> {
+public class PageResponse<T> implements java.io.Serializable {
     List<T> content;
     int pageNumber;
     int pageSize;

@@ -113,6 +113,11 @@
 			<artifactId>shedlock-provider-jdbc-template</artifactId>
 			<version>5.13.0</version>
 		</dependency>
+		<!-- Redis Cache -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
 		<dependency>
 			<!-- MapStruct for DTO mapping -->
 			<groupId>org.mapstruct</groupId>

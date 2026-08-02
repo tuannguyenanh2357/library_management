@@ -17,7 +17,6 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@SuppressWarnings("unused")
 @Table(name = "book_copies")
 public class BookCopy {
     @Id
