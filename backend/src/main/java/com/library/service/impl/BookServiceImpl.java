@@ -4,7 +4,7 @@ import com.library.dto.request.CreateBookRequest;
 import com.library.dto.request.UpdateBookRequest;
 import com.library.dto.response.BookResponse;
 import com.library.dto.response.PageResponse;
-import com.library.dto.response.TopBookProjection;
+import com.library.dto.response.TopBookResponse;
 import com.library.entity.Book;
 import com.library.exception.AppException;
 import com.library.exception.ErrorCode;
@@ -88,8 +88,11 @@ public class BookServiceImpl implements BookService {
 
         @Override
         @Cacheable(value = "topBooks")
-        public List<TopBookProjection> getTop10MostBorrowedBooks() {
-                return bookRepository.getTop10MostBorrowedBooks();
+        public List<TopBookResponse> getTop10MostBorrowedBooks() {
+                return bookRepository.getTop10MostBorrowedBooks().stream()
+                                .map(p -> new TopBookResponse(p.getBookId(), p.getTitle(), p.getAuthor(),
+                                                p.getCategory(), p.getImageUrl(), p.getBorrowCount()))
+                                .collect(Collectors.toList());
         }
 
         @Override

@@ -6,6 +6,6 @@ public interface TopBookProjection {
     String getAuthor();
     String getCategory();
     String getImageUrl();
-    Long getBorrowCount();
+    Integer getBorrowCount();
 }
 

@@ -32,7 +32,7 @@ public class JasperReportConfig {
     private JasperReport compileReport(String path) throws Exception {
         try (InputStream stream = getClass().getResourceAsStream(path)) {
             if (stream == null) {
-                throw new RuntimeException("Report template not found: " + path);
+                throw new RuntimeException("Không tìm thấy mẫu báo cáo: " + path);
             }
             return JasperCompileManager.compileReport(stream);
         }

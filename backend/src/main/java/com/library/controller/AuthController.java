@@ -1,13 +1,18 @@
 package com.library.controller;
 
 import com.library.dto.request.AuthenticationRequest;
+import com.library.dto.request.IntrospectRequest;
 import com.library.dto.request.RegisterRequest;
 import com.library.dto.response.AuthenticationResponse;
+import com.library.dto.response.IntrospectResponse;
 import com.library.dto.response.MemberResponse;
 import com.library.service.interfaces.AuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+
+import org.springframework.http.ResponseCookie;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -29,13 +34,14 @@ public class AuthController {
             HttpServletResponse response) {
         AuthenticationResponse authResponse = authenticationService.authenticate(request);
 
-        Cookie cookie = new Cookie("auth_token", authResponse.getToken());
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false); // đặt thành true nếu sử dụng HTTPS
-        cookie.setPath("/");
-        cookie.setMaxAge(90 * 60); // 90 phút
-
-        response.addCookie(cookie);
+        ResponseCookie springCookie = ResponseCookie.from("auth_token", authResponse.getToken())
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(90 * 60)
+                .sameSite("Strict") // Trình duyệt sẽ không gửi cookie này đi nếu request đến từ một domain khác
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, springCookie.toString());
 
         // Xóa token khỏi response body
         authResponse.setToken(null);
@@ -45,13 +51,15 @@ public class AuthController {
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(HttpServletResponse response) {
-        Cookie cookie = new Cookie("auth_token", null);
-        cookie.setHttpOnly(true);
-        cookie.setSecure(false);
-        cookie.setPath("/");
-        cookie.setMaxAge(0); // Xóa cookie
+        ResponseCookie springCookie = ResponseCookie.from("auth_token", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0) // Xóa cookie
+                .sameSite("Strict")
+                .build();
 
-        response.addCookie(cookie);
+        response.addHeader(HttpHeaders.SET_COOKIE, springCookie.toString());
         return ResponseEntity.ok().build();
     }
 
@@ -62,9 +70,10 @@ public class AuthController {
     }
 
     @PostMapping("/introspect")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<MemberResponse> introspect(@Valid @RequestBody RegisterRequest request) {
-        MemberResponse response = authenticationService.register(request);
+    public ResponseEntity<IntrospectResponse> introspect(@Valid @RequestBody IntrospectRequest request)
+            throws Exception {
+        IntrospectResponse response = authenticationService.introspect(request);
         return ResponseEntity.ok(response);
     }
+
 }

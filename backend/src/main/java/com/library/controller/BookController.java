@@ -5,7 +5,7 @@ import com.library.dto.response.BookResponse;
 import com.library.dto.response.PageResponse;
 import com.library.dto.request.CreateBookRequest;
 import java.util.List;
-import com.library.dto.response.TopBookProjection;
+import com.library.dto.response.TopBookResponse;
 import com.library.service.interfaces.BookService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -20,8 +20,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 public class BookController {
     private final BookService bookService;
 
-    @GetMapping("/top-10-borrowed")
-    public ResponseEntity<List<TopBookProjection>> getTop10MostBorrowedBooks() {
+    @GetMapping("/top-borrowed")
+    public ResponseEntity<List<TopBookResponse>> getTop10MostBorrowedBooks() {
         return ResponseEntity.ok(bookService.getTop10MostBorrowedBooks());
     }
 
@@ -54,7 +54,6 @@ public class BookController {
     public ResponseEntity<List<String>> getCategories() {
         return ResponseEntity.ok(bookService.getUniqueCategories());
     }
-
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")

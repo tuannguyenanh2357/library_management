@@ -43,7 +43,7 @@ public class FileController {
 
         try {
             if (fileName.contains("..")) {
-                throw new RuntimeException("Sorry! Filename contains invalid path sequence " + fileName);
+                throw new RuntimeException("Xin lỗi! Tên tệp chứa chuỗi đường dẫn không hợp lệ " + fileName);
             }
 
             Path targetLocation = this.fileStorageLocation.resolve(fileName);
@@ -57,7 +57,7 @@ public class FileController {
             return ResponseEntity.ok(Map.of("url", fileDownloadUri, "fileName", fileName));
         } catch (IOException ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Could not store file " + fileName + ". Please try again!");
+                    .body("Không thể lưu tệp " + fileName + ". Vui lòng thử lại!");
         }
     }
 

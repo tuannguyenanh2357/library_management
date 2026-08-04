@@ -5,12 +5,17 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -33,7 +38,8 @@ public class BookCopy {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    BookCopyStatus status;
+    @Builder.Default
+    BookCopyStatus status = BookCopyStatus.AVAILABLE;
 
     // String shelfLocation;
 
@@ -41,26 +47,14 @@ public class BookCopy {
     @Builder.Default
     List<Borrowing> borrowings = new ArrayList<>();
 
+    @CreatedDate
     @Column(name = "created_at", updatable = false)
     LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
 
-    @PrePersist
-     protected void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-
-        if(status == null) {
-            this.status = BookCopyStatus.AVAILABLE;
-        }
-    }
-
-    @PreUpdate
-    protected void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 
     // kiểm tra có thể mượn được không
     public boolean isAvailable() {

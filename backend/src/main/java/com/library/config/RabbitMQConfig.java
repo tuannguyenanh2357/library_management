@@ -24,7 +24,7 @@ public class RabbitMQConfig {
     public static final String RESERVATION_FULFILLED_ROUTING_KEY = "reservation.fulfilled";
     public static final String BORROWING_CREATED_ROUTING_KEY = "borrowing.created";
 
-    // Tạo Queue với durable = true (Tin nhắn không bị mất khi sập server)
+    // Tạo Queue với durable = true (Tin nhắn không bị mất khi sập server) 4
     @Bean
     public Queue reservationFulfilledQueue() {
         return new Queue(RESERVATION_FULFILLED_QUEUE, true);
@@ -35,13 +35,13 @@ public class RabbitMQConfig {
         return new Queue(BORROWING_CREATED_QUEUE, true);
     }
 
-    // Tạo Direct Exchange
+    // Tạo Direct Exchange 2
     @Bean
     public DirectExchange reservationExchange() {
         return new DirectExchange(RESERVATION_EXCHANGE);
     }
 
-    // Nối Queue vào Exchange thông qua Routing Key
+    // Nối Queue vào Exchange thông qua Routing Key 3
     @Bean
     public Binding bindingReservationFulfilled(Queue reservationFulfilledQueue, DirectExchange reservationExchange) {
         return BindingBuilder.bind(reservationFulfilledQueue)
@@ -56,7 +56,7 @@ public class RabbitMQConfig {
                 .with(BORROWING_CREATED_ROUTING_KEY);
     }
 
-    // Chuyển đổi dữ liệu Java Object sang định dạng JSON để truyền qua mạng
+    // Chuyển đổi dữ liệu Java Object sang định dạng JSON để truyền qua mạng 1
     @Bean
     public MessageConverter jsonMessageConverter(tools.jackson.databind.json.JsonMapper jsonMapper) {
         return new JacksonJsonMessageConverter(jsonMapper);

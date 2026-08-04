@@ -6,10 +6,14 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.Nationalized;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -32,9 +36,11 @@ public class BorrowingRequest {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    BorrowingRequestStatus status;
+    @Builder.Default
+    BorrowingRequestStatus status = BorrowingRequestStatus.PENDING;
 
-    @Column(name = "request_date", nullable = false)
+    @CreatedDate
+    @Column(name = "request_date", nullable = false, updatable = false)
     LocalDateTime requestDate;
 
     @Column(name = "expected_due_date")
@@ -47,13 +53,4 @@ public class BorrowingRequest {
     @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     String notes;
 
-    @PrePersist
-    protected void prePersist() {
-        if (this.requestDate == null) {
-            this.requestDate = LocalDateTime.now();
-        }
-        if (this.status == null) {
-            this.status = BorrowingRequestStatus.PENDING;
-        }
-    }
 }

@@ -2,13 +2,14 @@ package com.library.entity;
 
 import com.library.entity.enums.MemberRole;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import com.library.entity.enums.BorrowingStatus;
 import org.hibernate.annotations.Nationalized;
+
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -33,9 +35,9 @@ public class Member {
     Long id;
 
     @Column(name = "member_code", nullable = false, unique = true)
-    String memberCode;
+    @Builder.Default
+    String memberCode = "MBR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 
-    @NotBlank(message = "Name is required")
     @Nationalized
     @Column(nullable = false)
     String name;
@@ -46,23 +48,19 @@ public class Member {
     @Column(nullable = false, length = 60)
     String password;
 
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email is required")
     @Column(nullable = false, unique = true)
     String email;
 
-    @NotBlank(message = "Phone number is required")
-    @Pattern(regexp = "^(\\+84|0)[3-9]\\d{8}$", message = "Invalid Vietnamese phone number")
     @Column(nullable = false, unique = true)
     String phone;
 
-    @NotBlank(message = "Address is required")
     @Nationalized
     @Column(nullable = false)
     String address;
 
     @Column(name = "joining_date")
-    LocalDate joiningDate;
+    @Builder.Default
+    LocalDate joiningDate = LocalDate.now();
 
     @Column(name = "is_active")
     @Builder.Default
@@ -74,7 +72,8 @@ public class Member {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
-    MemberRole role;
+    @Builder.Default
+    MemberRole role = MemberRole.MEMBER;
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.REMOVE)
     @Builder.Default
@@ -85,44 +84,17 @@ public class Member {
     List<BorrowingRequest> borrowingRequests = new ArrayList<>();
 
     @ManyToMany
-    @JoinTable(
-        name = "member_favorite_books",
-        joinColumns = @JoinColumn(name = "member_id"),
-        inverseJoinColumns = @JoinColumn(name = "book_id")
-    )
+    @JoinTable(name = "member_favorite_books", joinColumns = @JoinColumn(name = "member_id"), inverseJoinColumns = @JoinColumn(name = "book_id"))
     @Builder.Default
     Set<Book> favoriteBooks = new HashSet<>();
 
+    @CreatedDate
     @Column(name = "created_at", updatable = false)
     LocalDateTime createdAt;
+
+    @LastModifiedDate
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void prePersist() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-        if (joiningDate == null) {
-            joiningDate = LocalDate.now();
-        }
-
-        if (isActive == null) {
-            isActive = true;
-        }
-
-        if (memberCode == null || memberCode.isBlank()) {
-            memberCode = "MBR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-        }
-
-        if (role == null) {
-            role = MemberRole.MEMBER;
-        }
-    }
-
-    @PreUpdate
-    protected void preUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
 
     // xem có đang mượn sách nào chua trả hay không
     public boolean hasBorrowedBooks() {

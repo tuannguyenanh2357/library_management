@@ -28,9 +28,10 @@ public class NotificationConsumer {
 
         String subject = "THÔNG BÁO: Sách đặt trước đã có sẵn tại thư viện";
         String text = String.format("Kính gửi %s,\n\n" +
-                        "Cuốn sách '%s' bạn đặt trước đã có sẵn tại thư viện.\n" +
-                        "Vui lòng đến nhận sách trước %s tại địa điểm: 123 Nguyễn Khang, Hà Nội. Sau thời gian này, sách sẽ được chuyển cho người khác.\n\n" +
-                        "Trân trọng,\nBan Quản lý Thư viện",
+                "Cuốn sách '%s' bạn đặt trước đã có sẵn tại thư viện.\n" +
+                "Vui lòng đến nhận sách trước %s tại địa điểm: 123 Nguyễn Khang, Hà Nội. Sau thời gian này, sách sẽ được chuyển cho người khác.\n\n"
+                +
+                "Trân trọng,\nBan Quản lý Thư viện",
                 event.getMemberName(), event.getBookTitle(), formattedExpiry);
 
         emailService.sendEmail(event.getMemberEmail(), subject, text);
@@ -50,11 +51,12 @@ public class NotificationConsumer {
 
         String subject = "THÔNG BÁO: Xác nhận mượn sách thành công";
         String text = String.format("Kính gửi %s,\n\n" +
-                        "Bạn đã mượn thành công cuốn sách '%s' tại Thư viện.\n" +
-                        "- Ngày mượn: %s\n" +
-                        "- Hạn trả sách: %s\n\n" +
-                        "Vui lòng trả sách đúng hạn để tránh phát sinh phí phạt quá hạn.\n\n" +
-                        "Trân trọng,\nBan Quản lý Thư viện",
+                "Bạn đã mượn thành công cuốn sách '%s' tại Thư viện.\n" +
+                "- Ngày mượn: %s\n" +
+                "- Hạn trả sách: %s\n\n" +
+                "Vui lòng giữ gìn, bảo quản sách cẩn thận và trả sách đúng hạn để tránh phát sinh phí phạt quá hạn.\n\n"
+                +
+                "Trân trọng,\nBan Quản lý Thư viện",
                 event.getMemberName(), event.getBookTitle(), formattedBorrowDate, formattedDueDate);
 
         emailService.sendEmail(event.getMemberEmail(), subject, text);
@@ -63,4 +65,3 @@ public class NotificationConsumer {
         log.info("=========================================================");
     }
 }
-

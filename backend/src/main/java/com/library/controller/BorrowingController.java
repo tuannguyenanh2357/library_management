@@ -1,12 +1,14 @@
 package com.library.controller;
 
 import com.library.dto.response.BorrowingResponse;
+import com.library.dto.response.OverdueBookProjection;
 import com.library.dto.request.BorrowingCreationRequest;
 import com.library.service.interfaces.BorrowingService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
@@ -42,7 +44,7 @@ public class BorrowingController {
 
     @GetMapping("/sp-overdue")
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
-    public ResponseEntity<List<com.library.dto.response.OverdueBookProjection>> getOverdueBooksFromSP() {
+    public ResponseEntity<List<OverdueBookProjection>> getOverdueBooksFromSP() {
         return ResponseEntity.ok(borrowingService.getOverdueBooksFromSP());
     }
 
@@ -67,7 +69,7 @@ public class BorrowingController {
     @PutMapping("/{borrowingId}/renew")
     @PreAuthorize("hasRole('MEMBER')")
     public ResponseEntity<BorrowingResponse> renewBorrowing(@PathVariable Long borrowingId) {
-        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(borrowingService.renewBorrowing(borrowingId, username));
     }
 

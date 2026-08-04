@@ -1,6 +1,7 @@
 package com.library.service.impl;
 
 import com.library.dto.response.BorrowingResponse;
+import com.library.dto.response.OverdueBookProjection;
 import com.library.dto.request.BorrowingCreationRequest;
 import com.library.entity.BookCopy;
 import com.library.entity.Borrowing;
@@ -52,7 +53,6 @@ public class BorrowingServiceImpl implements BorrowingService {
     static final int RENEWAL_EXTENSION_DAYS = 7;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BorrowingResponse borrowBook(BorrowingCreationRequest request) {
 
         Member member = memberRepository.findById(request.getMemberId())
@@ -136,7 +136,6 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BorrowingResponse returnBook(Long borrowingId) {
 
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
@@ -152,16 +151,19 @@ public class BorrowingServiceImpl implements BorrowingService {
         BookCopy bookCopy = borrowing.getBookCopy();
 
         if (borrowing.getReturnDate().isAfter(borrowing.getDueDate())) {
-
+            // tính số ngày quá hạn
             long overdueDays = ChronoUnit.DAYS.between(
                     borrowing.getDueDate(),
                     borrowing.getReturnDate());
 
+            // lấy số tiền phạt 1 ngày của cuốn sách (nếu không có thì mặc định là 5000)
             BigDecimal dailyFine = bookCopy.getBook().getDailyFineAmount() != null
                     ? bookCopy.getBook().getDailyFineAmount()
                     : BigDecimal.valueOf(5000);
+            // nhân số ngày quá hạn với số tiền phạt 1 ngày
             BigDecimal amount = dailyFine.multiply(BigDecimal.valueOf(overdueDays));
 
+            // tạo record phạt (Fines) với trạng thái UNPAID
             Fines fine = Fines.builder()
                     .borrowing(borrowing)
                     .amount(amount)
@@ -226,12 +228,11 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
-    public List<com.library.dto.response.OverdueBookProjection> getOverdueBooksFromSP() {
+    public List<OverdueBookProjection> getOverdueBooksFromSP() {
         return borrowingRepository.getOverdueBooksFromSP();
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void deleteBorrowing(Long borrowingId) {
 
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
@@ -246,7 +247,6 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BorrowingResponse renewBorrowing(Long borrowingId, String username) {
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
@@ -278,13 +278,11 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BorrowingResponse reportLost(Long borrowingId) {
         return closeWithReplacementFee(borrowingId, true);
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public BorrowingResponse reportDamaged(Long borrowingId) {
         return closeWithReplacementFee(borrowingId, false);
     }

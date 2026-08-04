@@ -18,6 +18,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,7 +39,8 @@ public class ScheduledTasks {
 
     // Hết hạn các reservation đã được giữ chỗ (FULFILLED) quá 48h mà độc giả chưa
     // đến lấy
-    @Scheduled(cron = "0 5 0 * * *")
+    // @Scheduled(cron = "0 5 0 * * *")
+    @Scheduled(cron = "0 * * * * *")
     @SchedulerLock(name = "expireFulfilledReservationsTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
     @Transactional(rollbackFor = Exception.class)
     public void expireFulfilledReservations() {
@@ -68,6 +70,7 @@ public class ScheduledTasks {
 
     // Gửi email nhắc nhở cho các phiếu mượn đang quá hạn chưa trả
     @Scheduled(cron = "0 0 8 * * *")
+    // @Scheduled(cron = "0 * * * * *")
     @SchedulerLock(name = "sendOverdueRemindersTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
     @Transactional(rollbackFor = Exception.class)
     public void sendOverdueReminders() {
@@ -83,21 +86,28 @@ public class ScheduledTasks {
             try {
                 long daysOverdue = java.time.temporal.ChronoUnit.DAYS.between(borrowing.getDueDate(), LocalDate.now());
                 var book = borrowing.getBookCopy().getBook();
-                java.math.BigDecimal dailyFine = book.getDailyFineAmount() != null
+                BigDecimal dailyFine = book.getDailyFineAmount() != null
                         ? book.getDailyFineAmount()
-                        : java.math.BigDecimal.valueOf(5000);
+                        : BigDecimal.valueOf(5000);
+
+                // Tính tổng tiền phạt hiện tại
+                BigDecimal totalFine = dailyFine.multiply(BigDecimal.valueOf(daysOverdue));
 
                 String subject = "THÔNG BÁO: Sách mượn đã quá hạn trả";
                 String text = String.format("Kính gửi %s,\n\n" +
                         "Cuốn sách '%s' bạn mượn đã quá hạn trả %d ngày (hạn trả: %s).\n" +
-                        "Mức phạt hiện tại là %s VNĐ/ngày quá hạn. Vui lòng mang sách đến trả sớm để tránh phát sinh thêm phí phạt.\n\n"
+                        "Mức phạt là %s VNĐ/ngày. TỔNG SỐ TIỀN PHẠT TẠM TÍNH ĐẾN HÔM NAY LÀ: %s VNĐ.\n" +
+                        "Vui lòng mang sách đến trả sớm để tránh phát sinh thêm phí phạt.\n\n"
+                        +
+                        "Hoặc có thể thanh toán qua STK:"
                         +
                         "Trân trọng,\nBan Quản lý Thư viện",
                         borrowing.getMember().getName(),
                         book.getTitle(),
                         daysOverdue,
                         borrowing.getDueDate().format(DATE_FORMATTER),
-                        dailyFine.toPlainString());
+                        dailyFine.toPlainString(),
+                        totalFine.toPlainString());
 
                 emailService.sendEmail(borrowing.getMember().getEmail(), subject, text);
             } catch (Exception e) {
@@ -108,7 +118,8 @@ public class ScheduledTasks {
     }
 
     // Tự động hủy các yêu cầu mượn PENDING quá 3 ngày không được nhân viên xử lý
-    @Scheduled(cron = "0 15 0 * * *")
+    // @Scheduled(cron = "0 15 0 * * *")
+    @Scheduled(cron = "0 * * * * *")
     @SchedulerLock(name = "cancelStalePendingRequestsTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
     @Transactional(rollbackFor = Exception.class)
     public void cancelStalePendingRequests() {

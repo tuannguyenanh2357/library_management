@@ -20,10 +20,7 @@ public class ReportController {
 
     private final ReportService reportService;
 
-    /**
-     * GET /reports/revenue?from=2026-07-14&to=2026-07-21
-     * Nếu không truyền tham số sẽ mặc định lấy 7 ngày gần nhất.
-     */
+    // đang mặc định lay 7 ngày gần nhất
     @GetMapping("/revenue")
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<WeeklyRevenueReportResponse> getRevenueReport(

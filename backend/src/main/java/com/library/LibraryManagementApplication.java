@@ -11,6 +11,7 @@ import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider;
 import org.springframework.context.annotation.Bean;
 import javax.sql.DataSource;
 import org.springframework.jdbc.core.JdbcTemplate;
+
 @SpringBootApplication
 @EnableScheduling
 @EnableAsync
@@ -18,15 +19,18 @@ import org.springframework.jdbc.core.JdbcTemplate;
 @EnableSchedulerLock(defaultLockAtMostFor = "10m")
 public class LibraryManagementApplication {
 
+	// Cấp Ổ khóa ShedLock để khóa cửa Cronjob, tránh chạy trùng lặp khi có nhiều
+	// Server
 	@Bean
 	public LockProvider lockProvider(DataSource dataSource) {
 		return new JdbcTemplateLockProvider(
 				JdbcTemplateLockProvider.Configuration.builder()
-						.withJdbcTemplate(new JdbcTemplate(dataSource))
-						.usingDbTime() // Works with SQL Server
-						.build()
-		);
+						.withJdbcTemplate(new JdbcTemplate(dataSource)) // Chỉ đường cho ShedLock cất chìa khóa vào SQL
+																		// Server (bảng shedlock)
+						.usingDbTime() // dùng Đồng hồ của SQL Server làm chuẩn (chống lệch giờ giữa các máy chủ)
+						.build());
 	}
+
 	public static void main(String[] args) {
 		SpringApplication.run(LibraryManagementApplication.class, args);
 	}

@@ -23,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,10 +69,11 @@ public class BookCopyServiceImpl implements BookCopyService {
         }
 
         BookCopy savedBookCopy = bookCopyRepository.save(bookCopy);
-        
-        // Kiểm tra xem có ai đang xếp hàng đợi cuốn sách này không. Nếu có thì gán luôn bản sao này cho người đó.
+
+        // Kiểm tra xem có ai đang xếp hàng đợi cuốn sách này không. Nếu có thì gán luôn
+        // bản sao này cho người đó.
         reservationService.fulfillNextReservationIfAny(book.getId(), savedBookCopy);
-        
+
         return bookCopyMapper.toResponse(savedBookCopy);
     }
 
@@ -86,7 +86,8 @@ public class BookCopyServiceImpl implements BookCopyService {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
 
         if (existingBookCopy.getStatus() == BookCopyStatus.BORROWED) {
-            throw new AppException(ErrorCode.INVALID_REQUEST, "Không thể cập nhật trạng thái của bản sao đang được mượn.");
+            throw new AppException(ErrorCode.INVALID_REQUEST,
+                    "Không thể cập nhật trạng thái của bản sao đang được mượn.");
         }
 
         bookCopyMapper.updateBookCopy(existingBookCopy, request);
@@ -107,7 +108,8 @@ public class BookCopyServiceImpl implements BookCopyService {
         }
 
         if (existingBookCopy.getBorrowings() != null && !existingBookCopy.getBorrowings().isEmpty()) {
-            throw new AppException(ErrorCode.INVALID_REQUEST, "Không thể xóa bản sao vì đã có lịch sử mượn (sẽ làm mất dữ liệu lịch sử). Khuyến nghị cập nhật trạng thái thành LOST hoặc DAMAGED.");
+            throw new AppException(ErrorCode.INVALID_REQUEST,
+                    "Không thể xóa bản sao vì đã có lịch sử mượn (sẽ làm mất dữ liệu lịch sử). Khuyến nghị cập nhật trạng thái thành LOST hoặc DAMAGED.");
         }
 
         bookCopyRepository.deleteById(bookCopyId);
