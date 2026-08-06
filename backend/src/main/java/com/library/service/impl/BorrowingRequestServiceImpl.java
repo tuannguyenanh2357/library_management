@@ -34,33 +34,33 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class BorrowingRequestServiceImpl implements BorrowingRequestService {
 
-        final BorrowingRequestRepository requestRepository;
-        final MemberRepository memberRepository;
-        final BookRepository bookRepository;
-        final BookCopyRepository bookCopyRepository;
-        final FineRepository fineRepository;
-        final BorrowingService borrowingService;
-        final BorrowingRequestMapper mapper;
+        BorrowingRequestRepository requestRepository;
+        MemberRepository memberRepository;
+        BookRepository bookRepository;
+        BookCopyRepository bookCopyRepository;
+        FineRepository fineRepository;
+        BorrowingService borrowingService;
+        BorrowingRequestMapper mapper;
 
         @Override
         @Transactional(rollbackFor = Exception.class)
-        public BorrowingRequestResponse createRequest(BorrowingRequestCreationRequest dto) {
-                Member member = memberRepository.findById(dto.getMemberId())
+        public BorrowingRequestResponse createRequest(BorrowingRequestCreationRequest requestt) {
+                Member member = memberRepository.findById(requestt.getMemberId())
                                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
 
                 if (member.hasOverdueBorrowings()) {
                         throw new AppException(ErrorCode.HAS_OVERDUE_BOOKS,
                                         "Bạn không thể gửi yêu cầu mượn mới khi đang có sách quá hạn chưa trả");
                 }
-                if (fineRepository.existsByBorrowing_Member_IdAndStatus(member.getId(), FineStatus.UNPAID)) {
+                if (fineRepository.existsByBorrowingMemberIdAndStatus(member.getId(), FineStatus.UNPAID)) {
                         throw new AppException(ErrorCode.HAS_UNPAID_FINES,
                                         "Bạn không thể gửi yêu cầu mượn mới khi đang có khoản phạt chưa thanh toán");
                 }
 
-                Book book = bookRepository.findById(dto.getBookId())
+                Book book = bookRepository.findById(requestt.getBookId())
                                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND,
                                                 "Không tìm thấy đầu sách"));
 
@@ -69,21 +69,22 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                                 .book(book)
                                 .status(BorrowingRequestStatus.PENDING)
                                 .requestDate(LocalDateTime.now())
-                                .expectedDueDate(dto.getExpectedDueDate())
-                                .notes(dto.getNotes())
+                                .expectedDueDate(requestt.getExpectedDueDate())
+                                .notes(requestt.getNotes())
                                 .build();
 
                 BorrowingRequest saved = requestRepository.save(request);
-                long count = bookCopyRepository.countByBook_IdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
+                long count = bookCopyRepository.countByBookIdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
                 return mapper.toResponse(saved, count);
         }
 
+        // Lấy danh sách các Yêu cầu mượn sách đang chờ duyệt
         @Override
         public List<BorrowingRequestResponse> getPendingRequests() {
                 return requestRepository.findByStatusWithRelations(BorrowingRequestStatus.PENDING)
                                 .stream()
                                 .map(r -> mapper.toResponse(r,
-                                                bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(),
+                                                bookCopyRepository.countByBookIdAndStatus(r.getBook().getId(),
                                                                 BookCopyStatus.AVAILABLE)))
                                 .collect(Collectors.toList());
         }
@@ -93,21 +94,23 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                 return requestRepository.findHistoryWithRelations()
                                 .stream()
                                 .map(r -> mapper.toResponse(r,
-                                                bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(),
+                                                bookCopyRepository.countByBookIdAndStatus(r.getBook().getId(),
                                                                 BookCopyStatus.AVAILABLE)))
                                 .collect(Collectors.toList());
         }
 
+        // member xem danh sách yêu cầu mượn sách
         @Override
         public List<BorrowingRequestResponse> getRequestsByMember(Long memberId) {
                 return requestRepository.findByMemberIdWithRelations(memberId)
                                 .stream()
                                 .map(r -> mapper.toResponse(r,
-                                                bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(),
+                                                bookCopyRepository.countByBookIdAndStatus(r.getBook().getId(),
                                                                 BookCopyStatus.AVAILABLE)))
                                 .collect(Collectors.toList());
         }
 
+        // Xử lý việc phê duyệt một yêu cầu mượn sách của độc giả
         @Override
         @Transactional(rollbackFor = Exception.class)
         public BorrowingRequestResponse approveRequest(Long requestId,
@@ -127,7 +130,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                                 .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_AVAILABLE,
                                                 "Không còn cuốn sách nào khả dụng trong kho"));
 
-                // Sử dụng ngày dự kiến trả và ghi chú từ yêu cầu
+                // tạo phiếu mượn từ yêu cầu đã được duyệt
                 BorrowingCreationRequest borrowingDto = new BorrowingCreationRequest(
                                 request.getMember().getId(),
                                 bookCopy.getId(),
@@ -138,7 +141,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                 request.setStatus(BorrowingRequestStatus.APPROVED);
                 request.setProcessedDate(LocalDateTime.now());
 
-                long count = bookCopyRepository.countByBook_IdAndStatus(request.getBook().getId(),
+                long count = bookCopyRepository.countByBookIdAndStatus(request.getBook().getId(),
                                 BookCopyStatus.AVAILABLE);
                 return mapper.toResponse(requestRepository.save(request), count);
         }
@@ -158,7 +161,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                 request.setProcessedDate(LocalDateTime.now());
                 request.setNotes(reason);
 
-                long count = bookCopyRepository.countByBook_IdAndStatus(request.getBook().getId(),
+                long count = bookCopyRepository.countByBookIdAndStatus(request.getBook().getId(),
                                 BookCopyStatus.AVAILABLE);
                 return mapper.toResponse(requestRepository.save(request), count);
         }
@@ -180,7 +183,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                 request.setStatus(BorrowingRequestStatus.CANCELLED);
                 request.setProcessedDate(LocalDateTime.now());
 
-                long count = bookCopyRepository.countByBook_IdAndStatus(request.getBook().getId(),
+                long count = bookCopyRepository.countByBookIdAndStatus(request.getBook().getId(),
                                 BookCopyStatus.AVAILABLE);
                 return mapper.toResponse(requestRepository.save(request), count);
         }

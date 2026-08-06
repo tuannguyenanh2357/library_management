@@ -26,7 +26,7 @@ public class LibraryManagementApplication {
 		return new JdbcTemplateLockProvider(
 				JdbcTemplateLockProvider.Configuration.builder()
 						.withJdbcTemplate(new JdbcTemplate(dataSource)) // Chỉ đường cho ShedLock cất chìa khóa vào SQL
-																		// Server (bảng shedlock)
+																		// Server
 						.usingDbTime() // dùng Đồng hồ của SQL Server làm chuẩn (chống lệch giờ giữa các máy chủ)
 						.build());
 	}

@@ -61,6 +61,10 @@ jwt:
   signerKey: "1234567890123456789012345678901234567890123456789012345678901234"
 
 app:
+  library:
+    fine:
+      default-daily-amount: 5000
+      default-replacement-fee: 200000
   setup:
     admin:
       username: ${ADMIN_USERNAME:admin}

@@ -5,7 +5,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.Authentication;
 import com.library.service.interfaces.MemberService;
 import com.library.dto.response.MemberResponse;
 import com.library.dto.request.MemberCreationRequest;
@@ -55,18 +54,9 @@ public class MemberController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getMyProfile() {
-        try {
-            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            if (auth == null) {
-                return ResponseEntity.status(401).body("Authentication object is null");
-            }
-            String username = auth.getName();
-            return ResponseEntity.ok(memberService.getMemberByUsername(username));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error: " + e.getMessage());
-        }
+    public ResponseEntity<MemberResponse> getMyProfile() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        return ResponseEntity.ok(memberService.getMemberByUsername(username));
     }
 
     @PutMapping("/me")
@@ -79,13 +69,9 @@ public class MemberController {
 
     @PutMapping("/me/password")
     public ResponseEntity<?> changePassword(@Valid @RequestBody com.library.dto.request.ChangePasswordRequest request) {
-        try {
-            String username = SecurityContextHolder.getContext().getAuthentication().getName();
-            memberService.changePassword(username, request);
-            return ResponseEntity.ok(java.util.Map.of("message", "Đổi mật khẩu thành công"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
-        }
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        memberService.changePassword(username, request);
+        return ResponseEntity.ok(java.util.Map.of("message", "Đổi mật khẩu thành công"));
     }
 
     @GetMapping("/unpaid-fines")

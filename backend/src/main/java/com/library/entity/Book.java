@@ -58,13 +58,11 @@ public class Book {
     String imageUrl;
 
     @Column(name = "daily_fine_amount", precision = 10, scale = 2)
-    @Builder.Default
-    BigDecimal dailyFineAmount = new BigDecimal("5000.00");
+    BigDecimal dailyFineAmount;
 
     // Phí đền bù khi bản sao của sách này bị báo mất/hỏng
     @Column(name = "replacement_fee", precision = 10, scale = 2)
-    @Builder.Default
-    BigDecimal replacementFee = new BigDecimal("200000.00");
+    BigDecimal replacementFee;
 
     @Column(name = "publication_year")
     Integer publicationYear;

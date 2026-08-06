@@ -35,5 +35,5 @@ public interface FineRepository extends JpaRepository<Fines, Long> {
 
         // Kiểm tra xem một thành viên có đang tồn tại khoản phạt với trạng thái cụ thể
         // hay không
-        boolean existsByBorrowing_Member_IdAndStatus(Long memberId, FineStatus status);
+        boolean existsByBorrowingMemberIdAndStatus(Long memberId, FineStatus status);
 }

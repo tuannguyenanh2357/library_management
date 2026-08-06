@@ -13,6 +13,7 @@ import com.library.repository.BookRepository;
 import com.library.repository.BookCopyRepository;
 import com.library.mapper.BookMapper;
 import com.library.service.interfaces.BookService;
+import com.library.entity.enums.BookCopyStatus;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
@@ -30,16 +31,15 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class BookServiceImpl implements BookService {
-        final BookRepository bookRepository;
-        final BookCopyRepository bookCopyRepository;
-        final BookMapper bookMapper;
+        BookRepository bookRepository;
+        BookCopyRepository bookCopyRepository;
+        BookMapper bookMapper;
 
         BookResponse mapToResponse(Book book) {
                 BookResponse response = bookMapper.toBookResponse(book);
-                long available = bookCopyRepository.countByBook_IdAndStatus(book.getId(),
-                                com.library.entity.enums.BookCopyStatus.AVAILABLE);
+                long available = bookCopyRepository.countByBookIdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
                 response.setAvailableCopiesCount(available);
                 return response;
         }

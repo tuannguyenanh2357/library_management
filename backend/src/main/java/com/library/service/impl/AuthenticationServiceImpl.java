@@ -28,6 +28,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -127,21 +128,28 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    // kiểm tra toke có đúng chữ ký không - token đã hết hạn chưa
-    public IntrospectResponse introspect(IntrospectRequest request) throws Exception {
+    // kiểm tra toke có đúng không - token còn hạn không
+    public IntrospectResponse introspect(IntrospectRequest request) {
         var token = request.getToken();
 
-        JWSVerifier verifier = new MACVerifier(signerKey.getBytes());
+        try {
+            JWSVerifier verifier = new MACVerifier(signerKey.getBytes());
 
-        SignedJWT signedJWT = SignedJWT.parse(token);
+            SignedJWT signedJWT = SignedJWT.parse(token);
 
-        Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+            Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
-        var verified = signedJWT.verify(verifier);
+            var verified = signedJWT.verify(verifier);
 
-        return IntrospectResponse.builder()
-                .valid(verified && expiryTime.after(new Date()))
-                .build();
+            return IntrospectResponse.builder()
+                    .valid(verified && expiryTime.after(new Date()))
+                    .build();
+        } catch (ParseException | JOSEException e) {
+            log.warn("Token không hợp lệ khi introspect: {}", e.getMessage());
+            return IntrospectResponse.builder()
+                    .valid(false)
+                    .build();
+        }
     }
 
 }

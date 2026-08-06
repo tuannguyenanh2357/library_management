@@ -37,20 +37,27 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
+@Transactional(rollbackFor = Exception.class)
 @RequiredArgsConstructor
 @Slf4j
-@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class BorrowingServiceImpl implements BorrowingService {
 
-    final BorrowingRepository borrowingRepository;
-    final MemberRepository memberRepository;
-    final BookCopyRepository bookCopyRepository;
-    final FineRepository fineRepository;
-    final ReservationService reservationService;
-    final BorrowingMapper mapper;
-    final RabbitTemplate rabbitTemplate;
+    BorrowingRepository borrowingRepository;
+    MemberRepository memberRepository;
+    BookCopyRepository bookCopyRepository;
+    FineRepository fineRepository;
+    ReservationService reservationService;
+    BorrowingMapper mapper;
+    RabbitTemplate rabbitTemplate;
     static final int MAX_RENEWALS = 1;
     static final int RENEWAL_EXTENSION_DAYS = 7;
+
+    @org.springframework.beans.factory.annotation.Value("${app.library.fine.default-daily-amount:5000}")
+    private BigDecimal defaultDailyFineAmount;
+
+    @org.springframework.beans.factory.annotation.Value("${app.library.fine.default-replacement-fee:200000}")
+    private BigDecimal defaultReplacementFee;
 
     @Override
     public BorrowingResponse borrowBook(BorrowingCreationRequest request) {
@@ -61,7 +68,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         if (member.hasOverdueBorrowings()) {
             throw new AppException(ErrorCode.HAS_OVERDUE_BOOKS);
         }
-        if (fineRepository.existsByBorrowing_Member_IdAndStatus(member.getId(), FineStatus.UNPAID)) {
+        if (fineRepository.existsByBorrowingMemberIdAndStatus(member.getId(), FineStatus.UNPAID)) {
             throw new AppException(ErrorCode.HAS_UNPAID_FINES);
         }
 
@@ -125,8 +132,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         try {
             rabbitTemplate.convertAndSend(
                     RabbitMQConfig.RESERVATION_EXCHANGE,
-                    RabbitMQConfig.BORROWING_CREATED_ROUTING_KEY,
-                    event);
+                    RabbitMQConfig.BORROWING_CREATED_ROUTING_KEY, event);
             log.info("[RABBITMQ PRODUCER] Đã gửi BorrowingCreatedEvent cho phiếu mượn ID: {}", borrowing.getId());
         } catch (Exception e) {
             log.error("Lỗi khi gửi RabbitMQ event cho phiếu mượn ID {}: {}", borrowing.getId(), e.getMessage());
@@ -156,10 +162,10 @@ public class BorrowingServiceImpl implements BorrowingService {
                     borrowing.getDueDate(),
                     borrowing.getReturnDate());
 
-            // lấy số tiền phạt 1 ngày của cuốn sách (nếu không có thì mặc định là 5000)
+            // lấy số tiền phạt 1 ngày của cuốn sách (nếu không có thì mặc định)
             BigDecimal dailyFine = bookCopy.getBook().getDailyFineAmount() != null
                     ? bookCopy.getBook().getDailyFineAmount()
-                    : BigDecimal.valueOf(5000);
+                    : defaultDailyFineAmount;
             // nhân số ngày quá hạn với số tiền phạt 1 ngày
             BigDecimal amount = dailyFine.multiply(BigDecimal.valueOf(overdueDays));
 
@@ -186,10 +192,8 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     @Override
     public BorrowingResponse getById(Long id) {
-
-        return mapper.toResponse(
-                borrowingRepository.findById(id)
-                        .orElseThrow(() -> new RuntimeException("Borrowing not found")));
+        return mapper.toResponse(borrowingRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Borrowing not found")));
     }
 
     @Override
@@ -236,7 +240,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     public void deleteBorrowing(Long borrowingId) {
 
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
-                .orElseThrow(() -> new RuntimeException("Borrowing not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
 
         if (borrowing.getFine() != null && borrowing.getFine().getStatus() == FineStatus.UNPAID) {
             throw new AppException(ErrorCode.INVALID_REQUEST,
@@ -310,7 +314,7 @@ public class BorrowingServiceImpl implements BorrowingService {
 
         BigDecimal fee = bookCopy.getBook().getReplacementFee() != null
                 ? bookCopy.getBook().getReplacementFee()
-                : new BigDecimal("200000.00");
+                : defaultReplacementFee;
 
         Fines fine = Fines.builder()
                 .borrowing(borrowing)

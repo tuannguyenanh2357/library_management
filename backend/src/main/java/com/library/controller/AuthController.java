@@ -14,12 +14,10 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 
 @RestController
@@ -35,15 +33,15 @@ public class AuthController {
         AuthenticationResponse authResponse = authenticationService.authenticate(request);
 
         ResponseCookie springCookie = ResponseCookie.from("auth_token", authResponse.getToken())
-                .httpOnly(true)
+                .httpOnly(true) // chặn javascript đọc được token
                 .secure(false)
                 .path("/")
                 .maxAge(90 * 60)
                 .sameSite("Strict") // Trình duyệt sẽ không gửi cookie này đi nếu request đến từ một domain khác
                 .build();
+        // Gắn cái Cookie đó vào HTTP Header để gửi về trình duyệt
         response.addHeader(HttpHeaders.SET_COOKIE, springCookie.toString());
 
-        // Xóa token khỏi response body
         authResponse.setToken(null);
 
         return ResponseEntity.ok(authResponse);
@@ -70,8 +68,7 @@ public class AuthController {
     }
 
     @PostMapping("/introspect")
-    public ResponseEntity<IntrospectResponse> introspect(@Valid @RequestBody IntrospectRequest request)
-            throws Exception {
+    public ResponseEntity<IntrospectResponse> introspect(@Valid @RequestBody IntrospectRequest request) {
         IntrospectResponse response = authenticationService.introspect(request);
         return ResponseEntity.ok(response);
     }

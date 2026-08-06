@@ -1,5 +1,7 @@
 package com.library.controller;
 
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -41,11 +43,11 @@ public class FileController {
                 .cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "");
         String fileName = UUID.randomUUID().toString() + "_" + originalFileName;
 
-        try {
-            if (fileName.contains("..")) {
-                throw new RuntimeException("Xin lỗi! Tên tệp chứa chuỗi đường dẫn không hợp lệ " + fileName);
-            }
+        if (fileName.contains("..")) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
 
+        try {
             Path targetLocation = this.fileStorageLocation.resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 

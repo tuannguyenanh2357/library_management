@@ -64,10 +64,8 @@ public class ReservationServiceImpl implements ReservationService {
             throw new AppException(ErrorCode.RESERVATION_FAILED, "Bạn đã đặt trước cuốn sách này rồi.");
         }
 
-        // Kiểm tra xem có bản sao nào khả dụng không. Nếu có, người dùng
-        // nên mượn trực tiếp hoặc tạo Yêu cầu mượn (BorrowingRequest).
-        // Thực tế, Đặt chỗ (Reservation) dành cho trường hợp sách đã hết.
-        long availableCount = bookCopyRepository.countByBook_IdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
+        // Kiểm tra xem có bản sao nào khả dụng không
+        long availableCount = bookCopyRepository.countByBookIdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
         if (availableCount > 0) {
             throw new AppException(ErrorCode.RESERVATION_FAILED,
                     "Sách này vẫn còn bản sao sẵn sàng. Vui lòng mượn trực tiếp thay vì đặt trước.");
@@ -127,8 +125,7 @@ public class ReservationServiceImpl implements ReservationService {
                         "Không tìm thấy thông tin đặt trước"));
 
         // Chỉ người sở hữu hoặc admin mới được hủy. Chúng ta đơn giản hóa bằng cách chỉ
-        // kiểm tra
-        // người sở hữu nếu đó không phải là API của admin.
+        // kiểm tra người sở hữu nếu đó không phải là API của admin.
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy người dùng"));
 

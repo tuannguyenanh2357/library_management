@@ -32,7 +32,6 @@ public class ReportServiceImpl implements ReportService {
         @Override
         public WeeklyRevenueReportResponse getRevenueReport(LocalDate fromDate, LocalDate toDate) {
 
-                // 1. Tóm tắt
                 List<ReportSummaryProjection> summaryList = reportRepository.getRevenueReportSummary(fromDate, toDate);
 
                 WeeklyRevenueReportResponse.WeeklyRevenueReportResponseBuilder builder = WeeklyRevenueReportResponse
@@ -177,7 +176,7 @@ public class ReportServiceImpl implements ReportService {
 
                 } catch (JRException e) {
                         log.error("Error generating revenue report PDF", e);
-                        throw new RuntimeException("Lỗi tạo file báo cáo PDF: " + e.getMessage());
+                        throw new RuntimeException("Lỗi tạo file báo cáo PDF: " + e.getMessage(), e);
                 }
         }
 }

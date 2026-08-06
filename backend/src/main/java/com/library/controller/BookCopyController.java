@@ -38,13 +38,13 @@ public class BookCopyController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<BookCopyResponse> createBookCopy(@Valid @RequestBody BookCopyCreationRequest request) {
         BookCopyResponse created = bookCopyService.createBookCopy(request);
-        URI location = URI.create("/book-copies/" + created.getId());
-        return ResponseEntity.created(location).body(created);
+        return ResponseEntity.ok(created);
     }
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
-    public ResponseEntity<BookCopyResponse> updateBookCopy(@PathVariable Long id, @Valid @RequestBody BookCopyUpdateRequest request) {
+    public ResponseEntity<BookCopyResponse> updateBookCopy(@PathVariable Long id,
+            @Valid @RequestBody BookCopyUpdateRequest request) {
         BookCopyResponse updated = bookCopyService.updateBookCopy(id, request);
         return ResponseEntity.ok(updated);
     }

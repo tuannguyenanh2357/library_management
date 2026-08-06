@@ -19,8 +19,6 @@ public interface BookCopyMapper {
 
         @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
         @Mapping(target = "book.id", source = "bookId")
-        void updateBookCopy(
-                        @MappingTarget BookCopy entity,
-                        BookCopyUpdateRequest request);
+        void updateBookCopy(@MappingTarget BookCopy entity, BookCopyUpdateRequest request);
 
 }

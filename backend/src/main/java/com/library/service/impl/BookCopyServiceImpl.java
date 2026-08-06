@@ -21,6 +21,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.concurrent.ThreadLocalRandom;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -64,7 +65,7 @@ public class BookCopyServiceImpl implements BookCopyService {
         BookCopy bookCopy = bookCopyMapper.toBookCopy(request);
         bookCopy.setBook(book);
         if (bookCopy.getBarCode() == null || bookCopy.getBarCode().isBlank()) {
-            int randomNum = java.util.concurrent.ThreadLocalRandom.current().nextInt(100000, 1000000);
+            int randomNum = ThreadLocalRandom.current().nextInt(100000, 1000000);
             bookCopy.setBarCode("BC-" + randomNum);
         }
 
@@ -73,7 +74,6 @@ public class BookCopyServiceImpl implements BookCopyService {
         // Kiểm tra xem có ai đang xếp hàng đợi cuốn sách này không. Nếu có thì gán luôn
         // bản sao này cho người đó.
         reservationService.fulfillNextReservationIfAny(book.getId(), savedBookCopy);
-
         return bookCopyMapper.toResponse(savedBookCopy);
     }
 

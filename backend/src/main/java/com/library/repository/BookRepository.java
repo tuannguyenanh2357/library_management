@@ -36,7 +36,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
         List<TopBookProjection> getTop10MostBorrowedBooks();
 
         // Tìm kiếm sách theo các tiêu chí lọc tùy chọn và hỗ trợ phân trang.
-        // Điều kiện có giá trị sẽ được áp dụng, điều kiện null sẽ được bỏ qua.
         @Query("SELECT b FROM Book b WHERE " +
                         "(:id IS NULL OR b.id = :id) AND " +
                         "(:title IS NULL OR LOWER(b.title) LIKE :title) AND " +

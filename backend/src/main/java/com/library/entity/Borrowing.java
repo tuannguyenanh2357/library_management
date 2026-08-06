@@ -73,12 +73,9 @@ public class Borrowing {
         return renewalCount != null ? renewalCount : 0;
     }
 
-
-
-    // kiem tra phiếu mượn có đang quá hạn hay không
+    // kiểm tra phiếu mượn có đang quá hạn hay không
     public boolean isCurrentlyOverdue() {
-        return status == BorrowingStatus.ACTIVE
-                && LocalDate.now().isAfter(dueDate);
+        return status == BorrowingStatus.ACTIVE && LocalDate.now().isAfter(dueDate);
     }
 
     // kiểm tra xem sách đã được trả trễ hay không
@@ -89,7 +86,7 @@ public class Borrowing {
 
     // số ngày trả trễ
     public long getDaysLate() {
-        if(!wasReturnedLate()){
+        if (!wasReturnedLate()) {
             return 0;
         }
 
@@ -97,10 +94,9 @@ public class Borrowing {
     }
 
     // trả sách
-    public void returnBook(){
+    public void returnBook() {
         this.returnDate = LocalDate.now();
         this.status = BorrowingStatus.RETURNED;
         this.bookCopy.markAsReturned();
     }
 }
-

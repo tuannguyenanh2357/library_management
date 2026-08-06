@@ -12,12 +12,15 @@ import com.library.repository.ReservationRepository;
 import com.library.service.interfaces.EmailService;
 import com.library.service.interfaces.ReservationService;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-
+import lombok.AccessLevel;
+import lombok.experimental.NonFinal;
+import org.springframework.beans.factory.annotation.Value;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,13 +30,18 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ScheduledTasks {
 
-    private final ReservationRepository reservationRepository;
-    private final ReservationService reservationService;
-    private final BorrowingRepository borrowingRepository;
-    private final BorrowingRequestRepository borrowingRequestRepository;
-    private final EmailService emailService;
+    ReservationRepository reservationRepository;
+    ReservationService reservationService;
+    BorrowingRepository borrowingRepository;
+    BorrowingRequestRepository borrowingRequestRepository;
+    EmailService emailService;
+
+    @NonFinal
+    @Value("${default-daily-amount}")
+    BigDecimal defaultDailyFineAmount;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
@@ -88,7 +96,7 @@ public class ScheduledTasks {
                 var book = borrowing.getBookCopy().getBook();
                 BigDecimal dailyFine = book.getDailyFineAmount() != null
                         ? book.getDailyFineAmount()
-                        : BigDecimal.valueOf(5000);
+                        : defaultDailyFineAmount;
 
                 // Tính tổng tiền phạt hiện tại
                 BigDecimal totalFine = dailyFine.multiply(BigDecimal.valueOf(daysOverdue));

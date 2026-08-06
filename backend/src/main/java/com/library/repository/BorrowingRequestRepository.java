@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface BorrowingRequestRepository extends JpaRepository<BorrowingRequest, Long> {
 
-    // Lấy danh sách yêu cầu mượn theo trạng thái và tải sẵn thông tin thành viên,
+    // Lấy danh sách yêu cầu mượn theo trạng thái và tải sẵn thông tin thành viên
     // đầu sách để phục vụ hiển thị.
     @Query("SELECT br FROM BorrowingRequest br JOIN FETCH br.member JOIN FETCH br.book WHERE br.status = :status ORDER BY br.requestDate DESC")
     List<BorrowingRequest> findByStatusWithRelations(BorrowingRequestStatus status);

@@ -25,7 +25,7 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
 
     // Đếm số lượng bản sao của một đầu sách theo trạng thái.
     @Query("SELECT COUNT(bc) FROM BookCopy bc WHERE bc.book.id = :bookId AND bc.status = :status")
-    long countByBook_IdAndStatus(long bookId, BookCopyStatus status);
+    long countByBookIdAndStatus(long bookId, BookCopyStatus status);
 
     // Khóa bản ghi ở mức ghi để đảm bảo chỉ một transaction
     @Lock(LockModeType.PESSIMISTIC_WRITE)

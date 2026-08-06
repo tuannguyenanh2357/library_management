@@ -15,7 +15,8 @@ import java.util.List;
 
 public interface ReportRepository extends JpaRepository<Fines, Long> {
 
-       // Gọi Stored Procedure để lấy tóm tắt tổng quan báo cáo doanh thu phạt trong một khoảng thời gian
+       // Gọi Stored Procedure để lấy tóm tắt tổng quan báo cáo doanh thu phạt trong
+       // một khoảng thời gian
        @Query(value = "EXEC dbo.GetRevenueReportSummary @FromDate = :fromDate, @ToDate = :toDate", nativeQuery = true)
        List<ReportSummaryProjection> getRevenueReportSummary(
                      @Param("fromDate") LocalDate fromDate,
@@ -27,7 +28,7 @@ public interface ReportRepository extends JpaRepository<Fines, Long> {
                      @Param("fromDate") LocalDate fromDate,
                      @Param("toDate") LocalDate toDate);
 
-       // Gọi Stored Procedure để lấy danh sách những thành viên vi phạm (bị phạt) nhiều nhất
+       // Gọi Stored Procedure để lấy danh sách những thành viên vi phạm nhiều nhất
        @Query(value = "EXEC dbo.GetTopOffendersInPeriod @FromDate = :fromDate, @ToDate = :toDate", nativeQuery = true)
        List<TopOffenderProjection> getTopOffenders(
                      @Param("fromDate") LocalDate fromDate,

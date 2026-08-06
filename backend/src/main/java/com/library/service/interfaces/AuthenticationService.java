@@ -10,5 +10,5 @@ import com.library.dto.response.MemberResponse;
 public interface AuthenticationService {
     AuthenticationResponse authenticate(AuthenticationRequest request);
     MemberResponse register(RegisterRequest request);
-    IntrospectResponse introspect(IntrospectRequest request) throws Exception;
+    IntrospectResponse introspect(IntrospectRequest request);
 }
