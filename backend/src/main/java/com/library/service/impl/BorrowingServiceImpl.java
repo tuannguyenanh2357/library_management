@@ -23,6 +23,8 @@ import com.library.exception.MemberNotFoundException;
 import com.library.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
+
 import com.library.config.RabbitMQConfig;
 import com.library.dto.event.BorrowingCreatedEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +32,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import com.library.service.interfaces.ReservationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -50,14 +53,22 @@ public class BorrowingServiceImpl implements BorrowingService {
     ReservationService reservationService;
     BorrowingMapper mapper;
     RabbitTemplate rabbitTemplate;
-    static final int MAX_RENEWALS = 1;
-    static final int RENEWAL_EXTENSION_DAYS = 7;
 
-    @org.springframework.beans.factory.annotation.Value("${app.library.fine.default-daily-amount:5000}")
-    private BigDecimal defaultDailyFineAmount;
+    @NonFinal
+    @Value("${app.library.fine.default-daily-amount:5000}")
+    BigDecimal defaultDailyFineAmount;
 
-    @org.springframework.beans.factory.annotation.Value("${app.library.fine.default-replacement-fee:200000}")
-    private BigDecimal defaultReplacementFee;
+    @NonFinal
+    @Value("${app.library.fine.default-replacement-fee:200000}")
+    BigDecimal defaultReplacementFee;
+
+    @NonFinal
+    @Value("${app.library.borrowing.max-renewals:1}")
+    int maxRenewals;
+
+    @NonFinal
+    @Value("${app.library.borrowing.renewal-extension-days:7}")
+    int renewalExtensionDays;
 
     @Override
     public BorrowingResponse borrowBook(BorrowingCreationRequest request) {
@@ -183,8 +194,7 @@ public class BorrowingServiceImpl implements BorrowingService {
 
         borrowingRepository.save(borrowing);
 
-        // Nếu có người đang xếp hàng chờ, sách sẽ đổi thành RESERVED. Ngược lại nó sẽ
-        // thành AVAILABLE.
+        // Nếu có người đang xếp hàng chờ, sách sẽ đổi thành RESERVED. Ngược lại nó sẽ thành AVAILABLE.
         reservationService.fulfillNextReservationIfAny(bookCopy.getBook().getId(), bookCopy);
 
         return mapper.toResponse(borrowing);
@@ -264,7 +274,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         if (LocalDate.now().isAfter(borrowing.getDueDate())) {
             throw new AppException(ErrorCode.CANNOT_EXTEND_BORROWING, "Không thể gia hạn sách đã quá hạn");
         }
-        if (borrowing.getRenewalCount() >= MAX_RENEWALS) {
+        if (borrowing.getRenewalCount() >= maxRenewals) {
             throw new AppException(ErrorCode.CANNOT_EXTEND_BORROWING, "Bạn chỉ được gia hạn một lần cho mỗi lượt mượn");
         }
 
@@ -274,7 +284,7 @@ public class BorrowingServiceImpl implements BorrowingService {
                     "Không thể gia hạn vì đang có độc giả khác chờ mượn cuốn sách này");
         }
 
-        borrowing.setDueDate(borrowing.getDueDate().plusDays(RENEWAL_EXTENSION_DAYS));
+        borrowing.setDueDate(borrowing.getDueDate().plusDays(renewalExtensionDays));
         borrowing.setRenewalCount(borrowing.getRenewalCount() + 1);
         borrowingRepository.save(borrowing);
 

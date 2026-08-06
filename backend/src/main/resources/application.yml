@@ -65,6 +65,9 @@ app:
     fine:
       default-daily-amount: 5000
       default-replacement-fee: 200000
+    borrowing:
+      max-renewals: 1
+      renewal-extension-days: 7
   setup:
     admin:
       username: ${ADMIN_USERNAME:admin}

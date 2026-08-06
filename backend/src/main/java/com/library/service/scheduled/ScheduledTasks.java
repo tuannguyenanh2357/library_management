@@ -40,7 +40,7 @@ public class ScheduledTasks {
     EmailService emailService;
 
     @NonFinal
-    @Value("${default-daily-amount}")
+    @Value("${app.library.fine.default-daily-amount}")
     BigDecimal defaultDailyFineAmount;
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
