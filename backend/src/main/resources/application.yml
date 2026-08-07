@@ -68,6 +68,8 @@ app:
     borrowing:
       max-renewals: 1
       renewal-extension-days: 7
+      default-days: 14
+      max-days: 30
   setup:
     admin:
       username: ${ADMIN_USERNAME:admin}

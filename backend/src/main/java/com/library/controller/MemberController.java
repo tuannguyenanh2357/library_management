@@ -4,9 +4,10 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.library.security.SecurityUtils;
 import com.library.service.interfaces.MemberService;
 import com.library.dto.response.MemberResponse;
+import com.library.dto.response.MessageResponse;
 import com.library.dto.request.MemberCreationRequest;
 import com.library.dto.request.MemberUpdateRequest;
 import jakarta.validation.Valid;
@@ -55,23 +56,24 @@ public class MemberController {
 
     @GetMapping("/me")
     public ResponseEntity<MemberResponse> getMyProfile() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = SecurityUtils.getCurrentUsername();
         return ResponseEntity.ok(memberService.getMemberByUsername(username));
     }
 
     @PutMapping("/me")
     public ResponseEntity<MemberResponse> updateMyProfile(
             @Valid @RequestBody com.library.dto.request.MyProfileUpdateRequest request) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = SecurityUtils.getCurrentUsername();
         MemberResponse updated = memberService.updateMyProfile(username, request);
         return ResponseEntity.ok(updated);
     }
 
     @PutMapping("/me/password")
-    public ResponseEntity<?> changePassword(@Valid @RequestBody com.library.dto.request.ChangePasswordRequest request) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    public ResponseEntity<MessageResponse> changePassword(
+            @Valid @RequestBody com.library.dto.request.ChangePasswordRequest request) {
+        String username = SecurityUtils.getCurrentUsername();
         memberService.changePassword(username, request);
-        return ResponseEntity.ok(java.util.Map.of("message", "Đổi mật khẩu thành công"));
+        return ResponseEntity.ok(MessageResponse.of("Đổi mật khẩu thành công"));
     }
 
     @GetMapping("/unpaid-fines")
@@ -82,21 +84,21 @@ public class MemberController {
 
     @GetMapping("/me/favorites")
     public ResponseEntity<List<com.library.dto.response.BookResponse>> getMyFavoriteBooks() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = SecurityUtils.getCurrentUsername();
         return ResponseEntity.ok(memberService.getFavoriteBooks(username));
     }
 
     @PostMapping("/me/favorites/{bookId}")
-    public ResponseEntity<?> addFavoriteBook(@PathVariable Long bookId) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    public ResponseEntity<MessageResponse> addFavoriteBook(@PathVariable Long bookId) {
+        String username = SecurityUtils.getCurrentUsername();
         memberService.addFavoriteBook(username, bookId);
-        return ResponseEntity.ok(java.util.Map.of("message", "Thêm sách vào danh sách yêu thích thành công"));
+        return ResponseEntity.ok(MessageResponse.of("Thêm sách vào danh sách yêu thích thành công"));
     }
 
     @DeleteMapping("/me/favorites/{bookId}")
-    public ResponseEntity<?> removeFavoriteBook(@PathVariable Long bookId) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    public ResponseEntity<MessageResponse> removeFavoriteBook(@PathVariable Long bookId) {
+        String username = SecurityUtils.getCurrentUsername();
         memberService.removeFavoriteBook(username, bookId);
-        return ResponseEntity.ok(java.util.Map.of("message", "Đã xóa sách khỏi danh sách yêu thích"));
+        return ResponseEntity.ok(MessageResponse.of("Đã xóa sách khỏi danh sách yêu thích"));
     }
 }

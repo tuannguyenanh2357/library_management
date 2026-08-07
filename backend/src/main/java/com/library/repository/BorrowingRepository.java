@@ -73,4 +73,11 @@ public interface BorrowingRepository extends JpaRepository<Borrowing, Long> {
         @Query("SELECT MIN(b.dueDate) FROM Borrowing b WHERE b.bookCopy.book.id = :bookId AND b.status = 'ACTIVE'")
         LocalDate findEarliestDueDateByBookId(@Param("bookId") Long bookId);
 
+        // Lấy ngày phải trả sớm nhất theo từng đầu sách trong một danh sách, dùng để
+        // tránh N+1 query khi cần tính ngày dự kiến có sách cho nhiều đầu sách cùng lúc.
+        @Query("SELECT b.bookCopy.book.id, MIN(b.dueDate) FROM Borrowing b " +
+                        "WHERE b.bookCopy.book.id IN :bookIds AND b.status = 'ACTIVE' " +
+                        "GROUP BY b.bookCopy.book.id")
+        List<Object[]> findEarliestDueDatesByBookIds(@Param("bookIds") List<Long> bookIds);
+
 }

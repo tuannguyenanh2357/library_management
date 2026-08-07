@@ -27,6 +27,12 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
     @Query("SELECT COUNT(bc) FROM BookCopy bc WHERE bc.book.id = :bookId AND bc.status = :status")
     long countByBookIdAndStatus(long bookId, BookCopyStatus status);
 
+    // Đếm số lượng bản sao AVAILABLE theo từng đầu sách trong một danh sách, dùng
+    // để tránh N+1 query khi cần đếm cho nhiều đầu sách cùng lúc.
+    @Query("SELECT bc.book.id, COUNT(bc) FROM BookCopy bc " +
+            "WHERE bc.book.id IN :bookIds AND bc.status = :status GROUP BY bc.book.id")
+    List<Object[]> countByBookIdsAndStatus(List<Long> bookIds, BookCopyStatus status);
+
     // Khóa bản ghi ở mức ghi để đảm bảo chỉ một transaction
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<BookCopy> findFirstByBook_IdAndStatus(long bookId, BookCopyStatus status);

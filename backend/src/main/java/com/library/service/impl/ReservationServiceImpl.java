@@ -25,9 +25,11 @@ import com.library.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import com.library.config.RabbitMQConfig;
@@ -78,7 +80,7 @@ public class ReservationServiceImpl implements ReservationService {
                 .build();
 
         Reservation saved = reservationRepository.save(reservation);
-        return mapToResponseWithExpectedDate(saved);
+        return mapToResponsesWithExpectedDate(List.of(saved)).get(0);
     }
 
     @Override
@@ -86,35 +88,43 @@ public class ReservationServiceImpl implements ReservationService {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên"));
 
-        return reservationRepository.findByMemberIdOrderByRequestDateDesc(member.getId())
-                .stream()
-                .map(this::mapToResponseWithExpectedDate)
-                .collect(Collectors.toList());
+        return mapToResponsesWithExpectedDate(
+                reservationRepository.findByMemberIdOrderByRequestDateDesc(member.getId()));
     }
 
     @Override
     public List<ReservationResponse> getPendingReservationsForBook(Long bookId) {
-        return reservationRepository.findByBookIdAndStatusOrderByRequestDateAsc(bookId, ReservationStatus.PENDING)
-                .stream()
-                .map(this::mapToResponseWithExpectedDate)
-                .collect(Collectors.toList());
+        return mapToResponsesWithExpectedDate(
+                reservationRepository.findByBookIdAndStatusOrderByRequestDateAsc(bookId, ReservationStatus.PENDING));
     }
 
     @Override
     public List<ReservationResponse> getAllReservations() {
-        return reservationRepository.findAll().stream()
-                .sorted((a, b) -> b.getRequestDate().compareTo(a.getRequestDate()))
-                .map(this::mapToResponseWithExpectedDate)
-                .collect(Collectors.toList());
+        return mapToResponsesWithExpectedDate(reservationRepository.findAllByOrderByRequestDateDesc());
     }
 
-    private ReservationResponse mapToResponseWithExpectedDate(Reservation reservation) {
-        ReservationResponse response = mapper.toResponse(reservation);
-        if (reservation.getStatus() == ReservationStatus.PENDING) {
-            response.setExpectedAvailableDate(
-                    borrowingRepository.findEarliestDueDateByBookId(reservation.getBook().getId()));
-        }
-        return response;
+    // Gộp truy vấn ngày dự kiến có sách cho tất cả reservation PENDING trong một lần thay vì gọi lại DB cho từng phần tử (tránh N+1 query).
+    private List<ReservationResponse> mapToResponsesWithExpectedDate(List<Reservation> reservations) {
+        List<Long> pendingBookIds = reservations.stream()
+                .filter(r -> r.getStatus() == ReservationStatus.PENDING)
+                .map(r -> r.getBook().getId())
+                .distinct()
+                .collect(Collectors.toList());
+
+        Map<Long, LocalDate> earliestDueDateByBookId = pendingBookIds.isEmpty()
+                ? Map.of()
+                : borrowingRepository.findEarliestDueDatesByBookIds(pendingBookIds).stream()
+                        .collect(Collectors.toMap(row -> (Long) row[0], row -> (LocalDate) row[1]));
+
+        return reservations.stream()
+                .map(reservation -> {
+                    ReservationResponse response = mapper.toResponse(reservation);
+                    if (reservation.getStatus() == ReservationStatus.PENDING) {
+                        response.setExpectedAvailableDate(earliestDueDateByBookId.get(reservation.getBook().getId()));
+                    }
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -124,8 +134,7 @@ public class ReservationServiceImpl implements ReservationService {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND,
                         "Không tìm thấy thông tin đặt trước"));
 
-        // Chỉ người sở hữu hoặc admin mới được hủy. Chúng ta đơn giản hóa bằng cách chỉ
-        // kiểm tra người sở hữu nếu đó không phải là API của admin.
+        // Chỉ người sở hữu hoặc admin mới được hủy. Chúng ta đơn giản hóa bằng cách chỉ kiểm tra người sở hữu nếu đó không phải là API của admin.
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy người dùng"));
 
@@ -199,10 +208,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void completeReservationByCopyId(Long copyId) {
-        reservationRepository.findAll().stream()
-                .filter(r -> r.getStatus() == ReservationStatus.FULFILLED && r.getFulfilledCopy() != null
-                        && r.getFulfilledCopy().getId().equals(copyId))
-                .findFirst()
+        reservationRepository.findFirstByFulfilledCopyIdAndStatus(copyId, ReservationStatus.FULFILLED)
                 .ifPresent(r -> {
                     r.setStatus(ReservationStatus.COMPLETED);
                     reservationRepository.save(r);

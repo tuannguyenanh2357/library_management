@@ -8,7 +8,8 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.library.security.SecurityUtils;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -50,7 +51,7 @@ public class BorrowingController {
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
-    public ResponseEntity<BorrowingResponse> borrowBook(@RequestBody BorrowingCreationRequest request) {
+    public ResponseEntity<BorrowingResponse> borrowBook(@Valid @RequestBody BorrowingCreationRequest request) {
         return ResponseEntity.ok(borrowingService.borrowBook(request));
     }
 
@@ -69,7 +70,7 @@ public class BorrowingController {
     @PutMapping("/{borrowingId}/renew")
     @PreAuthorize("hasRole('MEMBER')")
     public ResponseEntity<BorrowingResponse> renewBorrowing(@PathVariable Long borrowingId) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        String username = SecurityUtils.getCurrentUsername();
         return ResponseEntity.ok(borrowingService.renewBorrowing(borrowingId, username));
     }
 

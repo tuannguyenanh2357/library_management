@@ -9,10 +9,11 @@ import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import com.library.security.SecurityUtils;
 
 import com.library.service.interfaces.MemberService;
 import com.library.repository.MemberRepository;
@@ -33,6 +34,8 @@ import com.library.exception.MemberNotFoundException;
 import com.library.dto.request.MyProfileUpdateRequest;
 import com.library.dto.request.ChangePasswordRequest;
 import com.library.exception.ResourceNotFoundException;
+import com.library.dto.response.BookResponse;
+import com.library.entity.enums.BookCopyStatus;
 
 @Service
 @RequiredArgsConstructor
@@ -49,20 +52,11 @@ public class MemberServiceImpl implements MemberService {
     public List<MemberResponse> getAllMembers() {
         List<Member> members = memberRepository.findAll();
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getAuthorities() != null) {
-            boolean hasAdmin = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            boolean hasLibrarian = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_LIBRARIAN"));
-
-            // Nếu người dùng là LIBRARIAN và không phải ADMIN -> Chỉ được xem danh sách Độc
-            // giả (MEMBER)
-            if (!hasAdmin && hasLibrarian) {
-                members = members.stream()
-                        .filter(m -> m.getRole() == MemberRole.MEMBER)
-                        .collect(Collectors.toList());
-            }
+        // Nếu là thử thư và không phải ADMIN Chỉ được xem danh sách Độc giả
+        if (!SecurityUtils.isAdmin() && SecurityUtils.isLibrarian()) {
+            members = members.stream()
+                    .filter(m -> m.getRole() == MemberRole.MEMBER)
+                    .collect(Collectors.toList());
         }
 
         return members.stream()
@@ -72,9 +66,7 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public MemberResponse getMemberById(Long memberID) {
-        Member member = memberRepository.findById(memberID)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
-        return memberMapper.toMemberResponse(member);
+        return memberMapper.toMemberResponse(getMemberByIdOrThrow(memberID));
     }
 
     @Override
@@ -90,20 +82,11 @@ public class MemberServiceImpl implements MemberService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MemberResponse updateMember(Long memberId, MemberUpdateRequest request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        Member member = getMemberByIdOrThrow(memberId);
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getAuthorities() != null) {
-            boolean hasAdmin = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            boolean hasLibrarian = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_LIBRARIAN"));
-
-            if (!hasAdmin && hasLibrarian && member.getRole() != MemberRole.MEMBER) {
-                throw new AppException(ErrorCode.UNAUTHORIZED,
-                        "Thủ thư chỉ có quyền cập nhật thông tin tài khoản Độc giả (MEMBER).");
-            }
+        if (!SecurityUtils.isAdmin() && SecurityUtils.isLibrarian() && member.getRole() != MemberRole.MEMBER) {
+            throw new AppException(ErrorCode.UNAUTHORIZED,
+                    "Thủ thư chỉ có quyền cập nhật thông tin tài khoản Độc giả (MEMBER).");
         }
 
         String newPassword = request.getPassword();
@@ -120,20 +103,14 @@ public class MemberServiceImpl implements MemberService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void deleteMember(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        Member member = getMemberByIdOrThrow(memberId);
 
         if (member.getRole() == MemberRole.ADMIN) {
             throw new AppException(ErrorCode.CANNOT_DELETE_ADMIN);
         }
 
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getAuthorities() != null) {
-            boolean hasAdmin = auth.getAuthorities().stream()
-                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-            if (!hasAdmin) {
-                throw new AppException(ErrorCode.UNAUTHORIZED, "Chỉ Quản trị viên (ADMIN) mới có quyền xóa tài khoản.");
-            }
+        if (!SecurityUtils.isAdmin()) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Chỉ Quản trị viên (ADMIN) mới có quyền xóa tài khoản.");
         }
 
         if (member.hasBorrowedBooks()) {
@@ -154,8 +131,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MemberResponse updateMyProfile(String username, MyProfileUpdateRequest request) {
-        Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        Member member = getMemberByUsernameOrThrow(username);
 
         if (request.getName() != null)
             member.setName(request.getName());
@@ -175,8 +151,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void changePassword(String username, ChangePasswordRequest request) {
-        Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        Member member = getMemberByUsernameOrThrow(username);
 
         if (!passwordEncoder.matches(request.getOldPassword(), member.getPassword())) {
             throw new AppException(ErrorCode.INVALID_PASSWORD);
@@ -194,8 +169,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addFavoriteBook(String username, Long bookId) {
-        Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        Member member = getMemberByUsernameOrThrow(username);
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
         member.getFavoriteBooks().add(book);
@@ -205,8 +179,7 @@ public class MemberServiceImpl implements MemberService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void removeFavoriteBook(String username, Long bookId) {
-        Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+        Member member = getMemberByUsernameOrThrow(username);
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
         member.getFavoriteBooks().remove(book);
@@ -214,16 +187,31 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    public List<com.library.dto.response.BookResponse> getFavoriteBooks(String username) {
-        Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
-        return member.getFavoriteBooks().stream().map(book -> {
-            com.library.dto.response.BookResponse response = bookMapper.toBookResponse(book);
-            long available = bookCopyRepository.countByBookIdAndStatus(book.getId(),
-                    com.library.entity.enums.BookCopyStatus.AVAILABLE);
-            response.setAvailableCopiesCount(available);
+    public List<BookResponse> getFavoriteBooks(String username) {
+        Member member = getMemberByUsernameOrThrow(username);
+        Set<Book> favoriteBooks = member.getFavoriteBooks();
+
+        List<Long> bookIds = favoriteBooks.stream().map(Book::getId).collect(Collectors.toList());
+        Map<Long, Long> availableCountByBookId = bookIds.isEmpty()
+                ? Map.of()
+                : bookCopyRepository.countByBookIdsAndStatus(bookIds, BookCopyStatus.AVAILABLE).stream()
+                        .collect(Collectors.toMap(row -> (Long) row[0], row -> (Long) row[1]));
+
+        return favoriteBooks.stream().map(book -> {
+            BookResponse response = bookMapper.toBookResponse(book);
+            response.setAvailableCopiesCount(availableCountByBookId.getOrDefault(book.getId(), 0L));
             return response;
         }).collect(Collectors.toList());
+    }
+
+    private Member getMemberByIdOrThrow(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+    }
+
+    private Member getMemberByUsernameOrThrow(String username) {
+        return memberRepository.findByUsername(username)
+                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
     }
 
     private String sanitizeAvatar(String avatar) {
@@ -232,11 +220,11 @@ public class MemberServiceImpl implements MemberService {
         }
         String trimmed = avatar.trim();
         if (trimmed.startsWith("data:image/")) {
-            return null; // Bỏ qua base64
+            return null;
         }
         if (trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("/files/download/")) {
             return trimmed;
         }
-        return null; // Các trường hợp không hợp lệ khác cũng để null
+        return null;
     }
 }
