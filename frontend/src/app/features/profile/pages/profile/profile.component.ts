@@ -11,7 +11,6 @@ import { BorrowingRequestResponse } from '@features/borrowings/models/borrowing-
 import { BorrowingResponse } from '@features/borrowings/models/borrowing.model';
 import { ReservationService } from '../../../books/services/reservation.service';
 import { ReservationResponse } from '../../../books/models/reservation.model';
-import { FileService } from '@core/services/file.service';
 import { FineService } from '@features/fines/services/fine.service';
 import { FineResponse } from '@features/fines/models/fine.model';
 import { BookDetailModalComponent } from '@shared/components/book-detail-modal/book-detail-modal.component';
@@ -31,7 +30,6 @@ export class ProfileComponent implements OnInit {
   private borrowingService = inject(BorrowingService);
   private borrowingRequestService = inject(BorrowingRequestService);
   private reservationService = inject(ReservationService);
-  private fileService = inject(FileService);
   private fineService = inject(FineService);
   private authService = inject(AuthService);
   private router = inject(Router);
@@ -54,13 +52,11 @@ export class ProfileComponent implements OnInit {
   protected isDetailModalOpen = signal<boolean>(false);
   protected selectedBook = signal<BooksResponse | null>(null);
 
-  // Form edit states
   protected editForm = signal<ProfileUpdateRequest>({
     name: '',
     email: '',
     phone: '',
-    address: '',
-    avatar: ''
+    address: ''
   });
   protected updating = signal<boolean>(false);
   protected updateSuccess = signal<boolean>(false);
@@ -96,8 +92,7 @@ export class ProfileComponent implements OnInit {
           name: member.name,
           email: member.email,
           phone: member.phone,
-          address: member.address,
-          avatar: member.avatar
+          address: member.address
         });
 
         // Fetch borrowings
@@ -330,8 +325,7 @@ export class ProfileComponent implements OnInit {
       name: data.name,
       email: data.email,
       phone: data.phone,
-      address: data.address,
-      avatar: data.avatar
+      address: data.address
     };
 
     this.currentUserService.updateMyProfile(request).subscribe({
@@ -346,21 +340,6 @@ export class ProfileComponent implements OnInit {
         this.updating.set(false);
       }
     });
-  }
-
-  protected onFileSelected(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
-      this.fileService.uploadFile(file).subscribe({
-        next: (res) => {
-          this.editForm.update(f => ({ ...f, avatar: res.url }));
-        },
-        error: (err) => {
-          console.error(err);
-          this.updateError.set('Tải ảnh đại diện lên thất bại!');
-        }
-      });
-    }
   }
 
   protected onChangePassword(): void {

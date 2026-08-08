@@ -3,7 +3,9 @@ package com.library.service.impl;
 import com.library.dto.response.report.*;
 import com.library.repository.ReportRepository;
 import com.library.service.interfaces.ReportService;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
@@ -22,12 +24,13 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ReportServiceImpl implements ReportService {
 
-        private final ReportRepository reportRepository;
-        private final JasperReport revenueReportTemplate;
-        private final JasperReport topOffendersSubReport;
-        private final JasperReport topBooksSubReport;
+        ReportRepository reportRepository;
+        JasperReport revenueReportTemplate;
+        JasperReport topOffendersSubReport;
+        JasperReport topBooksSubReport;
 
         @Override
         public WeeklyRevenueReportResponse getRevenueReport(LocalDate fromDate, LocalDate toDate) {
@@ -54,9 +57,7 @@ public class ReportServiceImpl implements ReportService {
                         } else if (collected.compareTo(BigDecimal.ZERO) > 0) {
                                 growth = 100.0;
                         }
-
-                        builder
-                                        .rangeDays(s.getRangeDays() != null ? s.getRangeDays() : 7)
+                        builder.rangeDays(s.getRangeDays() != null ? s.getRangeDays() : 7)
                                         .collectedAmount(collected)
                                         .collectedCount(s.getCollectedCount() != null ? s.getCollectedCount() : 0)
                                         .pendingAmount(orZero(s.getPendingAmount()))
@@ -66,7 +67,7 @@ public class ReportServiceImpl implements ReportService {
                                         .growthPercent(Math.round(growth * 10.0) / 10.0);
                 }
 
-                // 2. Chi tiết theo ngày
+                // Chi tiết theo ngày
                 List<DailyBreakdownProjection> dailyList = reportRepository.getDailyBreakdown(fromDate, toDate);
 
                 List<WeeklyRevenueReportResponse.DailyEntry> daily = dailyList.stream()
@@ -81,7 +82,7 @@ public class ReportServiceImpl implements ReportService {
 
                 builder.dailyBreakdown(daily);
 
-                // 3. Người vi phạm nhiều nhất
+                // Người vi phạm nhiều nhất
                 List<TopOffenderProjection> offenderList = reportRepository.getTopOffenders(fromDate, toDate);
 
                 List<WeeklyRevenueReportResponse.TopOffenderEntry> offenders = offenderList.stream()
@@ -98,7 +99,7 @@ public class ReportServiceImpl implements ReportService {
 
                 builder.topOffenders(offenders);
 
-                // 4. Sách bị phạt nhiều nhất
+                // Sách bị phạt nhiều nhất
                 List<TopPenalizedBookProjection> bookList = reportRepository.getTopPenalizedBooks(fromDate, toDate);
 
                 List<WeeklyRevenueReportResponse.TopPenalizedBookEntry> books = bookList.stream()
@@ -138,10 +139,10 @@ public class ReportServiceImpl implements ReportService {
         @Override
         public byte[] exportRevenuePdf(LocalDate fromDate, LocalDate toDate) {
                 try {
-                        // 1. Lấy dữ liệu
+                        // Lấy dữ liệu
                         WeeklyRevenueReportResponse data = getRevenueReport(fromDate, toDate);
 
-                        // 2. Chuẩn bị nguồn dữ liệu
+                        // Chuẩn bị nguồn dữ liệu
                         JRBeanCollectionDataSource dailyDataSource = new JRBeanCollectionDataSource(
                                         data.getDailyBreakdown());
                         JRBeanCollectionDataSource topOffendersSource = new JRBeanCollectionDataSource(
@@ -150,7 +151,7 @@ public class ReportServiceImpl implements ReportService {
 
                         DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-                        // 3. Chuẩn bị tham số
+                        // Chuẩn bị tham số
                         Map<String, Object> parameters = new HashMap<>();
                         parameters.put("fromDate", fromDate.format(dtf));
                         parameters.put("toDate", toDate.format(dtf));
@@ -167,11 +168,11 @@ public class ReportServiceImpl implements ReportService {
                         parameters.put("topOffendersSub", topOffendersSubReport);
                         parameters.put("topBooksSub", topBooksSubReport);
 
-                        // 4. Điền báo cáo
+                        // Điền báo cáo
                         JasperPrint jasperPrint = JasperFillManager.fillReport(revenueReportTemplate, parameters,
                                         dailyDataSource);
 
-                        // 5. Xuất ra PDF
+                        // Xuất ra PDF
                         return JasperExportManager.exportReportToPdf(jasperPrint);
 
                 } catch (JRException e) {

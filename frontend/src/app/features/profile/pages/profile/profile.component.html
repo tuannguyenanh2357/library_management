@@ -17,14 +17,8 @@
       <div class="profile-header-card">
         <div class="header-card-bg"></div>
         <div class="header-card-content">
-          <div class="avatar-wrapper">
-            @if (profile()?.avatar) {
-              <img [src]="profile()?.avatar" alt="Avatar" class="user-avatar" />
-            } @else {
-              <div class="user-avatar-initials">
-                {{ profile()?.name?.substring(0, 1)?.toUpperCase() || 'U' }}
-              </div>
-            }
+          <div class="user-avatar-initials">
+            {{ profile()?.name?.substring(0, 1)?.toUpperCase() || 'U' }}
           </div>
           <div class="user-meta">
             <div class="user-name-row">
@@ -394,14 +388,6 @@
                   <input type="text" [(ngModel)]="editForm().address" name="address" />
                 </div>
 
-                <div class="form-group full-width">
-                  <label>URL Ảnh đại diện (Avatar)</label>
-                  <div class="upload-wrapper" style="display: flex; gap: 8px;">
-                    <input type="text" [(ngModel)]="editForm().avatar" name="avatar" placeholder="Nhập link ảnh (VD: https://...)" style="flex: 1;" />
-                    <button type="button" class="btn-secondary" style="white-space: nowrap; padding: 0 12px; font-size: 14px;" (click)="fileInput.click()">Tải lên</button>
-                    <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" style="display: none;" />
-                  </div>
-                </div>
               </div>
 
               <div class="form-actions">

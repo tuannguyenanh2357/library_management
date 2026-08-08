@@ -28,7 +28,7 @@ public class WeeklyRevenueReportResponse {
 
     // So sánh với kỳ trước
     BigDecimal prevCollectedAmount;
-    Double growthPercent; // % tăng/giảm so với kỳ trước
+    Double growthPercent;
 
     // Phân tích theo ngày
     List<DailyEntry> dailyBreakdown;

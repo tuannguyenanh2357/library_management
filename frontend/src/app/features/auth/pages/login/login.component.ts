@@ -17,8 +17,13 @@ export class LoginComponent {
 
   protected username = signal<string>('');
   protected password = signal<string>('');
+  protected showPassword = signal<boolean>(false);
   protected errorMessage = signal<string>('');
   protected loading = signal<boolean>(false);
+
+  toggleShowPassword(): void {
+    this.showPassword.update(v => !v);
+  }
 
   onSubmit(): void {
     if (!this.username() || !this.password()) {

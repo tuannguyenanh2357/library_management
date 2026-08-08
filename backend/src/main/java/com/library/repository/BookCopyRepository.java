@@ -41,8 +41,7 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
     @Query("SELECT COUNT(bc) FROM BookCopy bc WHERE bc.book.id = :bookId")
     long countByBook_Id(long bookId);
 
-    // Lấy toàn bộ bản sao và tải luôn thông tin Book để tối ưu khi hiển thị danh
-    // sách.
+    // Lấy tất cả bản sao và tải luôn thông tin Book
     @Query("SELECT bc FROM BookCopy bc JOIN FETCH bc.book")
     List<BookCopy> findAllWithBook();
 }

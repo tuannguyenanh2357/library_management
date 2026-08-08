@@ -20,12 +20,7 @@
         <a routerLink="/admin/dashboard" class="btn btn-admin">Trang Quản Trị</a>
         }
         <div class="avatar-circle" (click)="toggleDropdown($event)">
-          @if (currentUserService.currentUserProfile()?.avatar && !avatarLoadError()) {
-          <img [src]="currentUserService.currentUserProfile()?.avatar" alt="Avatar" class="avatar-img"
-            (error)="onAvatarError()" />
-          } @else {
           {{ getUsernameInitial() }}
-          }
         </div>
 
         @if (isDropdownOpen()) {

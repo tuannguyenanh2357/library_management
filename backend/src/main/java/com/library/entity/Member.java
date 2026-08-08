@@ -66,8 +66,6 @@ public class Member {
     @Builder.Default
     Boolean isActive = true;
 
-    @Column(columnDefinition = "NVARCHAR(MAX)")
-    String avatar;
     Integer age;
 
     @Enumerated(EnumType.STRING)

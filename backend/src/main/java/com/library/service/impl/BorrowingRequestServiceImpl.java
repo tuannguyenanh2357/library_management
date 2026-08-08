@@ -74,8 +74,9 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                                 .build();
 
                 BorrowingRequest saved = requestRepository.save(request);
-                long count = bookCopyRepository.countByBookIdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
-                return mapper.toResponse(saved, count);
+                long availableCopiesCount = bookCopyRepository.countByBookIdAndStatus(book.getId(),
+                                BookCopyStatus.AVAILABLE);
+                return mapper.toResponse(saved, availableCopiesCount);
         }
 
         // Lấy danh sách các Yêu cầu mượn sách đang chờ duyệt

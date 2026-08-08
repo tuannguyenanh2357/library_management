@@ -6,7 +6,6 @@ import com.library.dto.request.MemberCreationRequest;
 import com.library.dto.request.MemberUpdateRequest;
 import com.library.dto.request.MyProfileUpdateRequest;
 import com.library.dto.response.UnpaidMemberProjection;
-import com.library.dto.response.BookResponse;
 import java.util.List;
 
 public interface MemberService {
@@ -28,9 +27,9 @@ public interface MemberService {
 
     List<UnpaidMemberProjection> getMembersWithUnpaidFines();
 
-    void addFavoriteBook(String username, Long bookId);
+    // void addFavoriteBook(String username, Long bookId);
 
-    void removeFavoriteBook(String username, Long bookId);
+    // void removeFavoriteBook(String username, Long bookId);
 
-    List<BookResponse> getFavoriteBooks(String username);
+    // List<BookResponse> getFavoriteBooks(String username);
 }

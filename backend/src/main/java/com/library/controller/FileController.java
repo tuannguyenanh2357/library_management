@@ -2,6 +2,7 @@ package com.library.controller;
 
 import com.library.exception.AppException;
 import com.library.exception.ErrorCode;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
@@ -23,13 +24,12 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/files")
-@CrossOrigin(origins = "http://localhost:4200")
 public class FileController {
 
     private final Path fileStorageLocation;
 
-    public FileController() {
-        this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
+    public FileController(@Value("${app.file.upload-dir:uploads}") String uploadDir) {
+        this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
         try {
             Files.createDirectories(this.fileStorageLocation);
         } catch (Exception ex) {
@@ -69,14 +69,15 @@ public class FileController {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists()) {
-                // Determine content type dynamically based on file extension
-                String contentType = "application/octet-stream";
-                if (fileName.toLowerCase().endsWith(".png")) {
-                    contentType = "image/png";
-                } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg")) {
-                    contentType = "image/jpeg";
-                } else if (fileName.toLowerCase().endsWith(".gif")) {
-                    contentType = "image/gif";
+                String contentType = null;
+                try {
+                    contentType = Files.probeContentType(filePath);
+                } catch (IOException ex) {
+                    // Ignore, will fallback to default below
+                }
+                
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
                 }
 
                 return ResponseEntity.ok()

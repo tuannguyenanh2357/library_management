@@ -26,6 +26,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.time.temporal.ChronoUnit;
 
 @Component
 @RequiredArgsConstructor
@@ -45,8 +46,7 @@ public class ScheduledTasks {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    // Hết hạn các reservation đã được giữ chỗ (FULFILLED) quá 48h mà độc giả chưa
-    // đến lấy
+    // Hết hạn các reservation đã được giữ chỗ quá 48h mà độc giả chưa đến lấy
     // @Scheduled(cron = "0 5 0 * * *")
     @Scheduled(cron = "0 * * * * *")
     @SchedulerLock(name = "expireFulfilledReservationsTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
@@ -92,7 +92,7 @@ public class ScheduledTasks {
 
         for (Borrowing borrowing : overdue) {
             try {
-                long daysOverdue = java.time.temporal.ChronoUnit.DAYS.between(borrowing.getDueDate(), LocalDate.now());
+                long daysOverdue = ChronoUnit.DAYS.between(borrowing.getDueDate(), LocalDate.now());
                 var book = borrowing.getBookCopy().getBook();
                 BigDecimal dailyFine = book.getDailyFineAmount() != null
                         ? book.getDailyFineAmount()

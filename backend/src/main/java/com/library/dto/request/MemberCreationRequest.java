@@ -37,8 +37,6 @@ public class MemberCreationRequest {
     @NotBlank(message = "Address is required")
     String address;
 
-    String avatar;
-
     @NotNull(message = "Age is required")
     @Min(value = 0, message = "Age must be greater than 0")
     Integer age;

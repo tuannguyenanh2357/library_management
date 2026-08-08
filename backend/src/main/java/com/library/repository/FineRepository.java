@@ -16,8 +16,7 @@ public interface FineRepository extends JpaRepository<Fines, Long> {
                         + "WHERE b.member.id = :memberId AND f.status = :status")
         List<Fines> findByBorrowing_Member_IdAndStatus(Long memberId, FineStatus status);
 
-        // Lấy toàn bộ danh sách phạt và tải sẵn các thông tin liên quan để tối ưu truy
-        // vấn
+        // Lấy danh sách phạt và tải sẵn các thông tin liên quan để tối ưu truy vấn
         @Query("SELECT f FROM Fines f " + "JOIN FETCH f.borrowing b " + "JOIN FETCH b.member "
                         + "JOIN FETCH b.bookCopy bc " + "JOIN FETCH bc.book")
         List<Fines> findAllWithRelations();
@@ -33,7 +32,6 @@ public interface FineRepository extends JpaRepository<Fines, Long> {
                         + "JOIN FETCH bc.book " + "WHERE f.status = :status")
         List<Fines> findByStatusWithRelations(@Param("status") FineStatus status);
 
-        // Kiểm tra xem một thành viên có đang tồn tại khoản phạt với trạng thái cụ thể
-        // hay không
+        // Kiểm tra một thành viên có đang tồn tại khoản phạt với trạng thái cụ thể
         boolean existsByBorrowingMemberIdAndStatus(Long memberId, FineStatus status);
 }

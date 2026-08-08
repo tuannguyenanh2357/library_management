@@ -21,6 +21,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
 import java.util.concurrent.ThreadLocalRandom;
 
 import java.util.List;
@@ -58,6 +59,7 @@ public class BookCopyServiceImpl implements BookCopyService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
     public BookCopyResponse createBookCopy(BookCopyCreationRequest request) {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
@@ -79,6 +81,7 @@ public class BookCopyServiceImpl implements BookCopyService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
     public BookCopyResponse updateBookCopy(Long bookCopyId, BookCopyUpdateRequest request) {
         BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND));
@@ -99,6 +102,7 @@ public class BookCopyServiceImpl implements BookCopyService {
 
     @Override
     @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
     public void deleteBookCopy(Long bookCopyId) {
         BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND));

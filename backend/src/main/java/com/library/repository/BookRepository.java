@@ -38,11 +38,11 @@ public interface BookRepository extends JpaRepository<Book, Long> {
         // Tìm kiếm sách theo các tiêu chí lọc tùy chọn và hỗ trợ phân trang.
         @Query("SELECT b FROM Book b WHERE " +
                         "(:id IS NULL OR b.id = :id) AND " +
-                        "(:title IS NULL OR LOWER(b.title) LIKE :title) AND " +
-                        "(:author IS NULL OR LOWER(b.author) LIKE :author) AND " +
-                        "(:category IS NULL OR LOWER(b.category) LIKE :category) AND " +
-                        "(:publisher IS NULL OR LOWER(b.publisher) LIKE :publisher) AND " +
-                        "(:isbn IS NULL OR LOWER(b.isbn) LIKE :isbn)")
+                        "(:title IS NULL OR LOWER(b.title) LIKE LOWER(:title)) AND " +
+                        "(:author IS NULL OR LOWER(b.author) LIKE LOWER(:author)) AND " +
+                        "(:category IS NULL OR LOWER(b.category) LIKE LOWER(:category)) AND " +
+                        "(:publisher IS NULL OR LOWER(b.publisher) LIKE LOWER(:publisher)) AND " +
+                        "(:isbn IS NULL OR LOWER(b.isbn) LIKE LOWER(:isbn))")
         Page<Book> findByFilters(
                         @Param("id") Long id,
                         @Param("title") String title,

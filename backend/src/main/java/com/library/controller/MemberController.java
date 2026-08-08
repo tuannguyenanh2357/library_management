@@ -8,8 +8,11 @@ import com.library.security.SecurityUtils;
 import com.library.service.interfaces.MemberService;
 import com.library.dto.response.MemberResponse;
 import com.library.dto.response.MessageResponse;
+import com.library.dto.response.UnpaidMemberProjection;
 import com.library.dto.request.MemberCreationRequest;
 import com.library.dto.request.MemberUpdateRequest;
+import com.library.dto.request.MyProfileUpdateRequest;
+import com.library.dto.request.ChangePasswordRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
 import java.util.List;
@@ -62,7 +65,7 @@ public class MemberController {
 
     @PutMapping("/me")
     public ResponseEntity<MemberResponse> updateMyProfile(
-            @Valid @RequestBody com.library.dto.request.MyProfileUpdateRequest request) {
+            @Valid @RequestBody MyProfileUpdateRequest request) {
         String username = SecurityUtils.getCurrentUsername();
         MemberResponse updated = memberService.updateMyProfile(username, request);
         return ResponseEntity.ok(updated);
@@ -70,7 +73,7 @@ public class MemberController {
 
     @PutMapping("/me/password")
     public ResponseEntity<MessageResponse> changePassword(
-            @Valid @RequestBody com.library.dto.request.ChangePasswordRequest request) {
+            @Valid @RequestBody ChangePasswordRequest request) {
         String username = SecurityUtils.getCurrentUsername();
         memberService.changePassword(username, request);
         return ResponseEntity.ok(MessageResponse.of("Đổi mật khẩu thành công"));
@@ -78,27 +81,7 @@ public class MemberController {
 
     @GetMapping("/unpaid-fines")
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
-    public ResponseEntity<List<com.library.dto.response.UnpaidMemberProjection>> getMembersWithUnpaidFines() {
+    public ResponseEntity<List<UnpaidMemberProjection>> getMembersWithUnpaidFines() {
         return ResponseEntity.ok(memberService.getMembersWithUnpaidFines());
-    }
-
-    @GetMapping("/me/favorites")
-    public ResponseEntity<List<com.library.dto.response.BookResponse>> getMyFavoriteBooks() {
-        String username = SecurityUtils.getCurrentUsername();
-        return ResponseEntity.ok(memberService.getFavoriteBooks(username));
-    }
-
-    @PostMapping("/me/favorites/{bookId}")
-    public ResponseEntity<MessageResponse> addFavoriteBook(@PathVariable Long bookId) {
-        String username = SecurityUtils.getCurrentUsername();
-        memberService.addFavoriteBook(username, bookId);
-        return ResponseEntity.ok(MessageResponse.of("Thêm sách vào danh sách yêu thích thành công"));
-    }
-
-    @DeleteMapping("/me/favorites/{bookId}")
-    public ResponseEntity<MessageResponse> removeFavoriteBook(@PathVariable Long bookId) {
-        String username = SecurityUtils.getCurrentUsername();
-        memberService.removeFavoriteBook(username, bookId);
-        return ResponseEntity.ok(MessageResponse.of("Đã xóa sách khỏi danh sách yêu thích"));
     }
 }

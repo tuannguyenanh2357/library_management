@@ -21,8 +21,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     // Tìm kiếm thông tin thành viên theo tên đăng nhập
     Optional<Member> findByUsername(String username);
 
-    // Gọi Stored Procedure để lấy danh sách các thành viên đang có khoản phạt chưa
-    // đóng
+    // Gọi SP để lấy danh sách các thành viên đang có khoản phạt chưa đóng
     @Query(value = "EXEC dbo.GetMembersWithUnpaidFines", nativeQuery = true)
     List<UnpaidMemberProjection> getMembersWithUnpaidFines();
 }

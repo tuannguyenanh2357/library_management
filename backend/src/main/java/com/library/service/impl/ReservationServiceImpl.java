@@ -7,6 +7,7 @@ import com.library.entity.BookCopy;
 import com.library.entity.Member;
 import com.library.entity.Reservation;
 import com.library.entity.enums.BookCopyStatus;
+import com.library.entity.enums.MemberRole;
 import com.library.entity.enums.ReservationStatus;
 import com.library.mapper.ReservationMapper;
 import com.library.repository.BookRepository;
@@ -103,7 +104,8 @@ public class ReservationServiceImpl implements ReservationService {
         return mapToResponsesWithExpectedDate(reservationRepository.findAllByOrderByRequestDateDesc());
     }
 
-    // Gộp truy vấn ngày dự kiến có sách cho tất cả reservation PENDING trong một lần thay vì gọi lại DB cho từng phần tử (tránh N+1 query).
+    // Gộp truy vấn ngày dự kiến có sách cho tất cả reservation PENDING trong một
+    // lần thay vì gọi lại DB cho từng phần tử (tránh N+1 query).
     private List<ReservationResponse> mapToResponsesWithExpectedDate(List<Reservation> reservations) {
         List<Long> pendingBookIds = reservations.stream()
                 .filter(r -> r.getStatus() == ReservationStatus.PENDING)
@@ -134,19 +136,20 @@ public class ReservationServiceImpl implements ReservationService {
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND,
                         "Không tìm thấy thông tin đặt trước"));
 
-        // Chỉ người sở hữu hoặc admin mới được hủy. Chúng ta đơn giản hóa bằng cách chỉ kiểm tra người sở hữu nếu đó không phải là API của admin.
+        // Chỉ người sở hữu hoặc admin mới được hủy. Chúng ta đơn giản hóa bằng cách chỉ
+        // kiểm tra người sở hữu nếu đó không phải là API của admin.
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy người dùng"));
 
         if (!reservation.getMember().getId().equals(member.getId())
-                && member.getRole() != com.library.entity.enums.MemberRole.ADMIN
-                && member.getRole() != com.library.entity.enums.MemberRole.LIBRARIAN) {
+                && member.getRole() != MemberRole.ADMIN
+                && member.getRole() != MemberRole.LIBRARIAN) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Bạn không có quyền hủy đặt chỗ này");
         }
 
         if (reservation.getStatus() == ReservationStatus.FULFILLED) {
-            // Sách đã được giữ, nếu hủy thì sách phải về AVAILABLE và chuyển cho người tiếp
-            // theo (nếu có)
+            // Sách đã được giữ nếu hủy thì sách phải về AVAILABLE và chuyển cho người tiếp
+            // theo
             BookCopy copy = reservation.getFulfilledCopy();
             reservation.setStatus(ReservationStatus.CANCELLED);
             reservationRepository.save(reservation);

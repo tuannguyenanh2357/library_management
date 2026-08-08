@@ -9,7 +9,6 @@ import com.library.dto.response.BookCopyResponse;
 import com.library.dto.request.BookCopyCreationRequest;
 import com.library.dto.request.BookCopyUpdateRequest;
 import jakarta.validation.Valid;
-import java.net.URI;
 import java.util.List;
 
 @RequestMapping("/book-copies")

@@ -8,7 +8,6 @@ export interface Member {
   phone: string;
   address: string;
   isActive: boolean;
-  avatar?: string;
   age?: number;
   role: string;
 }
@@ -19,7 +18,6 @@ export interface ProfileUpdateRequest {
   email?: string;
   phone?: string;
   address?: string;
-  avatar?: string;
 }
 
 /** Request đổi mật khẩu */

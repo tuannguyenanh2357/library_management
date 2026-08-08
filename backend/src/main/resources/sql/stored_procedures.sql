@@ -121,7 +121,7 @@ BEGIN
     FROM dbo.borrowings
     WHERE borrow_date BETWEEN @FromDate AND @ToDate;
 
-    -- Kỳ trước (cùng độ dài)
+    -- Kỳ trước 
     DECLARE @PrevCollected DECIMAL(18,2);
     DECLARE @RangeDays     INT = DATEDIFF(day, @FromDate, @ToDate) + 1;
     DECLARE @PrevFrom DATE = DATEADD(day, -@RangeDays, @FromDate);

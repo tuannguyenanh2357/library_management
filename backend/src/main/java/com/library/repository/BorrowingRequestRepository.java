@@ -16,8 +16,7 @@ public interface BorrowingRequestRepository extends JpaRepository<BorrowingReque
     @Query("SELECT br FROM BorrowingRequest br JOIN FETCH br.member JOIN FETCH br.book WHERE br.status = :status ORDER BY br.requestDate DESC")
     List<BorrowingRequest> findByStatusWithRelations(BorrowingRequestStatus status);
 
-    // Lấy lịch sử các yêu cầu đã được xử lý (không bao gồm PENDING) và tải sẵn các
-    // thông tin liên quan.
+    // Lấy lịch sử các yêu cầu đã được xử lý và tải sẵn các thông tin liên quan.
     @Query("SELECT br FROM BorrowingRequest br JOIN FETCH br.member JOIN FETCH br.book WHERE br.status != 'PENDING' ORDER BY br.processedDate DESC")
     List<BorrowingRequest> findHistoryWithRelations();
 

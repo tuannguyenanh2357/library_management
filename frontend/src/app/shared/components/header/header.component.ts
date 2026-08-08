@@ -17,7 +17,6 @@ export class HeaderComponent implements OnInit {
   private router = inject(Router);
 
   protected isDropdownOpen = signal<boolean>(false);
-  protected avatarLoadError = signal<boolean>(false);
 
   ngOnInit(): void {
     if (this.authService.isLoggedIn()) {
@@ -28,14 +27,10 @@ export class HeaderComponent implements OnInit {
   loadUserProfile(): void {
     if (!this.currentUserService.currentUserProfile()) {
       this.currentUserService.getMyProfile().subscribe({
-        next: () => this.avatarLoadError.set(false),
+        next: () => {},
         error: (err) => console.error('Failed to fetch profile for header:', err)
       });
     }
-  }
-
-  onAvatarError(): void {
-    this.avatarLoadError.set(true);
   }
 
   toggleDropdown(event: Event): void {

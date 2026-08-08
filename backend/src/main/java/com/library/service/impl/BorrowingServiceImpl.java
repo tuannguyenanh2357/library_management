@@ -32,6 +32,7 @@ import com.library.dto.event.BorrowingCreatedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import com.library.service.interfaces.ReservationService;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Value;
@@ -82,6 +83,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     long maxBorrowingDays;
 
     @Override
+    @CacheEvict(value = { "books", "topBooks" }, allEntries = true)
     public BorrowingResponse borrowBook(BorrowingCreationRequest request) {
 
         Member member = memberRepository.findById(request.getMemberId())
@@ -96,7 +98,8 @@ public class BorrowingServiceImpl implements BorrowingService {
         resolveBookCopyForBorrowing(bookCopy, member);
 
         LocalDate borrowDate = LocalDate.now();
-        LocalDate dueDate = request.getDueDate() != null ? request.getDueDate() : borrowDate.plusDays(defaultBorrowingDays);
+        LocalDate dueDate = request.getDueDate() != null ? request.getDueDate()
+                : borrowDate.plusDays(defaultBorrowingDays);
         validateDueDate(borrowDate, dueDate);
 
         Borrowing borrowing = Borrowing.builder()
@@ -126,7 +129,8 @@ public class BorrowingServiceImpl implements BorrowingService {
         }
     }
 
-    // Nếu bản sao không AVAILABLE, nó chỉ hợp lệ khi đang RESERVED cho đúng member này,
+    // Nếu bản sao không AVAILABLE, nó chỉ hợp lệ khi đang RESERVED cho đúng member
+    // này,
     // trong trường hợp đó cần hoàn tất reservation tương ứng.
     private void resolveBookCopyForBorrowing(BookCopy bookCopy, Member member) {
         if (bookCopy.getStatus() == BookCopyStatus.AVAILABLE) {
@@ -181,13 +185,14 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
+    @CacheEvict(value = { "books", "topBooks" }, allEntries = true)
     public BorrowingResponse returnBook(Long borrowingId) {
 
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
 
         if (borrowing.getStatus() == BorrowingStatus.RETURNED) {
-            throw new AppException(ErrorCode.BORROWING_ACTION_FAILED, "Book already returned");
+            throw new AppException(ErrorCode.BORROWING_ACTION_FAILED, "Sách đã được trả lại rồi");
         }
 
         borrowing.setReturnDate(LocalDate.now());
@@ -201,7 +206,8 @@ public class BorrowingServiceImpl implements BorrowingService {
 
         borrowingRepository.save(borrowing);
 
-        // Nếu có người đang xếp hàng chờ, sách sẽ đổi thành RESERVED. Ngược lại nó sẽ thành AVAILABLE.
+        // Nếu có người đang xếp hàng chờ, sách sẽ đổi thành RESERVED. Ngược lại nó sẽ
+        // thành AVAILABLE.
         reservationService.fulfillNextReservationIfAny(bookCopy.getBook().getId(), bookCopy);
 
         return borrowingMapper.toResponse(borrowing);
@@ -321,11 +327,13 @@ public class BorrowingServiceImpl implements BorrowingService {
     }
 
     @Override
+    @CacheEvict(value = { "books", "topBooks" }, allEntries = true)
     public BorrowingResponse reportLost(Long borrowingId) {
         return closeWithReplacementFee(borrowingId, DamageType.LOST);
     }
 
     @Override
+    @CacheEvict(value = { "books", "topBooks" }, allEntries = true)
     public BorrowingResponse reportDamaged(Long borrowingId) {
         return closeWithReplacementFee(borrowingId, DamageType.DAMAGED);
     }

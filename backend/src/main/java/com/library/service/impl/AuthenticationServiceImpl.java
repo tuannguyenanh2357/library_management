@@ -75,24 +75,27 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public MemberResponse register(RegisterRequest request) {
-        if (memberRepository.existsByUsername(request.getUsername())) {
+        String username = request.getUsername().trim();
+        String email = request.getEmail().trim();
+        String phoneStr = request.getPhone() != null ? request.getPhone().trim() : "";
+
+        if (memberRepository.existsByUsername(username)) {
             throw new AppException(ErrorCode.USER_EXISTED);
         }
-        if (memberRepository.existsByEmail(request.getEmail())) {
+        if (memberRepository.existsByEmail(email)) {
             throw new AppException(ErrorCode.EMAIL_EXISTED);
         }
-        String phoneStr = request.getPhone() != null ? request.getPhone().trim() : "";
         if (!phoneStr.isBlank() && memberRepository.existsByPhone(phoneStr)) {
             throw new AppException(ErrorCode.PHONE_EXISTED);
         }
 
         Member member = Member.builder()
-                .username(request.getUsername())
+                .username(username)
                 .password(passwordEncoder.encode(request.getPassword()))
-                .email(request.getEmail())
-                .name(request.getName())
+                .email(email)
+                .name(request.getName().trim())
                 .phone(phoneStr)
-                .address(request.getAddress())
+                .address(request.getAddress().trim())
                 .role(MemberRole.MEMBER)
                 .isActive(true)
                 .build();
