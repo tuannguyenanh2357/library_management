@@ -5,9 +5,9 @@ import com.library.dto.response.BorrowingRequestResponse;
 import com.library.service.interfaces.BorrowingRequestService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -61,7 +61,7 @@ public class BorrowingRequestController {
     @PutMapping("/{id}/cancel")
     @PreAuthorize("hasRole('MEMBER')")
     public ResponseEntity<BorrowingRequestResponse> cancelRequest(@PathVariable Long id) {
-        String username = org.springframework.security.core.context.SecurityContextHolder.getContext()
+        String username = SecurityContextHolder.getContext()
                 .getAuthentication().getName();
         return ResponseEntity.ok(service.cancelRequest(id, username));
     }

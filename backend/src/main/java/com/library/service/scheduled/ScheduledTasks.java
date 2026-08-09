@@ -47,8 +47,8 @@ public class ScheduledTasks {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     // Hết hạn các reservation đã được giữ chỗ quá 48h mà độc giả chưa đến lấy
-    // @Scheduled(cron = "0 5 0 * * *")
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 5 0 * * *")
+    // @Scheduled(cron = "0 * * * * *")
     @SchedulerLock(name = "expireFulfilledReservationsTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
     @Transactional(rollbackFor = Exception.class)
     public void expireFulfilledReservations() {
@@ -126,8 +126,8 @@ public class ScheduledTasks {
     }
 
     // Tự động hủy các yêu cầu mượn PENDING quá 3 ngày không được nhân viên xử lý
-    // @Scheduled(cron = "0 15 0 * * *")
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 15 0 * * *")
+    // @Scheduled(cron = "0 * * * * *")
     @SchedulerLock(name = "cancelStalePendingRequestsTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
     @Transactional(rollbackFor = Exception.class)
     public void cancelStalePendingRequests() {

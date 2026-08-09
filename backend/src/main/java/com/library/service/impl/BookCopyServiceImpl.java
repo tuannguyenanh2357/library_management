@@ -73,8 +73,7 @@ public class BookCopyServiceImpl implements BookCopyService {
 
         BookCopy savedBookCopy = bookCopyRepository.save(bookCopy);
 
-        // Kiểm tra xem có ai đang xếp hàng đợi cuốn sách này không. Nếu có thì gán luôn
-        // bản sao này cho người đó.
+        // Kiểm tra xem có ai đang xếp hàng đợi cuốn sách này không
         reservationService.fulfillNextReservationIfAny(book.getId(), savedBookCopy);
         return bookCopyMapper.toResponse(savedBookCopy);
     }

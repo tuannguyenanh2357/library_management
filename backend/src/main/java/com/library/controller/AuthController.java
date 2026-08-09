@@ -1,10 +1,10 @@
 package com.library.controller;
 
 import com.library.dto.request.AuthenticationRequest;
-import com.library.dto.request.IntrospectRequest;
+
 import com.library.dto.request.RegisterRequest;
 import com.library.dto.response.AuthenticationResponse;
-import com.library.dto.response.IntrospectResponse;
+
 import com.library.dto.response.MemberResponse;
 import com.library.service.interfaces.AuthenticationService;
 import jakarta.validation.Valid;
@@ -64,12 +64,6 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<MemberResponse> register(@Valid @RequestBody RegisterRequest request) {
         MemberResponse response = authenticationService.register(request);
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/introspect")
-    public ResponseEntity<IntrospectResponse> introspect(@Valid @RequestBody IntrospectRequest request) {
-        IntrospectResponse response = authenticationService.introspect(request);
         return ResponseEntity.ok(response);
     }
 

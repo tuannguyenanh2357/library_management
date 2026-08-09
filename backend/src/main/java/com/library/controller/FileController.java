@@ -73,9 +73,8 @@ public class FileController {
                 try {
                     contentType = Files.probeContentType(filePath);
                 } catch (IOException ex) {
-                    // Ignore, will fallback to default below
                 }
-                
+
                 if (contentType == null) {
                     contentType = "application/octet-stream";
                 }

@@ -7,7 +7,7 @@ CREATE PROCEDURE dbo.GetTop10MostBorrowedBooks
 AS
 BEGIN
     SET NOCOUNT ON;
-    
+
     SELECT TOP 10
         b.id AS BookId,
         b.title AS Title,
@@ -24,67 +24,10 @@ END;
 GO
 
 
--- Thành viên nợ phạt quá hạn
-IF OBJECT_ID('dbo.GetMembersWithUnpaidFines', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.GetMembersWithUnpaidFines;
-GO
-
-CREATE PROCEDURE dbo.GetMembersWithUnpaidFines
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    SELECT 
-        m.id AS MemberId,
-        m.member_code AS MemberCode,
-        m.name AS Name,
-        m.email AS Email,
-        m.phone AS Phone,
-        SUM(f.amount) AS TotalUnpaidAmount,
-        COUNT(f.id) AS UnpaidFinesCount
-    FROM dbo.members m
-    INNER JOIN dbo.borrowings br ON m.id = br.member_id
-    INNER JOIN dbo.fines f ON br.id = f.borrowing_id
-    WHERE f.status = 'UNPAID'
-    GROUP BY m.id, m.member_code, m.name, m.email, m.phone
-    ORDER BY TotalUnpaidAmount DESC;
-END;
-GO
-
-
--- Sách quá hạn chưa trả
-IF OBJECT_ID('dbo.GetOverdueBooks', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.GetOverdueBooks;
-GO
-
-CREATE PROCEDURE dbo.GetOverdueBooks
-AS
-BEGIN
-    SET NOCOUNT ON;
-    
-    SELECT 
-        br.id AS BorrowingId,
-        m.id AS MemberId,
-        m.name AS MemberName,
-        m.phone AS MemberPhone,
-        b.title AS BookTitle,
-        bc.bar_code AS BarCode,
-        br.borrow_date AS BorrowDate,
-        br.due_date AS DueDate,
-        DATEDIFF(day, br.due_date, CAST(GETDATE() AS DATE)) AS OverdueDays
-    FROM dbo.borrowings br
-    INNER JOIN dbo.members m ON br.member_id = m.id
-    INNER JOIN dbo.book_copies bc ON br.book_copy_id = bc.id
-    INNER JOIN dbo.books b ON bc.book_id = b.id
-    WHERE br.status = 'ACTIVE' AND br.due_date < CAST(GETDATE() AS DATE)
-    ORDER BY OverdueDays DESC;
-END;
-GO
-
 -- Báo cáo doanh thu phạt theo khoảng thời gian
 
 
--- 1. Thống kê tổng quan
+-- . Thống kê tổng quan
 IF OBJECT_ID('dbo.GetRevenueReportSummary', 'P') IS NOT NULL
     DROP PROCEDURE dbo.GetRevenueReportSummary;
 GO
@@ -97,11 +40,11 @@ BEGIN
     SET NOCOUNT ON;
 
     -- Kỳ hiện tại
-    DECLARE @CurrentCollected  DECIMAL(18,2);
-    DECLARE @CurrentCount      INT;
-    DECLARE @CurrentPending    DECIMAL(18,2);
-    DECLARE @CurrentPendingCnt INT;
-    DECLARE @TotalBorrowings   INT;
+    DECLARE @CurrentCollected  DECIMAL(18,2); -- tiền phạt đã thu
+    DECLARE @CurrentCount      INT; -- số lần nộp tiền đã thu
+    DECLARE @CurrentPending    DECIMAL(18,2); -- tiền phạt chưa thu
+    DECLARE @CurrentPendingCnt INT; -- số khoản phạt chưa thanh toán
+    DECLARE @TotalBorrowings   INT; -- tổng số lượt mượn
 
     SELECT
         @CurrentCollected = ISNULL(SUM(f.amount), 0),
@@ -138,13 +81,13 @@ BEGIN
         @CurrentPending    AS PendingAmount,
         @CurrentPendingCnt AS PendingCount,
         @TotalBorrowings   AS TotalBorrowings,
-        @PrevCollected     AS PrevCollectedAmount,
-        @RangeDays         AS RangeDays;
+        @PrevCollected     AS PrevCollectedAmount, -- tiền phạt đã thu kỳ trước 
+        @RangeDays         AS RangeDays;  -- khoảng thời gian bao nhiêu ngày
 END;
 GO
 
 
--- 2. Phân tích theo ngày
+--  Phân tích theo ngày
 IF OBJECT_ID('dbo.GetRevenueDailyBreakdown', 'P') IS NOT NULL
     DROP PROCEDURE dbo.GetRevenueDailyBreakdown;
 GO
@@ -156,7 +99,6 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Generate date series using a numbers table trick
     WITH Dates AS (
         SELECT @FromDate AS dt
         UNION ALL
@@ -178,63 +120,3 @@ BEGIN
 END;
 GO
 
-
--- 3. Top 5 độc giả vi phạm nhiều nhất trong kỳ
-IF OBJECT_ID('dbo.GetTopOffendersInPeriod', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.GetTopOffendersInPeriod;
-GO
-
-CREATE PROCEDURE dbo.GetTopOffendersInPeriod
-    @FromDate DATE,
-    @ToDate   DATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT TOP 5
-        m.id                    AS MemberId,
-        m.name                  AS MemberName,
-        m.email                 AS Email,
-        COUNT(f.id)             AS FineCount,
-        SUM(f.amount)           AS TotalFineAmount,
-        SUM(CASE WHEN f.status = 'PAID' THEN f.amount ELSE 0 END)   AS PaidAmount,
-        SUM(CASE WHEN f.status = 'UNPAID' THEN f.amount ELSE 0 END) AS UnpaidAmount
-    FROM dbo.fines f
-    INNER JOIN dbo.borrowings br ON f.borrowing_id = br.id
-    INNER JOIN dbo.members m     ON br.member_id = m.id
-    WHERE (f.status = 'PAID' AND f.paid_date BETWEEN @FromDate AND @ToDate)
-       OR (f.status = 'UNPAID' AND f.issued_date BETWEEN @FromDate AND @ToDate)
-    GROUP BY m.id, m.name, m.email
-    ORDER BY TotalFineAmount DESC;
-END;
-GO
-
-
--- 4. Top 5 sách bị phạt nhiều nhất trong kỳ
-IF OBJECT_ID('dbo.GetTopPenalizedBooksInPeriod', 'P') IS NOT NULL
-    DROP PROCEDURE dbo.GetTopPenalizedBooksInPeriod;
-GO
-
-CREATE PROCEDURE dbo.GetTopPenalizedBooksInPeriod
-    @FromDate DATE,
-    @ToDate   DATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-
-    SELECT TOP 5
-        b.id                    AS BookId,
-        b.title                 AS BookTitle,
-        b.author                AS Author,
-        COUNT(f.id)             AS FineCount,
-        SUM(f.amount)           AS TotalFineAmount
-    FROM dbo.fines f
-    INNER JOIN dbo.borrowings br ON f.borrowing_id = br.id
-    INNER JOIN dbo.book_copies bc ON br.book_copy_id = bc.id
-    INNER JOIN dbo.books b        ON bc.book_id = b.id
-    WHERE (f.status = 'PAID' AND f.paid_date BETWEEN @FromDate AND @ToDate)
-       OR (f.status = 'UNPAID' AND f.issued_date BETWEEN @FromDate AND @ToDate)
-    GROUP BY b.id, b.title, b.author
-    ORDER BY FineCount DESC;
-END;
-GO

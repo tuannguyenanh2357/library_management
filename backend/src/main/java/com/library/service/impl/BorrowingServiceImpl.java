@@ -129,8 +129,7 @@ public class BorrowingServiceImpl implements BorrowingService {
         }
     }
 
-    // Nếu bản sao không AVAILABLE, nó chỉ hợp lệ khi đang RESERVED cho đúng member
-    // này,
+    // Nếu bản sao không AVAILABLE chỉ hợp lệ khi đang RESERVED cho đúng member này
     // trong trường hợp đó cần hoàn tất reservation tương ứng.
     private void resolveBookCopyForBorrowing(BookCopy bookCopy, Member member) {
         if (bookCopy.getStatus() == BookCopyStatus.AVAILABLE) {

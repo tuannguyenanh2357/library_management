@@ -9,6 +9,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jasperreports.engine.*;
 import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -79,11 +80,11 @@ public class ReportServiceImpl implements ReportService {
                                                                 : 0)
                                                 .build())
                                 .toList();
-
                 builder.dailyBreakdown(daily);
 
                 // Người vi phạm nhiều nhất
-                List<TopOffenderProjection> offenderList = reportRepository.getTopOffenders(fromDate, toDate);
+                List<TopOffenderProjection> offenderList = reportRepository.getTopOffenders(fromDate, toDate,
+                                PageRequest.of(0, 5));
 
                 List<WeeklyRevenueReportResponse.TopOffenderEntry> offenders = offenderList.stream()
                                 .map(o -> WeeklyRevenueReportResponse.TopOffenderEntry.builder()
@@ -100,7 +101,8 @@ public class ReportServiceImpl implements ReportService {
                 builder.topOffenders(offenders);
 
                 // Sách bị phạt nhiều nhất
-                List<TopPenalizedBookProjection> bookList = reportRepository.getTopPenalizedBooks(fromDate, toDate);
+                List<TopPenalizedBookProjection> bookList = reportRepository.getTopPenalizedBooks(fromDate, toDate,
+                                PageRequest.of(0, 5));
 
                 List<WeeklyRevenueReportResponse.TopPenalizedBookEntry> books = bookList.stream()
                                 .map(b -> WeeklyRevenueReportResponse.TopPenalizedBookEntry.builder()

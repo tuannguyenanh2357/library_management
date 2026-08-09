@@ -13,10 +13,6 @@ import com.library.dto.response.OverdueBookProjection;
 
 public interface BorrowingRepository extends JpaRepository<Borrowing, Long> {
 
-        // Gọi Stored Procedure để lấy danh sách các lượt mượn quá hạn.
-        @Query(value = "EXEC dbo.GetOverdueBooks", nativeQuery = true)
-        List<OverdueBookProjection> getOverdueBooksFromSP();
-
         // Lấy toàn bộ phiếu mượn và tải sẵn thông tin Member, BookCopy, Book
         @Query("SELECT b FROM Borrowing b " + "JOIN FETCH b.member m " + "JOIN FETCH b.bookCopy bc "
                         + "JOIN FETCH bc.book bk")
@@ -74,10 +70,23 @@ public interface BorrowingRepository extends JpaRepository<Borrowing, Long> {
         LocalDate findEarliestDueDateByBookId(@Param("bookId") Long bookId);
 
         // Lấy ngày phải trả sớm nhất theo từng đầu sách trong một danh sách, dùng để
-        // tránh N+1 query khi cần tính ngày dự kiến có sách cho nhiều đầu sách cùng lúc.
+        // tránh N+1 query khi cần tính ngày dự kiến có sách cho nhiều đầu sách cùng
+        // lúc.
         @Query("SELECT b.bookCopy.book.id, MIN(b.dueDate) FROM Borrowing b " +
                         "WHERE b.bookCopy.book.id IN :bookIds AND b.status = 'ACTIVE' " +
                         "GROUP BY b.bookCopy.book.id")
         List<Object[]> findEarliestDueDatesByBookIds(@Param("bookIds") List<Long> bookIds);
+
+        // Lấy danh sách các lượt mượn quá hạn
+        @Query("SELECT br.id AS borrowingId, m.id AS memberId, m.name AS memberName, m.phone AS memberPhone, " +
+                        "bk.title AS bookTitle, bc.barCode AS barCode, br.borrowDate AS borrowDate, br.dueDate AS dueDate "
+                        +
+                        "FROM Borrowing br " +
+                        "JOIN br.member m " +
+                        "JOIN br.bookCopy bc " +
+                        "JOIN bc.book bk " +
+                        "WHERE br.status = 'ACTIVE' AND br.dueDate < CURRENT_DATE " +
+                        "ORDER BY br.dueDate ASC")
+        List<OverdueBookProjection> getOverdueBooksFromSP();
 
 }

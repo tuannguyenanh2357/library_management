@@ -1,10 +1,8 @@
 package com.library.service.impl;
 
 import com.library.dto.request.AuthenticationRequest;
-import com.library.dto.request.IntrospectRequest;
 import com.library.dto.request.RegisterRequest;
 import com.library.dto.response.AuthenticationResponse;
-import com.library.dto.response.IntrospectResponse;
 import com.library.dto.response.MemberResponse;
 import com.library.entity.Member;
 import com.library.entity.enums.MemberRole;
@@ -15,9 +13,7 @@ import com.library.repository.MemberRepository;
 import com.library.service.interfaces.AuthenticationService;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
-import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
-import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -28,7 +24,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
@@ -128,30 +123,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         } catch (JOSEException e) {
             log.error("Không thể tạo token", e);
             throw new RuntimeException(e);
-        }
-    }
-
-    // kiểm tra toke có đúng không - token còn hạn không
-    public IntrospectResponse introspect(IntrospectRequest request) {
-        var token = request.getToken();
-
-        try {
-            JWSVerifier verifier = new MACVerifier(signerKey.getBytes());
-
-            SignedJWT signedJWT = SignedJWT.parse(token);
-
-            Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
-
-            var verified = signedJWT.verify(verifier);
-
-            return IntrospectResponse.builder()
-                    .valid(verified && expiryTime.after(new Date()))
-                    .build();
-        } catch (ParseException | JOSEException e) {
-            log.warn("Token không hợp lệ khi introspect: {}", e.getMessage());
-            return IntrospectResponse.builder()
-                    .valid(false)
-                    .build();
         }
     }
 
