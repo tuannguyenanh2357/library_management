@@ -1,0 +1,562 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+    name="revenue_report"
+    pageWidth="595" pageHeight="842"
+    columnWidth="535" leftMargin="30" rightMargin="30"
+    topMargin="30" bottomMargin="30"
+    language="java">
+
+    <property name="net.sf.jasperreports.default.font.name" value="Arial" />
+    <property name="net.sf.jasperreports.default.pdf.font.name" value="fonts/Arial.ttf" />
+    <property name="net.sf.jasperreports.default.pdf.encoding" value="Identity-H" />
+    <property name="net.sf.jasperreports.default.pdf.embedded" value="true" />
+
+    <!-- =========================================
+         STYLES
+    ============================================ -->
+    <style name="Default" fontName="Arial" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+        isPdfEmbedded="true" />
+    <style name="DefaultBold" fontName="Arial" pdfFontName="fonts/Arial-Bold.ttf"
+        pdfEncoding="Identity-H" isPdfEmbedded="true" isBold="true" />
+    <style name="Title" fontName="Arial" pdfFontName="fonts/Arial-Bold.ttf" pdfEncoding="Identity-H"
+        isPdfEmbedded="true" fontSize="15" isBold="true" forecolor="#1A1A1A" />
+    <style name="SubTitle" fontName="Arial" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+        isPdfEmbedded="true" fontSize="9" forecolor="#666666" />
+    <style name="SectionHeader" fontName="Arial" pdfFontName="fonts/Arial-Bold.ttf"
+        pdfEncoding="Identity-H" isPdfEmbedded="true" fontSize="10" isBold="true"
+        forecolor="#333333" backcolor="#F0F0F0" mode="Opaque" />
+    <style name="TableHeader" fontName="Arial" pdfFontName="fonts/Arial-Bold.ttf"
+        pdfEncoding="Identity-H" isPdfEmbedded="true" fontSize="8" isBold="true" forecolor="#FFFFFF"
+        backcolor="#4A4A4A" mode="Opaque" />
+    <style name="TableRow" fontName="Arial" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+        isPdfEmbedded="true" fontSize="8" forecolor="#333333" />
+    <style name="TableRowAlt" fontName="Arial" pdfFontName="fonts/Arial.ttf"
+        pdfEncoding="Identity-H" isPdfEmbedded="true" fontSize="8" forecolor="#333333"
+        backcolor="#F7F7F7" mode="Opaque" />
+    <style name="AmountGreen" fontName="Arial" pdfFontName="fonts/Arial-Bold.ttf"
+        pdfEncoding="Identity-H" isPdfEmbedded="true" fontSize="8" isBold="true" forecolor="#2E7D32" />
+    <style name="AmountRed" fontName="Arial" pdfFontName="fonts/Arial-Bold.ttf"
+        pdfEncoding="Identity-H" isPdfEmbedded="true" fontSize="8" isBold="true" forecolor="#C62828" />
+    <style name="KpiValue" fontName="Arial" pdfFontName="fonts/Arial-Bold.ttf"
+        pdfEncoding="Identity-H" isPdfEmbedded="true" fontSize="14" isBold="true"
+        forecolor="#1A1A1A" />
+    <style name="KpiLabel" fontName="Arial" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+        isPdfEmbedded="true" fontSize="7" forecolor="#666666" />
+
+    <!-- =========================================
+         PARAMETERS
+    ============================================ -->
+    <parameter name="fromDate" class="java.lang.String" />
+    <parameter name="toDate" class="java.lang.String" />
+    <parameter name="rangeDays" class="java.lang.Integer" />
+    <parameter name="collectedAmount" class="java.math.BigDecimal" />
+    <parameter name="collectedCount" class="java.lang.Integer" />
+    <parameter name="pendingAmount" class="java.math.BigDecimal" />
+    <parameter name="pendingCount" class="java.lang.Integer" />
+    <parameter name="totalBorrowings" class="java.lang.Integer" />
+    <parameter name="prevCollectedAmount" class="java.math.BigDecimal" />
+    <parameter name="growthPercent" class="java.lang.Double" />
+    <parameter name="topOffendersData" class="net.sf.jasperreports.engine.JRDataSource" />
+    <parameter name="topBooksData" class="net.sf.jasperreports.engine.JRDataSource" />
+    <parameter name="topOffendersSub" class="net.sf.jasperreports.engine.JasperReport" />
+    <parameter name="topBooksSub" class="net.sf.jasperreports.engine.JasperReport" />
+
+    <!-- Main datasource: dailyBreakdown -->
+    <queryString><![CDATA[]]></queryString>
+
+    <!-- Daily breakdown fields -->
+    <field name="date" class="java.time.LocalDate" />
+    <field name="dayName" class="java.lang.String" />
+    <field name="collectedAmount" class="java.math.BigDecimal" />
+    <field name="collectedCount" class="java.lang.Integer" />
+
+
+    <title>
+        <band height="130" splitType="Stretch">
+            <!-- Header bar - dark gray thay vì navy -->
+            <rectangle>
+                <reportElement x="0" y="0" width="535" height="62" backcolor="#2C2C2C"
+                    forecolor="#2C2C2C" mode="Opaque" />
+                <graphicElement>
+                    <pen lineWidth="0" />
+                </graphicElement>
+            </rectangle>
+
+            <!-- Tiêu đề chính -->
+            <staticText>
+                <reportElement x="14" y="12" width="320" height="24" forecolor="#FFFFFF"
+                    style="Title" />
+                <textElement verticalAlignment="Middle">
+                    <font size="14" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[BÁO CÁO DOANH THU THU PHẠT]]></text>
+            </staticText>
+
+            <!-- Tên hệ thống -->
+            <staticText>
+                <reportElement x="14" y="38" width="280" height="14" forecolor="#AAAAAA" />
+                <textElement>
+                    <font size="8" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Hệ Thống Quản Lý Thư Viện LIBRAHUB]]></text>
+            </staticText>
+
+            <!-- Ngày xuất báo cáo label -->
+            <staticText>
+                <reportElement x="370" y="10" width="165" height="12" forecolor="#AAAAAA" />
+                <textElement textAlignment="Right">
+                    <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Xuất báo cáo:]]></text>
+            </staticText>
+            <textField pattern="dd/MM/yyyy HH:mm">
+                <reportElement x="370" y="22" width="165" height="12" forecolor="#CCCCCC" />
+                <textElement textAlignment="Right">
+                    <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+            </textField>
+
+            <!-- Divider -->
+            <line>
+                <reportElement x="0" y="62" width="535" height="1" forecolor="#DDDDDD" />
+                <graphicElement>
+                    <pen lineWidth="1" />
+                </graphicElement>
+            </line>
+
+            <!-- Kỳ báo cáo -->
+            <staticText>
+                <reportElement x="0" y="70" width="70" height="12" forecolor="#666666" />
+                <textElement>
+                    <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Kỳ báo cáo:]]></text>
+            </staticText>
+            <textField>
+                <reportElement x="72" y="70" width="220" height="12" forecolor="#333333" />
+                <textElement>
+                    <font size="8" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[$P{fromDate} + "  →  " + $P{toDate} + "  (" + $P{rangeDays} + " ngày)"]]></textFieldExpression>
+            </textField>
+
+            <!-- Số trang -->
+            <staticText>
+                <reportElement x="400" y="70" width="50" height="12" forecolor="#999999" />
+                <textElement textAlignment="Right">
+                    <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Trang:]]></text>
+            </staticText>
+            <textField evaluationTime="Report">
+                <reportElement x="452" y="70" width="83" height="12" forecolor="#999999" />
+                <textElement textAlignment="Right">
+                    <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[$V{PAGE_NUMBER} + " / "]]></textFieldExpression>
+            </textField>
+
+            <!-- Divider dưới -->
+            <line>
+                <reportElement x="0" y="84" width="535" height="1" forecolor="#DDDDDD" />
+            </line>
+
+            <!-- === KPI Cards === -->
+            <!-- Card 1: Đã thu -->
+            <rectangle radius="4">
+                <reportElement x="0" y="94" width="128" height="34" backcolor="#F5F5F5"
+                    forecolor="#CCCCCC" mode="Opaque" />
+                <graphicElement>
+                    <pen lineWidth="1" />
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="5" y="96" width="118" height="10" forecolor="#666666" />
+                <textElement>
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[TỔNG ĐÃ THU]]></text>
+            </staticText>
+            <textField pattern="#,##0 VND">
+                <reportElement x="5" y="108" width="118" height="18" forecolor="#1A1A1A" />
+                <textElement>
+                    <font size="10" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[$P{collectedAmount}]]></textFieldExpression>
+            </textField>
+
+            <!-- Card 2: Tồn đọng -->
+            <rectangle radius="4">
+                <reportElement x="135" y="94" width="128" height="34" backcolor="#F5F5F5"
+                    forecolor="#CCCCCC" mode="Opaque" />
+                <graphicElement>
+                    <pen lineWidth="1" />
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="140" y="96" width="118" height="10" forecolor="#666666" />
+                <textElement>
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[CÒN TỒN ĐỌNG]]></text>
+            </staticText>
+            <textField pattern="#,##0 VND">
+                <reportElement x="140" y="108" width="118" height="18" forecolor="#1A1A1A" />
+                <textElement>
+                    <font size="10" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[$P{pendingAmount}]]></textFieldExpression>
+            </textField>
+
+            <!-- Card 3: Số khoản đã thu -->
+            <rectangle radius="4">
+                <reportElement x="270" y="94" width="128" height="34" backcolor="#F5F5F5"
+                    forecolor="#CCCCCC" mode="Opaque" />
+                <graphicElement>
+                    <pen lineWidth="1" />
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="275" y="96" width="118" height="10" forecolor="#666666" />
+                <textElement>
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[SỐ KHOẢN ĐÃ THU]]></text>
+            </staticText>
+            <textField pattern="#,##0">
+                <reportElement x="275" y="108" width="118" height="18" forecolor="#1A1A1A" />
+                <textElement>
+                    <font size="10" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[$P{collectedCount} + " khoản"]]></textFieldExpression>
+            </textField>
+
+            <!-- Card 4: Tăng trưởng -->
+            <rectangle radius="4">
+                <reportElement x="405" y="94" width="130" height="34" backcolor="#F5F5F5"
+                    forecolor="#CCCCCC" mode="Opaque" />
+                <graphicElement>
+                    <pen lineWidth="1" />
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="410" y="96" width="120" height="10" forecolor="#666666" />
+                <textElement>
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[SO VỚI KỲ TRƯỚC]]></text>
+            </staticText>
+            <textField pattern="#,##0.0">
+                <reportElement x="410" y="108" width="120" height="18" forecolor="#1A1A1A" />
+                <textElement>
+                    <font size="10" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[($P{growthPercent} >= 0 ? "▲ +" : "▼ ") + String.format("%.1f", $P{growthPercent}) + "%"]]></textFieldExpression>
+            </textField>
+        </band>
+    </title>
+
+    <!-- =========================================
+         COLUMN HEADER - Header bảng Daily
+    ============================================ -->
+    <columnHeader>
+        <band height="32" splitType="Stretch">
+            <!-- Section label -->
+            <staticText>
+                <reportElement x="0" y="0" width="535" height="16" backcolor="#EEEEEE"
+                    forecolor="#333333" mode="Opaque" />
+                <textElement verticalAlignment="Middle" textAlignment="Left">
+                    <font size="9" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[   Chi Tiết Thu Tiền Theo Ngày]]></text>
+            </staticText>
+
+            <!-- Table headers - gray thay vì blue -->
+            <rectangle>
+                <reportElement x="0" y="16" width="535" height="16" backcolor="#4A4A4A"
+                    forecolor="#4A4A4A" mode="Opaque" />
+                <graphicElement>
+                    <pen lineWidth="0" />
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="5" y="16" width="80" height="16" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Ngày]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="90" y="16" width="100" height="16" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Thứ]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="200" y="16" width="170" height="16" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Right">
+                    <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Số Tiền Thu Được (VND)]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="380" y="16" width="155" height="16" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Right">
+                    <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Số Khoản]]></text>
+            </staticText>
+        </band>
+    </columnHeader>
+
+    <!-- =========================================
+         DETAIL - Từng dòng daily breakdown
+    ============================================ -->
+    <detail>
+        <band height="16" splitType="Stretch">
+            <!-- Alternating row background -->
+            <rectangle>
+                <reportElement x="0" y="0" width="535" height="16" forecolor="#F5F5F5"
+                    backcolor="#F9F9F9" mode="Opaque">
+                    <printWhenExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></printWhenExpression>
+                </reportElement>
+                <graphicElement>
+                    <pen lineWidth="0" />
+                </graphicElement>
+            </rectangle>
+
+            <!-- Date -->
+            <textField pattern="dd/MM/yyyy">
+                <reportElement x="5" y="0" width="80" height="16" forecolor="#333333" />
+                <textElement verticalAlignment="Middle">
+                    <font size="8" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[$F{date}]]></textFieldExpression>
+            </textField>
+
+            <!-- Day name -->
+            <textField>
+                <reportElement x="90" y="0" width="100" height="16" forecolor="#555555" />
+                <textElement verticalAlignment="Middle">
+                    <font size="8" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[$F{dayName}]]></textFieldExpression>
+            </textField>
+
+            <!-- Collected Amount -->
+            <textField pattern="#,##0">
+                <reportElement x="200" y="0" width="170" height="16" forecolor="#1A1A1A" />
+                <textElement verticalAlignment="Middle" textAlignment="Right">
+                    <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[$F{collectedAmount}]]></textFieldExpression>
+            </textField>
+
+            <!-- Count -->
+            <textField>
+                <reportElement x="380" y="0" width="155" height="16" forecolor="#555555" />
+                <textElement verticalAlignment="Middle" textAlignment="Right">
+                    <font size="8" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[$F{collectedCount} + " khoản"]]></textFieldExpression>
+            </textField>
+
+            <!-- Bottom border -->
+            <line>
+                <reportElement x="0" y="15" width="535" height="1" forecolor="#EEEEEE" />
+            </line>
+        </band>
+    </detail>
+
+    <!-- =========================================
+         SUMMARY - Top Offenders + Top Books
+    ============================================ -->
+    <summary>
+        <band height="360" splitType="Stretch">
+            <!-- === TOP OFFENDERS TABLE === -->
+            <staticText>
+                <reportElement x="0" y="10" width="535" height="16" backcolor="#EEEEEE"
+                    forecolor="#333333" mode="Opaque" />
+                <textElement verticalAlignment="Middle">
+                    <font size="9" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[   Top 5 Độc Giả Vi Phạm Nhiều Nhất]]></text>
+            </staticText>
+
+            <!-- Header row -->
+            <rectangle>
+                <reportElement x="0" y="26" width="535" height="14" backcolor="#4A4A4A"
+                    forecolor="#4A4A4A" mode="Opaque" />
+                <graphicElement>
+                    <pen lineWidth="0" />
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="5" y="26" width="20" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[STT]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="25" y="26" width="150" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Độc Giả]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="175" y="26" width="90" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Email]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="265" y="26" width="40" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Center">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Phạt]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="305" y="26" width="115" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Right">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Tổng Phạt (VND)]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="420" y="26" width="115" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Right">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Còn Nợ (VND)]]></text>
+            </staticText>
+
+            <!-- Subreport: Top Offenders -->
+            <subreport>
+                <reportElement x="0" y="40" width="535" height="90" />
+                <dataSourceExpression><![CDATA[$P{topOffendersData}]]></dataSourceExpression>
+                <subreportExpression><![CDATA[$P{topOffendersSub}]]></subreportExpression>
+            </subreport>
+
+            <!-- === TOP BOOKS TABLE === -->
+            <staticText>
+                <reportElement x="0" y="145" width="535" height="16" backcolor="#EEEEEE"
+                    forecolor="#333333" mode="Opaque" />
+                <textElement verticalAlignment="Middle">
+                    <font size="9" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[   Top 5 Sách Bị Trả Trễ Nhiều Nhất]]></text>
+            </staticText>
+
+            <!-- Header row -->
+            <rectangle>
+                <reportElement x="0" y="161" width="535" height="14" backcolor="#4A4A4A"
+                    forecolor="#4A4A4A" mode="Opaque" />
+                <graphicElement>
+                    <pen lineWidth="0" />
+                </graphicElement>
+            </rectangle>
+            <staticText>
+                <reportElement x="5" y="161" width="20" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[STT]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="25" y="161" width="200" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Tên Sách]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="225" y="161" width="130" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Tác Giả]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="355" y="161" width="50" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Center">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Số Lần]]></text>
+            </staticText>
+            <staticText>
+                <reportElement x="405" y="161" width="130" height="14" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Right">
+                    <font size="7" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
+                        pdfEncoding="Identity-H" isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Tổng Phạt (VND)]]></text>
+            </staticText>
+
+            <!-- Subreport: Top Books -->
+            <subreport>
+                <reportElement x="0" y="175" width="535" height="90" />
+                <dataSourceExpression><![CDATA[$P{topBooksData}]]></dataSourceExpression>
+                <subreportExpression><![CDATA[$P{topBooksSub}]]></subreportExpression>
+            </subreport>
+
+            <!-- Footer -->
+            <line>
+                <reportElement x="0" y="278" width="535" height="1" forecolor="#DDDDDD" />
+            </line>
+            <staticText>
+                <reportElement x="0" y="282" width="535" height="12" forecolor="#AAAAAA" />
+                <textElement textAlignment="Center">
+                    <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[Tài liệu này được tạo tự động bởi Hệ Thống Quản Lý Thư Viện — Không cần ký xác nhận]]></text>
+            </staticText>
+        </band>
+    </summary>
+
+</jasperReport>
