@@ -33,7 +33,7 @@ public class Book {
     Long id;
 
     @Nationalized
-    @Column(nullable = false)
+    @Column(nullable = false, length = 40)
     String title;
 
     @Nationalized
@@ -66,6 +66,7 @@ public class Book {
 
     @Column(name = "publication_year")
     Integer publicationYear;
+
     @CreatedDate
     @Column(name = "created_at", updatable = false)
     LocalDateTime createdAt;

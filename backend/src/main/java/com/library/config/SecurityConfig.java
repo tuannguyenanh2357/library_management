@@ -37,7 +37,6 @@ public class SecurityConfig {
             "/auth/register",
             "/dashboard",
             "/about",
-            "/contact",
             "/rules",
             "/files/download/**"
     };
@@ -109,19 +108,16 @@ public class SecurityConfig {
     // lấy token từ cookie ra
     @Bean
     public BearerTokenResolver bearerTokenResolver() {
-        return new BearerTokenResolver() {
-            @Override
-            public String resolve(HttpServletRequest request) {
-                Cookie[] cookies = request.getCookies();
-                if (cookies != null) {
-                    for (Cookie cookie : cookies) {
-                        if ("auth_token".equals(cookie.getName())) {
-                            return cookie.getValue();
-                        }
+        return request -> {
+            Cookie[] cookies = request.getCookies();
+            if (cookies != null) {
+                for (Cookie cookie : cookies) {
+                    if ("auth_token".equals(cookie.getName())) {
+                        return cookie.getValue();
                     }
                 }
-                return null;
             }
+            return null;
         };
     }
 }

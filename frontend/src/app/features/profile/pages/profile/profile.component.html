@@ -17,8 +17,10 @@
       <div class="profile-header-card">
         <div class="header-card-bg"></div>
         <div class="header-card-content">
-          <div class="user-avatar-initials">
-            {{ profile()?.name?.substring(0, 1)?.toUpperCase() || 'U' }}
+          <div class="avatar-wrapper">
+            <div class="user-avatar-initials">
+              {{ profile()?.name?.substring(0, 1)?.toUpperCase() || 'U' }}
+            </div>
           </div>
           <div class="user-meta">
             <div class="user-name-row">
@@ -414,19 +416,21 @@
                 </div>
               }
 
-              <div class="form-group full-width">
-                <label>Mật khẩu cũ <span class="req">*</span></label>
-                <input type="password" [(ngModel)]="passwordForm().oldPassword" name="oldPassword" placeholder="Nhập mật khẩu cũ..." required />
-              </div>
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label>Mật khẩu cũ <span class="req">*</span></label>
+                  <input type="password" [(ngModel)]="passwordForm().oldPassword" name="oldPassword" placeholder="Nhập mật khẩu cũ..." required />
+                </div>
 
-              <div class="form-group full-width">
-                <label>Mật khẩu mới <span class="req">*</span></label>
-                <input type="password" [(ngModel)]="passwordForm().newPassword" name="newPassword" placeholder="Nhập mật khẩu mới..." required />
-              </div>
+                <div class="form-group full-width">
+                  <label>Mật khẩu mới <span class="req">*</span></label>
+                  <input type="password" [(ngModel)]="passwordForm().newPassword" name="newPassword" placeholder="Nhập mật khẩu mới..." required />
+                </div>
 
-              <div class="form-group full-width">
-                <label>Xác nhận mật khẩu mới <span class="req">*</span></label>
-                <input type="password" [(ngModel)]="passwordForm().confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu mới..." required />
+                <div class="form-group full-width">
+                  <label>Xác nhận mật khẩu mới <span class="req">*</span></label>
+                  <input type="password" [(ngModel)]="passwordForm().confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu mới..." required />
+                </div>
               </div>
 
               <div class="form-actions">

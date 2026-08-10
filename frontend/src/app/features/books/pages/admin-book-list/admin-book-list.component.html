@@ -152,11 +152,11 @@
             <label>Trạng thái:</label>
             <select [(ngModel)]="searchCopyStatus" name="searchCopyStatus" class="form-select">
               <option value="">-- Tất cả trạng thái --</option>
-              <option value="AVAILABLE">AVAILABLE (Sẵn sàng)</option>
-              <option value="BORROWED">BORROWED (Đang mượn)</option>
-              <option value="RESERVED">RESERVED (Đã đặt trước)</option>
-              <option value="DAMAGED">DAMAGED (Bị hỏng)</option>
-              <option value="LOST">LOST (Bị mất)</option>
+              <option value="AVAILABLE">Sẵn sàng</option>
+              <option value="BORROWED">Đang mượn</option>
+              <option value="RESERVED">Đã đặt trước</option>
+              <option value="DAMAGED">Bị hỏng</option>
+              <option value="LOST">Bị mất</option>
             </select>
           </div>
           <div class="filter-item">
@@ -196,7 +196,7 @@
                   <td>{{ copy.author || '-' }}</td>
                   <td>
                     <span class="status-badge" [class]="copy.status.toLowerCase()">
-                      {{ copy.status === 'AVAILABLE' ? 'Sẵn sàng' : (copy.status === 'BORROWED' ? 'Đang mượn' : (copy.status === 'RESERVED' ? 'Giữ chỗ' : copy.status)) }}
+                      {{ copy.status === 'AVAILABLE' ? 'Sẵn sàng' : (copy.status === 'BORROWED' ? 'Đang mượn' : (copy.status === 'RESERVED' ? 'Giữ chỗ' : (copy.status === 'DAMAGED' ? 'Bị hỏng' : (copy.status === 'LOST' ? 'Bị mất' : copy.status)))) }}
                     </span>
                   </td>
                   <td>{{ copy.dueDate || '-' }}</td>
@@ -413,11 +413,11 @@
           <div class="form-group">
             <label>Trạng thái bản sao <span class="required" style="color: red;">*</span>:</label>
             <select [(ngModel)]="editCopyStatus" name="status" required class="form-select">
-              <option value="AVAILABLE">AVAILABLE (Sẵn sàng)</option>
-              <option value="BORROWED" disabled>BORROWED (Đang mượn - Cập nhật tự động)</option>
-              <option value="RESERVED" disabled>RESERVED (Giữ chỗ - Cập nhật tự động)</option>
-              <option value="DAMAGED">DAMAGED (Bị hỏng)</option>
-              <option value="LOST">LOST (Bị mất)</option>
+              <option value="AVAILABLE">Sẵn sàng</option>
+              <option value="BORROWED" disabled>Đang mượn (Cập nhật tự động)</option>
+              <option value="RESERVED" disabled>Giữ chỗ (Cập nhật tự động)</option>
+              <option value="DAMAGED">Bị hỏng</option>
+              <option value="LOST">Bị mất</option>
             </select>
           </div>
 

@@ -2,22 +2,23 @@
   <div class="header">
     <div class="title-group">
       <button class="btn-back" routerLink="/admin/dashboard">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
         Quay lại
       </button>
-      <h2>  Quản Lý Mượn Trả Sách</h2>
+      <h2> Quản Lý Mượn Trả Sách</h2>
     </div>
     <!-- <p>Xử lý yêu cầu và quét mã vạch giao dịch</p> -->
   </div>
 
   <div class="tabs">
     <button [class.active]="activeTab() === 'APPROVAL'" (click)="activeTab.set('APPROVAL')">
-      Chờ Phê Duyệt 
+      Chờ Phê Duyệt
       @if (pendingRequests().length > 0) {
-        <span class="badge">{{ pendingRequests().length }}</span>
+      <span class="badge">{{ pendingRequests().length }}</span>
       }
     </button>
     <button [class.active]="activeTab() === 'BORROW'" (click)="activeTab.set('BORROW')">
@@ -35,7 +36,7 @@
     <button [class.active]="activeTab() === 'OVERDUE_SP'" (click)="activeTab.set('OVERDUE_SP'); loadOverdueBooksSP()">
       ⚠️ Sách Quá Hạn (SP)
       @if (overdueBooksSP().length > 0) {
-        <span class="badge" style="background: #ef4444; color: white;">{{ overdueBooksSP().length }}</span>
+      <span class="badge" style="background: #ef4444; color: white;">{{ overdueBooksSP().length }}</span>
       }
     </button>
   </div>
@@ -44,429 +45,439 @@
 
     <!-- CHỜ PHÊ DUYỆT -->
     @if (activeTab() === 'APPROVAL') {
-      <div class="card">
-        <h3>Yêu Cầu Mượn Sách Online</h3>
-        @if (loading()) {
-          <p>Đang tải danh sách...</p>
-        } @else if (pendingRequests().length === 0) {
-          <div class="empty-state">
-            <p>Không có yêu cầu nào đang chờ xử lý.</p>
+    <div class="card">
+      <h3>Yêu Cầu Mượn Sách Online</h3>
+      @if (loading()) {
+      <p>Đang tải danh sách...</p>
+      } @else if (pendingRequests().length === 0) {
+      <div class="empty-state">
+        <p>Không có yêu cầu nào đang chờ xử lý.</p>
+      </div>
+      } @else {
+      <div class="request-grid">
+        @for (req of pendingRequests(); track req.id) {
+        <div class="request-card">
+          <div class="req-header">
+            <span class="req-time">{{ req.requestDate | date:'short' }}</span>
+            <span class="status-badge pending">Chờ duyệt</span>
           </div>
-        } @else {
-          <div class="request-grid">
-            @for (req of pendingRequests(); track req.id) {
-              <div class="request-card">
-                <div class="req-header">
-                  <span class="req-time">{{ req.requestDate | date:'short' }}</span>
-                  <span class="status-badge pending">Chờ duyệt</span>
-                </div>
-                <div class="req-body">
-                  <h4>{{ req.bookTitle }}</h4>
-                  <p><strong>Người mượn:</strong> {{ req.memberName }} (ID: {{ req.memberId }})</p>
-                </div>
-                <div class="req-actions">
-                  <button class="btn-process" (click)="openApprovalModal(req)">Xử lý yêu cầu</button>
-                </div>
-              </div>
-            }
+          <div class="req-body">
+            <h4>{{ req.bookTitle }}</h4>
+            <p><strong>Người mượn:</strong> {{ req.memberName }} (ID: {{ req.memberId }})</p>
           </div>
+          <div class="req-actions">
+            <button class="btn-process" (click)="openApprovalModal(req)">Xử lý yêu cầu</button>
+          </div>
+        </div>
         }
       </div>
+      }
+    </div>
     }
 
     <!-- TẠO TRỰC TIẾP -->
     @if (activeTab() === 'BORROW') {
-      <div class="card">
-        <h3>Tạo Phiếu Mượn Trực Tiếp</h3>
-        <p class="sub-text">Dùng khi thành viên đến lấy sách mà chưa đăng ký online.</p>
-        <form [formGroup]="borrowForm" (ngSubmit)="onSubmitBorrow()">
-          <div class="form-group">
-            <label>ID Thành viên:</label>
-            <input type="number" formControlName="memberId" placeholder="Nhập ID thành viên..." class="modern-input">
+    <div class="card">
+      <h3>Tạo Phiếu Mượn Trực Tiếp</h3>
+      <p class="sub-text">Dùng khi thành viên đến lấy sách mà chưa đăng ký online.</p>
+      <form [formGroup]="borrowForm" (ngSubmit)="onSubmitBorrow()">
+        <div class="form-group">
+          <label>ID Thành viên:</label>
+          <input type="number" formControlName="memberId" placeholder="Nhập ID thành viên..." class="modern-input">
+        </div>
+
+        <div class="form-group barcode-group">
+          <label>Mã vạch cuốn sách:</label>
+          <div class="input-with-btn">
+            <input type="text" formControlName="barcode" placeholder="Quét mã vạch..." class="modern-input">
+            <button type="button" class="btn-scan" (click)="scanBarcodeForBorrow()">Kiểm tra</button>
           </div>
-          
-          <div class="form-group barcode-group">
-            <label>Mã vạch cuốn sách:</label>
-            <div class="input-with-btn">
-              <input type="text" formControlName="barcode" placeholder="Quét mã vạch..." class="modern-input">
-              <button type="button" class="btn-scan" (click)="scanBarcodeForBorrow()">Kiểm tra</button>
-            </div>
-          </div>
-          @if (scanError()) { <div class="error-msg" style="color: #ef4444; font-size: 0.85rem; margin-top: 5px;">{{ scanError() }}</div> }
-          @if (scanWarning()) { <div class="warning-msg" style="color: #f59e0b; font-size: 0.85rem; margin-top: 5px; font-weight: bold;">{{ scanWarning() }}</div> }
-          @if (scannedBookCopy(); as copy) {
-            <div class="book-info-card" [class.available]="copy.status === 'AVAILABLE'" [class.unavailable]="copy.status !== 'AVAILABLE'">
-              <div><strong>Sách:</strong> {{ copy.title }}</div>
-              <div><strong>Trạng thái:</strong> {{ copy.status }}</div>
-            </div>
-          }
-          <div class="form-group">
-            <label>Hạn trả:</label>
-            <input type="date" formControlName="dueDate" class="modern-input">
-          </div>
-          <button type="submit" class="btn-submit" [disabled]="borrowForm.invalid || !scannedBookCopy() || (scannedBookCopy()?.status !== 'AVAILABLE' && scannedBookCopy()?.status !== 'RESERVED')">
-            Xác nhận mượn
-          </button>
-        </form>
-      </div>
+        </div>
+        @if (scanError()) { <div class="error-msg" style="color: #ef4444; font-size: 0.85rem; margin-top: 5px;">{{
+          scanError() }}</div> }
+        @if (scanWarning()) { <div class="warning-msg"
+          style="color: #f59e0b; font-size: 0.85rem; margin-top: 5px; font-weight: bold;">{{ scanWarning() }}</div> }
+        @if (scannedBookCopy(); as copy) {
+        <div class="book-info-card" [class.available]="copy.status === 'AVAILABLE'"
+          [class.unavailable]="copy.status !== 'AVAILABLE'">
+          <div><strong>Sách:</strong> {{ copy.title }}</div>
+          <div><strong>Trạng thái:</strong> {{ copy.status === 'AVAILABLE' ? 'Sẵn sàng' : (copy.status === 'BORROWED' ?
+            'Đang mượn' : (copy.status === 'RESERVED' ? 'Giữ chỗ' : (copy.status === 'DAMAGED' ? 'Bị hỏng' :
+            (copy.status === 'LOST' ? 'Bị mất' : copy.status)))) }}</div>
+        </div>
+        }
+        <div class="form-group">
+          <label>Hạn trả:</label>
+          <input type="date" formControlName="dueDate" class="modern-input">
+        </div>
+        <button type="submit" class="btn-submit"
+          [disabled]="borrowForm.invalid || !scannedBookCopy() || (scannedBookCopy()?.status !== 'AVAILABLE' && scannedBookCopy()?.status !== 'RESERVED')">
+          Xác nhận mượn
+        </button>
+      </form>
+    </div>
     }
 
     <!-- TRẢ SÁCH -->
     @if (activeTab() === 'RETURN') {
-      <div class="card">
-        <h3>Trả Sách</h3>
-        <form [formGroup]="returnForm" (ngSubmit)="onSubmitReturn()">
-          <div class="form-group">
-            <label>Mã vạch cuốn sách:</label>
-            <input type="text" formControlName="barcode" placeholder="Quét mã vạch sách cần trả..." class="modern-input">
-          </div>
-          <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-            <button type="submit" class="btn-submit" [disabled]="returnForm.invalid">Xác nhận trả</button>
-            <button type="button" class="btn-reject-large" [disabled]="returnForm.invalid" (click)="reportLost()">Báo Mất</button>
-            <button type="button" class="btn-reject-large" [disabled]="returnForm.invalid" (click)="reportDamaged()">Báo Hỏng</button>
-          </div>
-        </form>
-      </div>
+    <div class="card">
+      <h3>Trả Sách</h3>
+      <form [formGroup]="returnForm" (ngSubmit)="onSubmitReturn()">
+        <div class="form-group">
+          <label>Mã vạch cuốn sách:</label>
+          <input type="text" formControlName="barcode" placeholder="Quét mã vạch sách cần trả..." class="modern-input">
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button type="submit" class="btn-submit" [disabled]="returnForm.invalid">Xác nhận trả</button>
+          <button type="button" class="btn-reject-large" [disabled]="returnForm.invalid" (click)="reportLost()">Báo
+            Mất</button>
+          <button type="button" class="btn-reject-large" [disabled]="returnForm.invalid" (click)="reportDamaged()">Báo
+            Hỏng</button>
+        </div>
+      </form>
+    </div>
     }
 
     <!-- HÀNG ĐỢI (RESERVATIONS) -->
     @if (activeTab() === 'RESERVATIONS') {
-      <div class="card">
-        <h3>Quản Lý Hàng Đợi (Đặt Chỗ)</h3>
-        <p class="sub-text">Danh sách độc giả đang xếp hàng chờ mượn sách.</p>
-        
-        <div class="table-responsive" style="margin-top: 16px;">
-          <table class="modern-table">
-            <thead>
-              <tr>
-                <th class="text-center">Người đặt</th>
-                <th>Sách</th>
-                <th class="text-center">Ngày xếp hàng</th>
-                <th class="text-center">Trạng thái</th>
-                <th class="text-center">Ghi chú (Dự kiến / Hạn lấy)</th>
-                <th class="text-center">Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              @if (reservations().length === 0) {
-                <tr>
-                  <td colspan="6" class="text-center" style="padding: 24px; color: #64748b;">Chưa có dữ liệu đặt chỗ nào.</td>
-                </tr>
-              } @else {
-                @for (res of reservations(); track res.id) {
-                  <tr>
-                    <td class="text-center"><strong>{{ res.memberName }}</strong><br><small class="text-muted">ID: {{ res.memberId }}</small></td>
-                    <td><strong>{{ res.bookTitle }}</strong><br><small class="text-muted">ID Sách: {{ res.bookId }}</small></td>
-                    <td class="text-center">{{ res.requestDate | date:'short' }}</td>
-                    <td class="text-center">
-                      <span class="status-badge"
-                            [class.pending]="res.status === 'PENDING'"
-                            [class.returned]="res.status === 'FULFILLED' || res.status === 'COMPLETED'"
-                            [class.rejected]="res.status === 'CANCELLED' || res.status === 'EXPIRED'">
-                        {{ res.status }}
-                      </span>
-                    </td>
-                    <td class="text-center">
-                      @if (res.status === 'FULFILLED') {
-                        <span style="color: #ef4444; font-weight: 600;">Hạn lấy: {{ res.expiryDate | date:'short' }}</span>
-                      } @else if (res.status === 'PENDING' && res.expectedAvailableDate) {
-                        <span style="color: #3b82f6; font-weight: 600;">Dự kiến có: {{ res.expectedAvailableDate | date:'dd/MM/yyyy' }}</span>
-                      } @else if (res.status === 'PENDING') {
-                        <span class="text-muted">Chưa rõ ngày trả</span>
-                      } @else {
-                        <span class="text-muted">-</span>
-                      }
-                    </td>
-                    <td class="text-center">
-                      @if (res.status === 'PENDING' || res.status === 'FULFILLED') {
-                        <button class="btn-reject-large" style="padding: 6px 12px; font-size: 0.85rem;" (click)="cancelReservationAsStaff(res.id)">Hủy</button>
-                      } @else {
-                        <span class="text-muted">-</span>
-                      }
-                    </td>
-                  </tr>
+    <div class="card">
+      <h3>Quản Lý Hàng Đợi (Đặt Chỗ)</h3>
+      <p class="sub-text">Danh sách độc giả đang xếp hàng chờ mượn sách.</p>
+
+      <div class="table-responsive" style="margin-top: 16px;">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th class="text-center">Người đặt</th>
+              <th>Sách</th>
+              <th class="text-center">Ngày xếp hàng</th>
+              <th class="text-center">Trạng thái</th>
+              <th class="text-center">Ghi chú (Dự kiến / Hạn lấy)</th>
+              <th class="text-center">Hành động</th>
+            </tr>
+          </thead>
+          <tbody>
+            @if (reservations().length === 0) {
+            <tr>
+              <td colspan="6" class="text-center" style="padding: 24px; color: #64748b;">Chưa có dữ liệu đặt chỗ nào.
+              </td>
+            </tr>
+            } @else {
+            @for (res of reservations(); track res.id) {
+            <tr>
+              <td class="text-center"><strong>{{ res.memberName }}</strong><br><small class="text-muted">ID: {{
+                  res.memberId }}</small></td>
+              <td><strong>{{ res.bookTitle }}</strong><br><small class="text-muted">ID Sách: {{ res.bookId }}</small>
+              </td>
+              <td class="text-center">{{ res.requestDate | date:'short' }}</td>
+              <td class="text-center">
+                <span class="status-badge" [class.pending]="res.status === 'PENDING'"
+                  [class.returned]="res.status === 'FULFILLED' || res.status === 'COMPLETED'"
+                  [class.rejected]="res.status === 'CANCELLED' || res.status === 'EXPIRED'">
+                  {{ res.status === 'PENDING' ? 'Đang xếp hàng' : (res.status === 'FULFILLED' ? 'Chờ đến lấy sách' :
+                  (res.status === 'COMPLETED' ? 'Đã đến lấy' : (res.status === 'CANCELLED' ? 'Đã hủy' : (res.status ===
+                  'EXPIRED' ? 'Hết hạn' : res.status)))) }}
+                </span>
+              </td>
+              <td class="text-center">
+                @if (res.status === 'FULFILLED') {
+                <span style="color: #ef4444; font-weight: 600;">Hạn lấy: {{ res.expiryDate | date:'short' }}</span>
+                } @else if (res.status === 'PENDING' && res.expectedAvailableDate) {
+                <span style="color: #3b82f6; font-weight: 600;">Dự kiến có: {{ res.expectedAvailableDate |
+                  date:'dd/MM/yyyy' }}</span>
+                } @else if (res.status === 'PENDING') {
+                <span class="text-muted">Chưa rõ ngày trả</span>
+                } @else {
+                <span class="text-muted">-</span>
                 }
-              }
-            </tbody>
-          </table>
-        </div>
+              </td>
+              <td class="text-center">
+                @if (res.status === 'PENDING' || res.status === 'FULFILLED') {
+                <button class="btn-reject-large" style="padding: 6px 12px; font-size: 0.85rem;"
+                  (click)="cancelReservationAsStaff(res.id)">Hủy</button>
+                } @else {
+                <span class="text-muted">-</span>
+                }
+              </td>
+            </tr>
+            }
+            }
+          </tbody>
+        </table>
       </div>
+    </div>
     }
 
     <!-- SÁCH QUÁ HẠN (STORED PROCEDURE) -->
     @if (activeTab() === 'OVERDUE_SP') {
-      <div class="card">
-        <div class="card-header-flex">
-          <div>
-            <h3>⚠️ Danh Sách Sách Đang Quá Hạn</h3>
-            <p class="sub-text">Cảnh báo các khoản mượn đã trễ hạn chưa trả để gọi điện / thông báo đòi sách</p>
-          </div>
-          <button class="btn-scan" (click)="loadOverdueBooksSP()">🔄 Tải lại</button>
+    <div class="card">
+      <div class="card-header-flex">
+        <div>
+          <h3>⚠️ Danh Sách Sách Đang Quá Hạn</h3>
+          <p class="sub-text">Cảnh báo các khoản mượn đã trễ hạn chưa trả để gọi điện / thông báo đòi sách</p>
         </div>
-
-        @if (isOverdueLoading()) {
-          <div class="empty-state" style="padding: 40px;">
-            <p>Đang tải danh sách quá hạn từ Stored Procedure...</p>
-          </div>
-        } @else if (overdueBooksSP().length === 0) {
-          <div class="empty-state" style="padding: 40px; color: #10b981;">
-            <p>🎉 Tuyệt vời! Hiện tại không có cuốn sách nào đang bị quá hạn.</p>
-          </div>
-        } @else {
-          <div class="table-responsive" style="margin-top: 16px;">
-            <table class="modern-table">
-              <thead>
-                <tr>
-                  <th>Mã Phiếu Mượn</th>
-                  <th>Mã Vạch Sách</th>
-                  <th>Tên Sách</th>
-                  <th>Độc Giả</th>
-                  <th>Số Điện Thoại</th>
-                  <th class="text-center">Ngày Mượn</th>
-                  <th class="text-center">Hạn Trả</th>
-                  <th class="text-center">Số Ngày Quá Hạn</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (item of overdueBooksSP(); track item.borrowingId) {
-                  <tr style="background-color: #fff5f5;">
-                    <td><strong>#{{ item.borrowingId }}</strong></td>
-                    <td><code>{{ item.barCode }}</code></td>
-                    <td><strong style="color: #1e293b;">{{ item.bookTitle }}</strong></td>
-                    <td>{{ item.memberName }} <small class="text-muted">(ID: {{ item.memberId }})</small></td>
-                    <td><a [href]="'tel:' + item.memberPhone" style="color: #2563eb; text-decoration: none;">📞 {{ item.memberPhone }}</a></td>
-                    <td class="text-center">{{ item.borrowDate | date:'dd/MM/yyyy' }}</td>
-                    <td class="text-center text-danger"><strong>{{ item.dueDate | date:'dd/MM/yyyy' }}</strong></td>
-                    <td class="text-center">
-                      <span class="status-badge rejected" style="font-size: 0.9rem; padding: 6px 12px;">
-                        🚨 Quá {{ item.overdueDays }} ngày
-                      </span>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
+        <button class="btn-scan" (click)="loadOverdueBooksSP()">🔄 Tải lại</button>
       </div>
+
+      @if (isOverdueLoading()) {
+      <div class="empty-state" style="padding: 40px;">
+        <p>Đang tải danh sách quá hạn từ Stored Procedure...</p>
+      </div>
+      } @else if (overdueBooksSP().length === 0) {
+      <div class="empty-state" style="padding: 40px; color: #10b981;">
+        <p>🎉 Tuyệt vời! Hiện tại không có cuốn sách nào đang bị quá hạn.</p>
+      </div>
+      } @else {
+      <div class="table-responsive" style="margin-top: 16px;">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>Mã Phiếu Mượn</th>
+              <th>Mã Vạch Sách</th>
+              <th>Tên Sách</th>
+              <th>Độc Giả</th>
+              <th>Số Điện Thoại</th>
+              <th class="text-center">Ngày Mượn</th>
+              <th class="text-center">Hạn Trả</th>
+              <th class="text-center">Số Ngày Quá Hạn</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of overdueBooksSP(); track item.borrowingId) {
+            <tr style="background-color: #fff5f5;">
+              <td><strong>#{{ item.borrowingId }}</strong></td>
+              <td><code>{{ item.barCode }}</code></td>
+              <td><strong style="color: #1e293b;">{{ item.bookTitle }}</strong></td>
+              <td>{{ item.memberName }} <small class="text-muted">(ID: {{ item.memberId }})</small></td>
+              <td><a [href]="'tel:' + item.memberPhone" style="color: #2563eb; text-decoration: none;">📞 {{
+                  item.memberPhone }}</a></td>
+              <td class="text-center">{{ item.borrowDate | date:'dd/MM/yyyy' }}</td>
+              <td class="text-center text-danger"><strong>{{ item.dueDate | date:'dd/MM/yyyy' }}</strong></td>
+              <td class="text-center">
+                <span class="status-badge rejected" style="font-size: 0.9rem; padding: 6px 12px;">
+                  🚨 Quá {{ item.overdueDays }} ngày
+                </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+    </div>
     }
 
     <!-- LỊCH SỬ -->
     @if (activeTab() === 'HISTORY') {
 
-      <div class="card" style="margin-top: 24px;">
-        <div class="card-header-flex">
-          <div>
-            <h3>Lịch Sử Duyệt Yêu Cầu Online</h3>
-            <p class="sub-text">Các yêu cầu mượn sách đã được duyệt hoặc từ chối</p>
-          </div>
+    <div class="card" style="margin-top: 24px;">
+      <div class="card-header-flex">
+        <div>
+          <h3>Lịch Sử Duyệt Yêu Cầu Online</h3>
+          <p class="sub-text">Các yêu cầu mượn sách đã được duyệt hoặc từ chối</p>
         </div>
-        
-        <div class="table-responsive">
-          <table class="modern-table">
-            <thead>
-              <tr>
-                <th class="text-center">Thành viên</th>
-                <th>Đầu sách</th>
-                <th class="text-center">Ngày gửi</th>
-                <th class="text-center">Ngày xử lý</th>
-                <th class="text-center">Trạng thái</th>
-                <th>Lý do từ chối</th>
-              </tr>
-              <tr class="filter-row">
-                <th class="text-center"><input type="text" class="column-filter" placeholder="Tìm tên..." (input)="updateRequestFilter('memberName', $any($event.target).value)"></th>
-                <th><input type="text" class="column-filter" placeholder="Tìm sách..." (input)="updateRequestFilter('bookTitle', $any($event.target).value)"></th>
-                <th class="text-center"><input type="date" class="column-filter" (change)="updateRequestFilter('requestDate', $any($event.target).value)"></th>
-                <th class="text-center"><input type="date" class="column-filter" (change)="updateRequestFilter('processedDate', $any($event.target).value)"></th>
-                <th class="text-center">
-                  <select class="column-filter" (change)="updateRequestFilter('status', $any($event.target).value)">
-                    <option value="">Tất cả</option>
-                    <option value="đã duyệt">Đã duyệt</option>
-                    <option value="từ chối">Từ chối</option>
-                  </select>
-                </th>
-                <th><input type="text" class="column-filter" placeholder="Tìm lý do..." (input)="updateRequestFilter('notes', $any($event.target).value)"></th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (req of paginatedHistoryRequests(); track req.id) {
-                <tr>
-                  <td class="text-center">{{ req.memberName }}</td>
-                  <td>{{ req.bookTitle }}</td>
-                  <td class="text-center">{{ req.requestDate | date:'shortDate' }}</td>
-                  <td class="text-center">{{ req.processedDate | date:'shortDate' }}</td>
-                  <td class="text-center">
-                    <span class="status-badge" 
-                          [class.returned]="req.status === 'APPROVED'" 
-                          [class.rejected]="req.status === 'REJECTED'">
-                      {{ req.status === 'APPROVED' ? 'Đã duyệt' : (req.status === 'REJECTED' ? 'Từ chối' : req.status) }}
-                    </span>
-                  </td>
-                  <td>
-                    @if (req.status === 'REJECTED') {
-                      <span class="text-danger" style="font-size: 13px;">{{ req.notes }}</span>
-                    } @else {
-                      <span style="color: #94a3b8;">-</span>
-                    }
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination for Requests -->
-        <app-pagination
-          [currentPage]="reqCurrentPage()"
-          [totalItems]="filteredHistoryRequests().length"
-          [pageSize]="reqPageSize()"
-          itemLabel="yêu cầu"
-          (pageChange)="goToReqPage($event)"
-        />
       </div>
 
-      <div class="card" style="margin-top: 24px;">
-        <div class="card-header-flex">
-          <div>
-            <h3>Lịch Sử Giao Dịch Mượn Sách</h3>
-            <p class="sub-text">Lịch sử mượn và trả sách thực tế</p>
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table class="modern-table">
-            <thead>
-              <tr>
-                <th class="text-center">Thành viên</th>
-                <th>Sách</th>
-                <th>Mã vạch</th>
-                <th class="text-center">Ngày mượn</th>
-                <th class="text-center">Hạn trả</th>
-                <th class="text-center">Ngày trả</th>
-                <th class="text-center">Trạng thái</th>
-              </tr>
-              <tr class="filter-row">
-                <th class="text-center"><input type="text" class="column-filter" placeholder="Tìm tên..." (input)="updateBorrowingFilter('memberName', $any($event.target).value)"></th>
-                <th><input type="text" class="column-filter" placeholder="Tìm sách..." (input)="updateBorrowingFilter('bookTitle', $any($event.target).value)"></th>
-                <th><input type="text" class="column-filter" placeholder="Tìm mã vạch..." (input)="updateBorrowingFilter('barCode', $any($event.target).value)"></th>
-                <th class="text-center"><input type="date" class="column-filter" (change)="updateBorrowingFilter('borrowDate', $any($event.target).value)"></th>
-                <th class="text-center"></th>
-                <th class="text-center"><input type="date" class="column-filter" (change)="updateBorrowingFilter('returnDate', $any($event.target).value)"></th>
-                <th class="text-center">
-                  <select class="column-filter" (change)="updateBorrowingFilter('status', $any($event.target).value)">
-                    <option value="">Tất cả</option>
-                    <option value="đã trả">Đã trả</option>
-                    <option value="đang mượn">Đang mượn</option>
-                  </select>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (b of paginatedBorrowings(); track b.id) {
-                <tr>
-                  <td class="text-center">{{ b.memberName }}</td>
-                  <td>{{ b.bookTitle }}</td>
-                  <td>{{ b.barCode }}</td>
-                  <td class="text-center">{{ b.borrowDate }}</td>
-                  <td class="text-center">{{ b.dueDate }}</td>
-                  <td class="text-center">{{ b.returnDate || '-' }}</td>
-                  <td class="text-center">
-                    <span class="status-badge" [class.returned]="b.returnDate" [class.borrowed]="!b.returnDate">
-                      {{ b.returnDate ? 'Đã trả' : 'Đang mượn' }}
-                    </span>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination for Borrowings -->
-        <app-pagination
-          [currentPage]="borrowCurrentPage()"
-          [totalItems]="filteredBorrowings().length"
-          [pageSize]="borrowPageSize()"
-          itemLabel="giao dịch"
-          (pageChange)="goToBorrowPage($event)"
-        />
+      <div class="table-responsive">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th class="text-center">Thành viên</th>
+              <th>Đầu sách</th>
+              <th class="text-center">Ngày gửi</th>
+              <th class="text-center">Ngày xử lý</th>
+              <th class="text-center">Trạng thái</th>
+              <th>Lý do từ chối</th>
+            </tr>
+            <tr class="filter-row">
+              <th class="text-center"><input type="text" class="column-filter" placeholder="Tìm tên..."
+                  (input)="updateRequestFilter('memberName', $any($event.target).value)"></th>
+              <th><input type="text" class="column-filter" placeholder="Tìm sách..."
+                  (input)="updateRequestFilter('bookTitle', $any($event.target).value)"></th>
+              <th class="text-center"><input type="date" class="column-filter"
+                  (change)="updateRequestFilter('requestDate', $any($event.target).value)"></th>
+              <th class="text-center"><input type="date" class="column-filter"
+                  (change)="updateRequestFilter('processedDate', $any($event.target).value)"></th>
+              <th class="text-center">
+                <select class="column-filter" (change)="updateRequestFilter('status', $any($event.target).value)">
+                  <option value="">Tất cả</option>
+                  <option value="đã duyệt">Đã duyệt</option>
+                  <option value="từ chối">Từ chối</option>
+                </select>
+              </th>
+              <th><input type="text" class="column-filter" placeholder="Tìm lý do..."
+                  (input)="updateRequestFilter('notes', $any($event.target).value)"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (req of paginatedHistoryRequests(); track req.id) {
+            <tr>
+              <td class="text-center">{{ req.memberName }}</td>
+              <td>{{ req.bookTitle }}</td>
+              <td class="text-center">{{ req.requestDate | date:'shortDate' }}</td>
+              <td class="text-center">{{ req.processedDate | date:'shortDate' }}</td>
+              <td class="text-center">
+                <span class="status-badge" [class.returned]="req.status === 'APPROVED'"
+                  [class.rejected]="req.status === 'REJECTED'">
+                  {{ req.status === 'APPROVED' ? 'Đã duyệt' : (req.status === 'REJECTED' ? 'Từ chối' : (req.status ===
+                  'PENDING' ? 'Đang chờ' : req.status)) }}
+                </span>
+              </td>
+              <td>
+                @if (req.status === 'REJECTED') {
+                <span class="text-danger" style="font-size: 13px;">{{ req.notes }}</span>
+                } @else {
+                <span style="color: #94a3b8;">-</span>
+                }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
       </div>
+
+      <!-- Pagination for Requests -->
+      <app-pagination [currentPage]="reqCurrentPage()" [totalItems]="filteredHistoryRequests().length"
+        [pageSize]="reqPageSize()" itemLabel="yêu cầu" (pageChange)="goToReqPage($event)" />
+    </div>
+
+    <div class="card" style="margin-top: 24px;">
+      <div class="card-header-flex">
+        <div>
+          <h3>Lịch Sử Giao Dịch Mượn Sách</h3>
+          <p class="sub-text">Lịch sử mượn và trả sách thực tế</p>
+        </div>
+      </div>
+      <div class="table-responsive">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th class="text-center">Thành viên</th>
+              <th>Sách</th>
+              <th>Mã vạch</th>
+              <th class="text-center">Ngày mượn</th>
+              <th class="text-center">Hạn trả</th>
+              <th class="text-center">Ngày trả</th>
+              <th class="text-center">Trạng thái</th>
+            </tr>
+            <tr class="filter-row">
+              <th class="text-center"><input type="text" class="column-filter" placeholder="Tìm tên..."
+                  (input)="updateBorrowingFilter('memberName', $any($event.target).value)"></th>
+              <th><input type="text" class="column-filter" placeholder="Tìm sách..."
+                  (input)="updateBorrowingFilter('bookTitle', $any($event.target).value)"></th>
+              <th><input type="text" class="column-filter" placeholder="Tìm mã vạch..."
+                  (input)="updateBorrowingFilter('barCode', $any($event.target).value)"></th>
+              <th class="text-center"><input type="date" class="column-filter"
+                  (change)="updateBorrowingFilter('borrowDate', $any($event.target).value)"></th>
+              <th class="text-center"></th>
+              <th class="text-center"><input type="date" class="column-filter"
+                  (change)="updateBorrowingFilter('returnDate', $any($event.target).value)"></th>
+              <th class="text-center">
+                <select class="column-filter" (change)="updateBorrowingFilter('status', $any($event.target).value)">
+                  <option value="">Tất cả</option>
+                  <option value="đã trả">Đã trả</option>
+                  <option value="đang mượn">Đang mượn</option>
+                </select>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of paginatedBorrowings(); track b.id) {
+            <tr>
+              <td class="text-center">{{ b.memberName }}</td>
+              <td>{{ b.bookTitle }}</td>
+              <td>{{ b.barCode }}</td>
+              <td class="text-center">{{ b.borrowDate }}</td>
+              <td class="text-center">{{ b.dueDate }}</td>
+              <td class="text-center">{{ b.returnDate || '-' }}</td>
+              <td class="text-center">
+                <span class="status-badge" [class.returned]="b.returnDate" [class.borrowed]="!b.returnDate">
+                  {{ b.returnDate ? 'Đã trả' : 'Đang mượn' }}
+                </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination for Borrowings -->
+      <app-pagination [currentPage]="borrowCurrentPage()" [totalItems]="filteredBorrowings().length"
+        [pageSize]="borrowPageSize()" itemLabel="giao dịch" (pageChange)="goToBorrowPage($event)" />
+    </div>
     }
   </div>
 </div>
 
 <!-- Modal Xử Lý Yêu Cầu -->
 @if (selectedRequestToApprove(); as req) {
-  <div class="modal-overlay">
-    <div class="modal-content card">
-      <div class="modal-header">
-        <h3>Chi Tiết Yêu Cầu Mượn Sách</h3>
-        <button class="btn-close" (click)="closeApprovalModal()">×</button>
+<div class="modal-overlay">
+  <div class="modal-content card">
+    <div class="modal-header">
+      <h3>Chi Tiết Yêu Cầu Mượn Sách</h3>
+      <button class="btn-close" (click)="closeApprovalModal()">×</button>
+    </div>
+
+    <div class="req-details-box">
+      <div class="detail-row">
+        <span class="detail-label">Người mượn:</span>
+        <span class="detail-value"><strong>{{ req.memberName }}</strong> (ID: {{ req.memberId }})</span>
       </div>
-      
-      <div class="req-details-box">
-        <div class="detail-row">
-          <span class="detail-label">Người mượn:</span>
-          <span class="detail-value"><strong>{{ req.memberName }}</strong> (ID: {{ req.memberId }})</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Đầu sách yêu cầu:</span>
-          <span class="detail-value book-title">{{ req.bookTitle }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Kho hiện còn:</span>
-          <span class="detail-value" [class.text-danger]="req.availableCopiesCount === 0">
-            <strong>{{ req.availableCopiesCount }}</strong> cuốn sách
-          </span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Ngày gửi yêu cầu:</span>
-          <span class="detail-value">{{ req.requestDate | date:'medium' }}</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Mong muốn trả vào:</span>
-          <span class="detail-value"><strong>{{ req.expectedDueDate | date:'longDate' }}</strong></span>
-        </div>
-        @if (req.notes) {
-          <div class="detail-row notes-row">
-            <span class="detail-label">Lời nhắn:</span>
-            <span class="detail-value text-italic">"{{ req.notes }}"</span>
-          </div>
-        }
+      <div class="detail-row">
+        <span class="detail-label">Đầu sách yêu cầu:</span>
+        <span class="detail-value book-title">{{ req.bookTitle }}</span>
       </div>
-
-      <div class="divider"></div>
-
-      @if (!isRejecting()) {
-        <h4>Phê Duyệt Tự Động</h4>
-        <p class="instruction">Hệ thống sẽ tự động chọn 1 cuốn "{{ req.bookTitle }}" ngẫu nhiên trong kho để cho mượn và đặt hạn trả theo mong muốn của độc giả.</p>
-
-        <div class="modal-actions">
-          <button type="button" class="btn-reject-large" (click)="toggleRejectMode()">Từ chối yêu cầu</button>
-          <button type="button" class="btn-submit-large" 
-                  (click)="submitApproval()"
-                  [disabled]="req.availableCopiesCount === 0">
-            Duyệt yêu cầu mượn sách
-          </button>
-        </div>
-      } @else {
-        <h4>Từ Chối Yêu Cầu</h4>
-        <p class="instruction text-danger">Vui lòng nhập lý do từ chối để độc giả biết (Vd: Hết sách, Sách hỏng...)</p>
-        
-        <textarea 
-          class="modern-input reject-textarea" 
-          rows="3" 
-          placeholder="Nhập lý do tại đây..."
-          [value]="rejectReason()"
-          (input)="updateRejectReason($event)"></textarea>
-
-        <div class="modal-actions">
-          <button type="button" class="btn-cancel" (click)="cancelRejectMode()">Quay lại</button>
-          <button type="button" class="btn-reject-large confirm-reject" 
-                  (click)="submitReject()"
-                  [disabled]="!rejectReason().trim()">
-            Xác nhận Từ Chối
-          </button>
-        </div>
+      <div class="detail-row">
+        <span class="detail-label">Kho hiện còn:</span>
+        <span class="detail-value" [class.text-danger]="req.availableCopiesCount === 0">
+          <strong>{{ req.availableCopiesCount }}</strong> cuốn sách
+        </span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Ngày gửi yêu cầu:</span>
+        <span class="detail-value">{{ req.requestDate | date:'medium' }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Mong muốn trả vào:</span>
+        <span class="detail-value"><strong>{{ req.expectedDueDate | date:'longDate' }}</strong></span>
+      </div>
+      @if (req.notes) {
+      <div class="detail-row notes-row">
+        <span class="detail-label">Lời nhắn:</span>
+        <span class="detail-value text-italic">"{{ req.notes }}"</span>
+      </div>
       }
     </div>
+
+    <div class="divider"></div>
+
+    @if (!isRejecting()) {
+    <h4>Phê Duyệt Tự Động</h4>
+    <p class="instruction">Hệ thống sẽ tự động chọn 1 cuốn "{{ req.bookTitle }}" ngẫu nhiên trong kho để cho mượn và đặt
+      hạn trả theo mong muốn của độc giả.</p>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-reject-large" (click)="toggleRejectMode()">Từ chối yêu cầu</button>
+      <button type="button" class="btn-submit-large" (click)="submitApproval()"
+        [disabled]="req.availableCopiesCount === 0">
+        Duyệt yêu cầu mượn sách
+      </button>
+    </div>
+    } @else {
+    <h4>Từ Chối Yêu Cầu</h4>
+    <p class="instruction text-danger">Vui lòng nhập lý do từ chối để độc giả biết (Vd: Hết sách, Sách hỏng...)</p>
+
+    <textarea class="modern-input reject-textarea" rows="3" placeholder="Nhập lý do tại đây..." [value]="rejectReason()"
+      (input)="updateRejectReason($event)"></textarea>
+
+    <div class="modal-actions">
+      <button type="button" class="btn-cancel" (click)="cancelRejectMode()">Quay lại</button>
+      <button type="button" class="btn-reject-large confirm-reject" (click)="submitReject()"
+        [disabled]="!rejectReason().trim()">
+        Xác nhận Từ Chối
+      </button>
+    </div>
+    }
   </div>
+</div>
 }

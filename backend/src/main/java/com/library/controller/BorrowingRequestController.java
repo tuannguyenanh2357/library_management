@@ -61,8 +61,7 @@ public class BorrowingRequestController {
     @PutMapping("/{id}/cancel")
     @PreAuthorize("hasRole('MEMBER')")
     public ResponseEntity<BorrowingRequestResponse> cancelRequest(@PathVariable Long id) {
-        String username = SecurityContextHolder.getContext()
-                .getAuthentication().getName();
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
         return ResponseEntity.ok(service.cancelRequest(id, username));
     }
 }

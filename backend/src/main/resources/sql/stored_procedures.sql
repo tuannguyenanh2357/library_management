@@ -24,9 +24,6 @@ END;
 GO
 
 
--- Báo cáo doanh thu phạt theo khoảng thời gian
-
-
 -- . Thống kê tổng quan
 IF OBJECT_ID('dbo.GetRevenueReportSummary', 'P') IS NOT NULL
     DROP PROCEDURE dbo.GetRevenueReportSummary;
@@ -39,7 +36,7 @@ AS
 BEGIN
     SET NOCOUNT ON;
 
-    -- Kỳ hiện tại
+    -- ký hiện tại
     DECLARE @CurrentCollected  DECIMAL(18,2); -- tiền phạt đã thu
     DECLARE @CurrentCount      INT; -- số lần nộp tiền đã thu
     DECLARE @CurrentPending    DECIMAL(18,2); -- tiền phạt chưa thu
@@ -116,7 +113,7 @@ BEGIN
         ON f.paid_date = d.dt AND f.status = 'PAID'
     GROUP BY d.dt
     ORDER BY d.dt
-    OPTION (MAXRECURSION 365);
+    OPTION (MAXRECURSION 365); -- set tối đa 365 ngày
 END;
 GO
 

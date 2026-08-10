@@ -64,7 +64,7 @@ public class Borrowing {
     @Column(name = "updated_at")
     LocalDate updatedAt;
 
-    // Số lần đã gia hạn (tối đa 1 lần/lượt mượn)
+    // Số lần đã gia hạn
     @Column(name = "renewal_count")
     @Builder.Default
     Integer renewalCount = 0;
