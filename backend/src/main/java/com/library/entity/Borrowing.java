@@ -5,10 +5,15 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -48,32 +53,29 @@ public class Borrowing {
     // Trạng thái mượn sách
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    BorrowingStatus status;
+    @Builder.Default
+    BorrowingStatus status = BorrowingStatus.ACTIVE;
 
+    @CreatedDate
     @Column(name = "created_at", updatable = false)
     LocalDate createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at")
     LocalDate updatedAt;
 
-    @PrePersist
-    protected void prePersist() {
-        this.createdAt = LocalDate.now();
-        this.updatedAt = LocalDate.now();
-        if (status == null) {
-            this.status = BorrowingStatus.ACTIVE;
-        }
+    // Số lần đã gia hạn (tối đa 1 lần/lượt mượn)
+    @Column(name = "renewal_count")
+    @Builder.Default
+    Integer renewalCount = 0;
+
+    public Integer getRenewalCount() {
+        return renewalCount != null ? renewalCount : 0;
     }
 
-    @PreUpdate
-    protected void preUpdate() {
-        this.updatedAt = LocalDate.now();
-    }
-
-    // kiem tra phiếu mượn có đang quá hạn hay không
+    // kiểm tra phiếu mượn có đang quá hạn hay không
     public boolean isCurrentlyOverdue() {
-        return status == BorrowingStatus.ACTIVE
-                && LocalDate.now().isAfter(dueDate);
+        return status == BorrowingStatus.ACTIVE && LocalDate.now().isAfter(dueDate);
     }
 
     // kiểm tra xem sách đã được trả trễ hay không
@@ -84,7 +86,7 @@ public class Borrowing {
 
     // số ngày trả trễ
     public long getDaysLate() {
-        if(!wasReturnedLate()){
+        if (!wasReturnedLate()) {
             return 0;
         }
 
@@ -92,10 +94,9 @@ public class Borrowing {
     }
 
     // trả sách
-    public void returnBook(){
+    public void returnBook() {
         this.returnDate = LocalDate.now();
         this.status = BorrowingStatus.RETURNED;
         this.bookCopy.markAsReturned();
     }
 }
-
