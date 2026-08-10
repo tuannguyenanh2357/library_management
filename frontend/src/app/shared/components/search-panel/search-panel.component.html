@@ -1,0 +1,50 @@
+<form (ngSubmit)="onSearch()" class="search-panel">
+  <div class="search-field">
+    <label for="searchTitle">Tên sách</label>
+    <div class="input-wrapper">
+      <span class="field-icon">📖</span>
+      <input 
+        type="text" 
+        id="searchTitle" 
+        [(ngModel)]="searchTitle" 
+        name="searchTitle"
+        placeholder="Nhập tên cuốn sách..." 
+      />
+    </div>
+  </div>
+
+  <div class="search-field">
+    <label for="searchAuthor">Tác giả</label>
+    <div class="input-wrapper">
+      <span class="field-icon">👤</span>
+      <input 
+        type="text" 
+        id="searchAuthor" 
+        [(ngModel)]="searchAuthor" 
+        name="searchAuthor"
+        placeholder="Nhập tên tác giả..." 
+      />
+    </div>
+  </div>
+
+  <div class="search-field">
+    <label for="searchCategory">Thể loại</label>
+    <div class="input-wrapper">
+      <span class="field-icon">🏷️</span>
+      <select 
+        id="searchCategory" 
+        [(ngModel)]="selectedCategory" 
+        name="selectedCategory"
+      >
+        <option value="">Tất cả thể loại</option>
+        @for (cat of categories; track cat) {
+          <option [value]="cat">{{ cat }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <button type="submit" class="btn-search">
+    <span>🔍</span> Tìm Kiếm
+  </button>
+</form>

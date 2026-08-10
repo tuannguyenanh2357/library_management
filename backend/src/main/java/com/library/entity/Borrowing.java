@@ -5,10 +5,15 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -48,27 +53,27 @@ public class Borrowing {
     // Trạng thái mượn sách
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    BorrowingStatus status;
+    @Builder.Default
+    BorrowingStatus status = BorrowingStatus.ACTIVE;
 
+    @CreatedDate
     @Column(name = "created_at", updatable = false)
     LocalDate createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at")
     LocalDate updatedAt;
 
-    @PrePersist
-    protected void prePersist() {
-        this.createdAt = LocalDate.now();
-        this.updatedAt = LocalDate.now();
-        if (status == null) {
-            this.status = BorrowingStatus.ACTIVE;
-        }
+    // Số lần đã gia hạn (tối đa 1 lần/lượt mượn)
+    @Column(name = "renewal_count")
+    @Builder.Default
+    Integer renewalCount = 0;
+
+    public Integer getRenewalCount() {
+        return renewalCount != null ? renewalCount : 0;
     }
 
-    @PreUpdate
-    protected void preUpdate() {
-        this.updatedAt = LocalDate.now();
-    }
+
 
     // kiem tra phiếu mượn có đang quá hạn hay không
     public boolean isCurrentlyOverdue() {

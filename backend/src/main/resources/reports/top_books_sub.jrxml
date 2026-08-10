@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jasperReport xmlns="http://jasperreports.sourceforge.net/jasperreports"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://jasperreports.sourceforge.net/jasperreports
+              http://jasperreports.sourceforge.net/xsd/jasperreport.xsd"
+              name="top_books_sub"
+              pageWidth="535" pageHeight="842"
+              columnWidth="535" leftMargin="0" rightMargin="0"
+              topMargin="0" bottomMargin="0"
+              language="java">
+
+    <property name="net.sf.jasperreports.default.font.name" value="Arial"/>
+    <property name="net.sf.jasperreports.default.pdf.font.name" value="fonts/Arial.ttf"/>
+    <property name="net.sf.jasperreports.default.pdf.encoding" value="Identity-H"/>
+    <property name="net.sf.jasperreports.default.pdf.embedded" value="true"/>
+
+    <queryString><![CDATA[]]></queryString>
+
+    <field name="bookTitle"      class="java.lang.String"/>
+    <field name="author"         class="java.lang.String"/>
+    <field name="fineCount"      class="java.lang.Integer"/>
+    <field name="totalFineAmount" class="java.math.BigDecimal"/>
+
+    <detail>
+        <band height="16" splitType="Stretch">
+            <!-- Alternating rows -->
+            <rectangle>
+                <reportElement x="0" y="0" width="535" height="16" backcolor="#F9F9F9" forecolor="#F9F9F9" mode="Opaque">
+                    <printWhenExpression><![CDATA[$V{REPORT_COUNT} % 2 == 0]]></printWhenExpression>
+                </reportElement>
+                <graphicElement><pen lineWidth="0"/></graphicElement>
+            </rectangle>
+
+            <!-- STT -->
+            <textField>
+                <reportElement x="5" y="0" width="20" height="16" forecolor="#666666"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$V{REPORT_COUNT}]]></textFieldExpression>
+            </textField>
+
+            <!-- Tên Sách -->
+            <textField isStretchWithOverflow="true">
+                <reportElement x="25" y="0" width="200" height="16" forecolor="#1A1A1A"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{bookTitle}]]></textFieldExpression>
+            </textField>
+
+            <!-- Tác Giả -->
+            <textField isStretchWithOverflow="true">
+                <reportElement x="225" y="0" width="130" height="16" forecolor="#666666"/>
+                <textElement verticalAlignment="Middle">
+                    <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{author}]]></textFieldExpression>
+            </textField>
+
+            <!-- Số Lần -->
+            <textField>
+                <reportElement x="355" y="0" width="50" height="16" forecolor="#333333"/>
+                <textElement verticalAlignment="Middle" textAlignment="Center">
+                    <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{fineCount}]]></textFieldExpression>
+            </textField>
+
+            <!-- Tổng Phạt -->
+            <textField pattern="#,##0">
+                <reportElement x="405" y="0" width="130" height="16" forecolor="#1A1A1A"/>
+                <textElement verticalAlignment="Middle" textAlignment="Right">
+                    <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf" pdfEncoding="Identity-H" isPdfEmbedded="true"/>
+                </textElement>
+                <textFieldExpression><![CDATA[$F{totalFineAmount}]]></textFieldExpression>
+            </textField>
+
+            <line>
+                <reportElement x="0" y="15" width="535" height="1" forecolor="#EEEEEE"/>
+            </line>
+        </band>
+    </detail>
+</jasperReport>
