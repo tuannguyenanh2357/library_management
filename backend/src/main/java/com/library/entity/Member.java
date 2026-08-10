@@ -7,11 +7,13 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import com.library.entity.enums.BorrowingStatus;
+import org.hibernate.annotations.Nationalized;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -21,28 +23,42 @@ import java.util.List;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "members")
+
 public class Member {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;
 
+    @Nationalized
     @Column(name = "member_code", nullable = false, unique = true)
     String memberCode;
 
     @NotBlank(message = "Name is required")
+    @Nationalized
     @Column(nullable = false)
     String name;
 
+    @Nationalized
+    @Column(nullable = false, unique = true, length = 50)
+    String username;
+
+    @Nationalized
+    @Column(nullable = false, length = 50)
+    String password;
+
     @Email
     @NotBlank(message = "Email is required")
+    @Nationalized
     @Column(nullable = false, unique = true)
     String email;
 
     @NotBlank(message = "Phone number is required")
+    @Nationalized
     @Column(nullable = false, unique = true)
     String phone;
 
     @NotBlank(message = "Address is required")
+    @Nationalized
     @Column(nullable = false)
     String address;
 
@@ -52,6 +68,10 @@ public class Member {
     @Column(name = "is_active")
     @Builder.Default
     Boolean isActive = true;
+
+    @Column(columnDefinition = "NVARCHAR(MAX)")
+    String avatar;
+    Integer age;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false)
@@ -76,6 +96,14 @@ public class Member {
 
         if(isActive == null) {
             isActive = true;
+        }
+
+        if (memberCode == null || memberCode.isBlank()) {
+            memberCode = "MBR-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        }
+
+        if (role == null) {
+            role = MemberRole.MEMBER;
         }
     }
 
