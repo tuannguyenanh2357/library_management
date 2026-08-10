@@ -4,7 +4,9 @@ import com.library.entity.enums.FineStatus;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import org.hibernate.annotations.Nationalized;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -15,6 +17,7 @@ import java.time.LocalDate;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "fines")
+
 public class Fines {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,10 +30,11 @@ public class Fines {
 
 
     // Số tiền phạt
-    @Column(name = "amount", nullable = false)
-    Double amount;
+    @Column(name = "amount", nullable = false, precision = 10, scale = 2)
+    BigDecimal amount;
 
     // Lý do phạt
+    @Nationalized
     @Column(name = "reason", nullable = false)
     String reason;
 
