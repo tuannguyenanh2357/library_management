@@ -73,9 +73,6 @@
     <field name="collectedCount" class="java.lang.Integer" />
 
 
-    <!-- =========================================
-         TITLE BAND - Header
-    ============================================ -->
     <title>
         <band height="130" splitType="Stretch">
             <!-- Header bar - dark gray thay vì navy -->

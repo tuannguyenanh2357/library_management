@@ -41,7 +41,7 @@ public class RabbitMQConfig {
         return new DirectExchange(RESERVATION_EXCHANGE);
     }
 
-    // Nối Queue vào Exchange thông qua Routing Key 3
+    // Nối Queue vào Exchange thông qua Routing Key
     @Bean
     public Binding bindingReservationFulfilled(Queue reservationFulfilledQueue, DirectExchange reservationExchange) {
         return BindingBuilder.bind(reservationFulfilledQueue)
@@ -56,7 +56,7 @@ public class RabbitMQConfig {
                 .with(BORROWING_CREATED_ROUTING_KEY);
     }
 
-    // Chuyển đổi dữ liệu Java Object sang định dạng JSON để truyền qua mạng 1
+    // Chuyển đổi dữ liệu Java Object sang định dạng JSON để truyền qua mạng
     @Bean
     public MessageConverter jsonMessageConverter(tools.jackson.databind.json.JsonMapper jsonMapper) {
         return new JacksonJsonMessageConverter(jsonMapper);

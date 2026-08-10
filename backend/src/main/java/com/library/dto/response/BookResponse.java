@@ -4,15 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import java.math.BigDecimal;
 
 @Data
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
-public class BookResponse implements java.io.Serializable {
+public class BookResponse {
 
     Long id;
-    
+
     String title;
 
     String author;
@@ -29,9 +30,9 @@ public class BookResponse implements java.io.Serializable {
 
     String imageUrl;
 
-    java.math.BigDecimal dailyFineAmount;
+    BigDecimal dailyFineAmount;
 
-    java.math.BigDecimal replacementFee;
+    BigDecimal replacementFee;
 
     long availableCopiesCount;
 
