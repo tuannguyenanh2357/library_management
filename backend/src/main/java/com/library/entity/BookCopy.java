@@ -6,6 +6,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,15 +43,15 @@ public class BookCopy {
     List<Borrowing> borrowings = new ArrayList<>();
 
     @Column(name = "created_at", updatable = false)
-    LocalDate createdAt;
+    LocalDateTime createdAt;
 
     @Column(name = "updated_at")
-    LocalDate updatedAt;
+    LocalDateTime updatedAt;
 
     @PrePersist
      protected void prePersist() {
-        this.createdAt = LocalDate.now();
-        this.updatedAt = LocalDate.now();
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
 
         if(status == null) {
             this.status = BookCopyStatus.AVAILABLE;
@@ -59,7 +60,7 @@ public class BookCopy {
 
     @PreUpdate
     protected void preUpdate() {
-        this.updatedAt = LocalDate.now();
+        this.updatedAt = LocalDateTime.now();
     }
 
     // kiểm tra có thể mượn được không
