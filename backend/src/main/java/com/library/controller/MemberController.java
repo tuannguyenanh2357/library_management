@@ -9,7 +9,6 @@ import com.library.dto.response.MemberResponse;
 import com.library.dto.request.MemberCreationRequest;
 import com.library.dto.request.MemberUpdateRequest;
 import jakarta.validation.Valid;
-import java.net.URI;
 import java.util.List;
 
 @RequestMapping("/members")
@@ -33,8 +32,7 @@ public class MemberController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<MemberResponse> createMember(@Valid @RequestBody MemberCreationRequest request) {
         MemberResponse created = memberService.createMember(request);
-        URI location = URI.create("/members/" + created.getId());
-        return ResponseEntity.created(location).body(created);
+        return ResponseEntity.ok(created);
     }
 
     @PutMapping("/{id}")

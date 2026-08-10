@@ -18,13 +18,9 @@
         <div class="header-card-bg"></div>
         <div class="header-card-content">
           <div class="avatar-wrapper">
-            @if (profile()?.avatar) {
-              <img [src]="profile()?.avatar" alt="Avatar" class="user-avatar" />
-            } @else {
-              <div class="user-avatar-initials">
-                {{ profile()?.name?.substring(0, 1)?.toUpperCase() || 'U' }}
-              </div>
-            }
+            <div class="user-avatar-initials">
+              {{ profile()?.name?.substring(0, 1)?.toUpperCase() || 'U' }}
+            </div>
           </div>
           <div class="user-meta">
             <div class="user-name-row">
@@ -101,12 +97,26 @@
           >
             🔒 Đổi Mật Khẩu
           </button>
-          <button 
-            class="tab-link" 
-            [class.active]="activeTab() === 'reservations'" 
+          <button
+            class="tab-link"
+            [class.active]="activeTab() === 'reservations'"
             (click)="activeTab.set('reservations')"
           >
             ⏳ Hàng Đợi Của Tôi
+          </button>
+          <button
+            class="tab-link"
+            [class.active]="activeTab() === 'fines'"
+            (click)="activeTab.set('fines')"
+          >
+            💰 Khoản Phạt Của Tôi
+          </button>
+          <button
+            class="tab-link"
+            [class.active]="activeTab() === 'favorites'"
+            (click)="activeTab.set('favorites')"
+          >
+            ❤️ Sách Yêu Thích
           </button>
         </div>
 
@@ -129,6 +139,7 @@
                         <th>Hạn Trả Mong Muốn</th>
                         <th>Trạng Thái</th>
                         <th>Lời Nhắn / Lý Do</th>
+                        <th>Hành Động</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -147,6 +158,13 @@
                               <span class="text-danger">Từ chối: {{ r.notes || 'Không rõ lý do' }}</span>
                             } @else {
                               <span class="text-muted">{{ r.notes || '-' }}</span>
+                            }
+                          </td>
+                          <td>
+                            @if (r.status === 'PENDING') {
+                              <button class="btn-retry" style="background-color: #ef4444;" (click)="cancelOnlineRequest(r.id)">Hủy Yêu Cầu</button>
+                            } @else {
+                              <span class="text-muted">-</span>
                             }
                           </td>
                         </tr>
@@ -174,6 +192,7 @@
                         <th>Hạn Trả</th>
                         <th>Ngày Trả</th>
                         <th>Trạng Thái</th>
+                        <th>Hành Động</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -188,6 +207,13 @@
                             <span class="status-badge" [ngClass]="getBorrowingStatus(b)">
                               {{ getStatusText(b) }}
                             </span>
+                          </td>
+                          <td>
+                            @if (canRenew(b)) {
+                              <button class="btn-retry" (click)="renewBorrowing(b)">Gia Hạn (+7 ngày)</button>
+                            } @else {
+                              <span class="text-muted">-</span>
+                            }
                           </td>
                         </tr>
                       }
@@ -255,6 +281,78 @@
             </div>
           }
 
+          <!-- Tab 1.6: My Fines -->
+          @if (activeTab() === 'fines') {
+            <div class="history-section">
+              <h3 class="section-title">Khoản Phạt Của Tôi</h3>
+              @if (myFines().length === 0) {
+                <div class="empty-borrowings">
+                  <p>Bạn không có khoản phạt nào. 🎉</p>
+                </div>
+              } @else {
+                <div class="table-responsive">
+                  <table class="borrow-table">
+                    <thead>
+                      <tr>
+                        <th>Tên Sách</th>
+                        <th>Lý Do</th>
+                        <th>Số Tiền</th>
+                        <th>Ngày Lập</th>
+                        <th>Trạng Thái</th>
+                        <th>Ngày Thanh Toán</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (f of myFines(); track f.id) {
+                        <tr>
+                          <td class="book-title-cell"><strong>{{ f.bookTitle }}</strong></td>
+                          <td>{{ f.reason }}</td>
+                          <td>{{ f.amount | number:'1.0-0' }} VND</td>
+                          <td>{{ f.issuedDate }}</td>
+                          <td>
+                            <span class="status-badge" [ngClass]="getFineStatusClass(f.status)">
+                              {{ getFineStatusText(f.status) }}
+                            </span>
+                          </td>
+                          <td>{{ f.paidDate || '-' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          }
+
+          <!-- Tab 1.7: Favorite Books -->
+          @if (activeTab() === 'favorites') {
+            <div class="history-section">
+              <h3 class="section-title">Sách Yêu Thích Của Tôi</h3>
+              @if (favoriteBooks().length === 0) {
+                <div class="empty-borrowings">
+                  <p>Bạn chưa thêm cuốn sách nào vào danh sách yêu thích.</p>
+                </div>
+              } @else {
+                <div class="favorites-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; padding: 20px 0;">
+                  @for (book of favoriteBooks(); track book.id) {
+                    <div class="favorite-card" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: white; transition: box-shadow 0.2s; cursor: pointer;" (click)="openDetailModal(book)">
+                      <img [src]="book.imageUrl || 'https://images.unsplash.com/photo-1543002588-bfa74002ed7e?q=80&w=400'" 
+                           [alt]="book.title" 
+                           style="width: 100%; height: 280px; object-fit: cover; border-bottom: 1px solid #e5e7eb;"/>
+                      <div class="favorite-card-body" style="padding: 12px;">
+                        <h4 style="margin: 0 0 8px 0; font-size: 16px; color: #1f2937; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="book.title">{{ book.title }}</h4>
+                        <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">{{ book.author }}</p>
+                        <button class="btn-retry" style="width: 100%; background-color: #f3f4f6; color: #ef4444;" (click)="$event.stopPropagation(); removeFavorite(book.id)">
+                          Bỏ Yêu Thích
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          }
+
           <!-- Tab 2: Edit Info Form -->
           @if (activeTab() === 'edit') {
             <form class="edit-profile-form" (ngSubmit)="onUpdateProfile()">
@@ -292,14 +390,6 @@
                   <input type="text" [(ngModel)]="editForm().address" name="address" />
                 </div>
 
-                <div class="form-group full-width">
-                  <label>URL Ảnh đại diện (Avatar)</label>
-                  <div class="upload-wrapper" style="display: flex; gap: 8px;">
-                    <input type="text" [(ngModel)]="editForm().avatar" name="avatar" placeholder="Nhập link ảnh (VD: https://...)" style="flex: 1;" />
-                    <button type="button" class="btn-secondary" style="white-space: nowrap; padding: 0 12px; font-size: 14px;" (click)="fileInput.click()">Tải lên</button>
-                    <input type="file" #fileInput (change)="onFileSelected($event)" accept="image/*" style="display: none;" />
-                  </div>
-                </div>
               </div>
 
               <div class="form-actions">
@@ -326,19 +416,21 @@
                 </div>
               }
 
-              <div class="form-group full-width">
-                <label>Mật khẩu cũ <span class="req">*</span></label>
-                <input type="password" [(ngModel)]="passwordForm().oldPassword" name="oldPassword" placeholder="Nhập mật khẩu cũ..." required />
-              </div>
+              <div class="form-grid">
+                <div class="form-group full-width">
+                  <label>Mật khẩu cũ <span class="req">*</span></label>
+                  <input type="password" [(ngModel)]="passwordForm().oldPassword" name="oldPassword" placeholder="Nhập mật khẩu cũ..." required />
+                </div>
 
-              <div class="form-group full-width">
-                <label>Mật khẩu mới <span class="req">*</span></label>
-                <input type="password" [(ngModel)]="passwordForm().newPassword" name="newPassword" placeholder="Nhập mật khẩu mới..." required />
-              </div>
+                <div class="form-group full-width">
+                  <label>Mật khẩu mới <span class="req">*</span></label>
+                  <input type="password" [(ngModel)]="passwordForm().newPassword" name="newPassword" placeholder="Nhập mật khẩu mới..." required />
+                </div>
 
-              <div class="form-group full-width">
-                <label>Xác nhận mật khẩu mới <span class="req">*</span></label>
-                <input type="password" [(ngModel)]="passwordForm().confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu mới..." required />
+                <div class="form-group full-width">
+                  <label>Xác nhận mật khẩu mới <span class="req">*</span></label>
+                  <input type="password" [(ngModel)]="passwordForm().confirmPassword" name="confirmPassword" placeholder="Nhập lại mật khẩu mới..." required />
+                </div>
               </div>
 
               <div class="form-actions">
@@ -354,4 +446,11 @@
   </div>
 </main>
 
+<app-book-detail-modal
+  [isOpen]="isDetailModalOpen()"
+  [book]="selectedBook()"
+  (close)="closeDetailModal()"
+  (borrow)="onBorrowBook($event)"
+  (reserve)="onReserveBook($event)"
+></app-book-detail-modal>
 
