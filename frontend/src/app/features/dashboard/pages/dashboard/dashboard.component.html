@@ -9,7 +9,7 @@
       <h1>Khám Phá Tri Thức - Định Hình Tương Lai</h1>
       <p>Tìm kiếm hàng nghìn đầu sách khoa học, văn học, công nghệ chất lượng cao ngay lập tức</p>
 
-      <app-search-panel></app-search-panel>
+      <app-search-panel [categories]="categories()"></app-search-panel>
     </div>
   </section>
 
@@ -29,7 +29,7 @@
     } @else {
       <div class="books-slider-container">
         <div class="books-slider">
-          @for (book of top10Books(); track book.id; let idx = $index) {
+          @for (book of top10Books(); track book.id || book.bookId; let idx = $index) {
             <div class="slider-card" (click)="openDetailModal(book)">
               <div class="badge-rank">#{{ idx + 1 }}</div>
               <div class="card-cover">
@@ -39,6 +39,9 @@
                 <span class="book-category">{{ book.category }}</span>
                 <h4 class="book-title" [title]="book.title">{{ book.title }}</h4>
                 <p class="book-author">{{ book.author }}</p>
+                @if (book.borrowCount !== undefined && book.borrowCount !== null) {
+                  <small class="borrow-count-badge">🔥 {{ book.borrowCount }} lượt mượn</small>
+                }
               </div>
             </div>
           }

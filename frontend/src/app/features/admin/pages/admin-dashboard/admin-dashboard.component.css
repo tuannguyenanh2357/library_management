@@ -8,7 +8,7 @@
 }
 .admin-dashboard {
   padding: 2rem 2.5rem;
-  max-width: 1440px;
+  max-width: 1640px;
   margin: 0 auto;
   box-sizing: border-box;
 }
@@ -176,6 +176,8 @@
 .bg-soft-green { background-color: #ecfdf5; }
 .bg-soft-red { background-color: #fef2f2; }
 .bg-soft-indigo { background-color: #e0e7ff; }
+.bg-soft-amber { background-color: #fffbeb; }
+.text-amber { color: #b45309; }
 .kpi-emoji { font-size: 1.6rem; }
 .kpi-label {
   display: block;

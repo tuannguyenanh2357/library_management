@@ -13,4 +13,5 @@ public interface BorrowingRequestService {
     List<BorrowingRequestResponse> getRequestsByMember(Long memberId);
     BorrowingRequestResponse approveRequest(Long requestId, BorrowingRequestApprovalRequest approvalRequest);
     BorrowingRequestResponse rejectRequest(Long requestId, String reason);
+    BorrowingRequestResponse cancelRequest(Long requestId, String username);
 }

@@ -12,4 +12,5 @@ import lombok.Setter;
 @AllArgsConstructor
 public class FineUpdateRequest {
     FineStatus fineStatus;
+    String reason;
 }

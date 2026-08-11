@@ -11,6 +11,10 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 @Builder
-public class IntrospectResponse {
-    boolean valid;
+public class MessageResponse {
+    String message;
+
+    public static MessageResponse of(String message) {
+        return new MessageResponse(message);
+    }
 }

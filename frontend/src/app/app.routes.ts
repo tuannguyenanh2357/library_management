@@ -50,9 +50,22 @@ export const routes: Routes = [
         loadComponent: () => import('@features/fines/pages/admin-fine-list/admin-fine-list.component').then(m => m.AdminFineListComponent),
         canActivate: [adminGuard]
       },
+      {
+        path: 'admin/reports',
+        loadComponent: () => import('@features/reports/pages/revenue-report/revenue-report.component').then(m => m.RevenueReportComponent),
+        canActivate: [adminGuard]
+      },
       { 
         path: 'about', 
         loadComponent: () => import('@features/about/pages/about/about.component').then(m => m.AboutComponent) 
+      },
+      { 
+        path: 'rules', 
+        loadComponent: () => import('@features/rules/pages/rules/rules.component').then(m => m.RulesComponent) 
+      },
+      { 
+        path: 'forbidden', 
+        loadComponent: () => import('@features/errors/pages/forbidden/forbidden.component').then(m => m.ForbiddenComponent) 
       },
       { 
         path: 'profile', 

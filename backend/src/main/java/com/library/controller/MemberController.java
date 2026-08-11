@@ -4,16 +4,21 @@ import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.library.security.SecurityUtils;
 import com.library.service.interfaces.MemberService;
 import com.library.dto.response.MemberResponse;
+import com.library.dto.response.MessageResponse;
+import com.library.dto.response.UnpaidMemberProjection;
 import com.library.dto.request.MemberCreationRequest;
 import com.library.dto.request.MemberUpdateRequest;
+import com.library.dto.request.MyProfileUpdateRequest;
+import com.library.dto.request.ChangePasswordRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 
 @RequestMapping("/members")
 @RestController
-@AllArgsConstructor 
+@AllArgsConstructor
 public class MemberController {
     private final MemberService memberService;
 
@@ -37,7 +42,8 @@ public class MemberController {
 
     @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
-    public ResponseEntity<MemberResponse> updateMember(@PathVariable Long id, @Valid @RequestBody MemberUpdateRequest request) {
+    public ResponseEntity<MemberResponse> updateMember(@PathVariable Long id,
+            @Valid @RequestBody MemberUpdateRequest request) {
         MemberResponse updated = memberService.updateMember(id, request);
         return ResponseEntity.ok(updated);
     }
@@ -50,36 +56,30 @@ public class MemberController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getMyProfile() {
-        try {
-            org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-            if (auth == null) {
-                return ResponseEntity.status(401).body("Authentication object is null");
-            }
-            String username = auth.getName();
-            return ResponseEntity.ok(memberService.getMemberByUsername(username));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error: " + e.getMessage());
-        }
+    public ResponseEntity<MemberResponse> getMyProfile() {
+        String username = SecurityUtils.getCurrentUsername();
+        return ResponseEntity.ok(memberService.getMemberByUsername(username));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<MemberResponse> updateMyProfile(@Valid @RequestBody com.library.dto.request.MyProfileUpdateRequest request) {
-        String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
+    public ResponseEntity<MemberResponse> updateMyProfile(
+            @Valid @RequestBody MyProfileUpdateRequest request) {
+        String username = SecurityUtils.getCurrentUsername();
         MemberResponse updated = memberService.updateMyProfile(username, request);
         return ResponseEntity.ok(updated);
     }
 
     @PutMapping("/me/password")
-    public ResponseEntity<?> changePassword(@Valid @RequestBody com.library.dto.request.ChangePasswordRequest request) {
-        try {
-            String username = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication().getName();
-            memberService.changePassword(username, request);
-            return ResponseEntity.ok(java.util.Map.of("message", "Đổi mật khẩu thành công"));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(java.util.Map.of("message", e.getMessage()));
-        }
+    public ResponseEntity<MessageResponse> changePassword(
+            @Valid @RequestBody ChangePasswordRequest request) {
+        String username = SecurityUtils.getCurrentUsername();
+        memberService.changePassword(username, request);
+        return ResponseEntity.ok(MessageResponse.of("Đổi mật khẩu thành công"));
     }
 
+    @GetMapping("/unpaid-fines")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    public ResponseEntity<List<UnpaidMemberProjection>> getMembersWithUnpaidFines() {
+        return ResponseEntity.ok(memberService.getMembersWithUnpaidFines());
+    }
 }

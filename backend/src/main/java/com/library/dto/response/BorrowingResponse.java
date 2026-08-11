@@ -22,5 +22,6 @@ public class BorrowingResponse {
     String dueDate;
     String returnDate;
     String bookCopy;
-    
+    Integer renewalCount;
+
 }

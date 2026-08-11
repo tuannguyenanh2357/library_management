@@ -13,20 +13,23 @@ import com.library.repository.BookRepository;
 import com.library.service.interfaces.BookCopyService;
 import com.library.service.interfaces.ReservationService;
 
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
+import com.library.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.cache.annotation.CacheEvict;
+import java.util.concurrent.ThreadLocalRandom;
 
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
-@Transactional
 public class BookCopyServiceImpl implements BookCopyService {
     BookCopyRepository bookCopyRepository;
     BookRepository bookRepository;
@@ -55,6 +58,8 @@ public class BookCopyServiceImpl implements BookCopyService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
     public BookCopyResponse createBookCopy(BookCopyCreationRequest request) {
         Book book = bookRepository.findById(request.getBookId())
                 .orElseThrow(() -> new RuntimeException("Book not found"));
@@ -62,26 +67,29 @@ public class BookCopyServiceImpl implements BookCopyService {
         BookCopy bookCopy = bookCopyMapper.toBookCopy(request);
         bookCopy.setBook(book);
         if (bookCopy.getBarCode() == null || bookCopy.getBarCode().isBlank()) {
-            bookCopy.setBarCode("BC-" + UUID.randomUUID().toString().replace("-", "").substring(0, 24));
+            int randomNum = ThreadLocalRandom.current().nextInt(100000, 1000000);
+            bookCopy.setBarCode("BC-" + randomNum);
         }
 
         BookCopy savedBookCopy = bookCopyRepository.save(bookCopy);
-        
-        // Kiểm tra xem có ai đang xếp hàng đợi cuốn sách này không. Nếu có thì gán luôn bản sao này cho người đó.
+
+        // Kiểm tra xem có ai đang xếp hàng đợi cuốn sách này không
         reservationService.fulfillNextReservationIfAny(book.getId(), savedBookCopy);
-        
         return bookCopyMapper.toResponse(savedBookCopy);
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
     public BookCopyResponse updateBookCopy(Long bookCopyId, BookCopyUpdateRequest request) {
         BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
-                .orElseThrow(() -> new RuntimeException("Book copy not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND));
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
 
         if (existingBookCopy.getStatus() == BookCopyStatus.BORROWED) {
-            throw new RuntimeException("Không thể cập nhật trạng thái của bản sao đang được mượn.");
+            throw new AppException(ErrorCode.INVALID_REQUEST,
+                    "Không thể cập nhật trạng thái của bản sao đang được mượn.");
         }
 
         bookCopyMapper.updateBookCopy(existingBookCopy, request);
@@ -92,12 +100,19 @@ public class BookCopyServiceImpl implements BookCopyService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
     public void deleteBookCopy(Long bookCopyId) {
         BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
-                .orElseThrow(() -> new RuntimeException("Book copy not found"));
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND));
 
         if (existingBookCopy.getStatus() == BookCopyStatus.BORROWED) {
-            throw new RuntimeException("Không thể xóa bản sao đang được mượn.");
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Không thể xóa bản sao đang được mượn.");
+        }
+
+        if (existingBookCopy.getBorrowings() != null && !existingBookCopy.getBorrowings().isEmpty()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST,
+                    "Không thể xóa bản sao vì đã có lịch sử mượn (sẽ làm mất dữ liệu lịch sử). Khuyến nghị cập nhật trạng thái thành LOST hoặc DAMAGED.");
         }
 
         bookCopyRepository.deleteById(bookCopyId);

@@ -1,5 +1,6 @@
 package com.library.controller;
 
+import com.library.dto.request.FineUpdateRequest;
 import com.library.dto.response.FineResponse;
 import com.library.service.interfaces.FineService;
 import lombok.AllArgsConstructor;
@@ -42,5 +43,11 @@ public class FineController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<FineResponse> payFine(@PathVariable Long fineId) {
         return ResponseEntity.ok(fineService.payFine(fineId));
+    }
+
+    @PutMapping("/{fineId}/cancel")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    public ResponseEntity<FineResponse> cancelFine(@PathVariable Long fineId, @RequestBody FineUpdateRequest request) {
+        return ResponseEntity.ok(fineService.cancelFine(fineId, request.getReason()));
     }
 }

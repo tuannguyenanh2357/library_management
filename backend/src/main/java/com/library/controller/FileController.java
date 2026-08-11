@@ -1,5 +1,7 @@
 package com.library.controller;
 
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -22,30 +24,30 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/files")
-@CrossOrigin(origins = "http://localhost:4200")
 public class FileController {
 
     private final Path fileStorageLocation;
 
-    public FileController() {
-        this.fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
+    public FileController(@Value("${app.file.upload-dir:uploads}") String uploadDir) {
+        this.fileStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
         try {
             Files.createDirectories(this.fileStorageLocation);
         } catch (Exception ex) {
-            throw new RuntimeException("Could not create the directory where the uploaded files will be stored.", ex);
+            throw new RuntimeException("Không thể tạo thư mục để lưu trữ các tệp đã tải lên..", ex);
         }
     }
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadFile(@RequestParam("file") MultipartFile file) {
-        String originalFileName = StringUtils.cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "");
+        String originalFileName = StringUtils
+                .cleanPath(file.getOriginalFilename() != null ? file.getOriginalFilename() : "");
         String fileName = UUID.randomUUID().toString() + "_" + originalFileName;
 
-        try {
-            if (fileName.contains("..")) {
-                throw new RuntimeException("Sorry! Filename contains invalid path sequence " + fileName);
-            }
+        if (fileName.contains("..")) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
 
+        try {
             Path targetLocation = this.fileStorageLocation.resolve(fileName);
             Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 
@@ -56,7 +58,8 @@ public class FileController {
 
             return ResponseEntity.ok(Map.of("url", fileDownloadUri, "fileName", fileName));
         } catch (IOException ex) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not store file " + fileName + ". Please try again!");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Không thể lưu tệp " + fileName + ". Vui lòng thử lại!");
         }
     }
 
@@ -66,16 +69,16 @@ public class FileController {
             Path filePath = this.fileStorageLocation.resolve(fileName).normalize();
             Resource resource = new UrlResource(filePath.toUri());
             if (resource.exists()) {
-                // Determine content type dynamically based on file extension
-                String contentType = "application/octet-stream";
-                if (fileName.toLowerCase().endsWith(".png")) {
-                    contentType = "image/png";
-                } else if (fileName.toLowerCase().endsWith(".jpg") || fileName.toLowerCase().endsWith(".jpeg")) {
-                    contentType = "image/jpeg";
-                } else if (fileName.toLowerCase().endsWith(".gif")) {
-                    contentType = "image/gif";
+                String contentType = null;
+                try {
+                    contentType = Files.probeContentType(filePath);
+                } catch (IOException ex) {
                 }
-                
+
+                if (contentType == null) {
+                    contentType = "application/octet-stream";
+                }
+
                 return ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_TYPE, contentType)
                         .body(resource);

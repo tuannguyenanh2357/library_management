@@ -1,12 +1,15 @@
 package com.library.controller;
 
 import com.library.dto.response.BorrowingResponse;
+import com.library.dto.response.OverdueBookProjection;
 import com.library.dto.request.BorrowingCreationRequest;
 import com.library.service.interfaces.BorrowingService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import com.library.security.SecurityUtils;
+import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -34,15 +37,15 @@ public class BorrowingController {
         return ResponseEntity.ok(borrowingService.getByMemberId(memberId));
     }
 
-    @GetMapping("/overdue")
+    @GetMapping("/sp-overdue")
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
-    public ResponseEntity<List<BorrowingResponse>> getOverdueBorrowings() {
-        return ResponseEntity.ok(borrowingService.getOverdueBorrowings());
+    public ResponseEntity<List<OverdueBookProjection>> getOverdueBooksFromSP() {
+        return ResponseEntity.ok(borrowingService.getOverdueBooksFromSP());
     }
 
     @PostMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
-    public ResponseEntity<BorrowingResponse> borrowBook(@RequestBody BorrowingCreationRequest request) {
+    public ResponseEntity<BorrowingResponse> borrowBook(@Valid @RequestBody BorrowingCreationRequest request) {
         return ResponseEntity.ok(borrowingService.borrowBook(request));
     }
 
@@ -56,6 +59,25 @@ public class BorrowingController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<List<BorrowingResponse>> getBorrowingsByCopyId(@PathVariable Long copyId) {
         return ResponseEntity.ok(borrowingService.getByCopyId(copyId));
+    }
+
+    @PutMapping("/{borrowingId}/renew")
+    @PreAuthorize("hasRole('MEMBER')")
+    public ResponseEntity<BorrowingResponse> renewBorrowing(@PathVariable Long borrowingId) {
+        String username = SecurityUtils.getCurrentUsername();
+        return ResponseEntity.ok(borrowingService.renewBorrowing(borrowingId, username));
+    }
+
+    @PutMapping("/{borrowingId}/report-lost")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    public ResponseEntity<BorrowingResponse> reportLost(@PathVariable Long borrowingId) {
+        return ResponseEntity.ok(borrowingService.reportLost(borrowingId));
+    }
+
+    @PutMapping("/{borrowingId}/report-damaged")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    public ResponseEntity<BorrowingResponse> reportDamaged(@PathVariable Long borrowingId) {
+        return ResponseEntity.ok(borrowingService.reportDamaged(borrowingId));
     }
 
 }

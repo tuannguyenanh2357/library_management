@@ -13,10 +13,18 @@ import com.library.mapper.BorrowingRequestMapper;
 import com.library.repository.BookCopyRepository;
 import com.library.repository.BookRepository;
 import com.library.repository.BorrowingRequestRepository;
+import com.library.repository.FineRepository;
 import com.library.repository.MemberRepository;
 import com.library.service.interfaces.BorrowingRequestService;
 import com.library.service.interfaces.BorrowingService;
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
+import com.library.exception.MemberNotFoundException;
+import com.library.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import com.library.entity.enums.BookCopyStatus;
+import com.library.entity.enums.FineStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,104 +34,158 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE, makeFinal = true)
 public class BorrowingRequestServiceImpl implements BorrowingRequestService {
 
-    private final BorrowingRequestRepository requestRepository;
-    private final MemberRepository memberRepository;
-    private final BookRepository bookRepository;
-    private final BookCopyRepository bookCopyRepository;
-    private final BorrowingService borrowingService;
-    private final BorrowingRequestMapper mapper;
+        BorrowingRequestRepository requestRepository;
+        MemberRepository memberRepository;
+        BookRepository bookRepository;
+        BookCopyRepository bookCopyRepository;
+        FineRepository fineRepository;
+        BorrowingService borrowingService;
+        BorrowingRequestMapper mapper;
 
-    @Override
-    public BorrowingRequestResponse createRequest(BorrowingRequestCreationRequest dto) {
-        Member member = memberRepository.findById(dto.getMemberId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy độc giả"));
-        Book book = bookRepository.findById(dto.getBookId())
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đầu sách"));
+        @Override
+        @Transactional(rollbackFor = Exception.class)
+        public BorrowingRequestResponse createRequest(BorrowingRequestCreationRequest requestt) {
+                Member member = memberRepository.findById(requestt.getMemberId())
+                                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
 
-        BorrowingRequest request = BorrowingRequest.builder()
-                .member(member)
-                .book(book)
-                .status(BorrowingRequestStatus.PENDING)
-                .requestDate(LocalDateTime.now())
-                .expectedDueDate(dto.getExpectedDueDate())
-                .notes(dto.getNotes())
-                .build();
+                if (member.hasOverdueBorrowings()) {
+                        throw new AppException(ErrorCode.HAS_OVERDUE_BOOKS,
+                                        "Bạn không thể gửi yêu cầu mượn mới khi đang có sách quá hạn chưa trả");
+                }
+                if (fineRepository.existsByBorrowingMemberIdAndStatus(member.getId(), FineStatus.UNPAID)) {
+                        throw new AppException(ErrorCode.HAS_UNPAID_FINES,
+                                        "Bạn không thể gửi yêu cầu mượn mới khi đang có khoản phạt chưa thanh toán");
+                }
 
-        BorrowingRequest saved = requestRepository.save(request);
-        long count = bookCopyRepository.countByBook_IdAndStatus(book.getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE);
-        return mapper.toResponse(saved, count);
-    }
+                Book book = bookRepository.findById(requestt.getBookId())
+                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND,
+                                                "Không tìm thấy đầu sách"));
 
-    @Override
-    public List<BorrowingRequestResponse> getPendingRequests() {
-        return requestRepository.findByStatusWithRelations(BorrowingRequestStatus.PENDING)
-                .stream()
-                .map(r -> mapper.toResponse(r, bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE)))
-                .collect(Collectors.toList());
-    }
+                BorrowingRequest request = BorrowingRequest.builder()
+                                .member(member)
+                                .book(book)
+                                .status(BorrowingRequestStatus.PENDING)
+                                .requestDate(LocalDateTime.now())
+                                .expectedDueDate(requestt.getExpectedDueDate())
+                                .notes(requestt.getNotes())
+                                .build();
 
-    @Override
-    public List<BorrowingRequestResponse> getHistoryRequests() {
-        return requestRepository.findHistoryWithRelations()
-                .stream()
-                .map(r -> mapper.toResponse(r, bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE)))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<BorrowingRequestResponse> getRequestsByMember(Long memberId) {
-        return requestRepository.findByMemberIdWithRelations(memberId)
-                .stream()
-                .map(r -> mapper.toResponse(r, bookCopyRepository.countByBook_IdAndStatus(r.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE)))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public BorrowingRequestResponse approveRequest(Long requestId, BorrowingRequestApprovalRequest approvalRequest) {
-        BorrowingRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
-
-        if (request.getStatus() != BorrowingRequestStatus.PENDING) {
-            throw new RuntimeException("Only pending requests can be approved");
+                BorrowingRequest saved = requestRepository.save(request);
+                long availableCopiesCount = bookCopyRepository.countByBookIdAndStatus(book.getId(),
+                                BookCopyStatus.AVAILABLE);
+                return mapper.toResponse(saved, availableCopiesCount);
         }
 
-        // Auto-assign the first available copy
-        BookCopy bookCopy = bookCopyRepository.findFirstByBook_IdAndStatus(request.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE)
-                .orElseThrow(() -> new RuntimeException("Không còn cuốn sách nào khả dụng trong kho"));
-
-        // Use expected due date and notes from request
-        BorrowingCreationRequest borrowingDto = new BorrowingCreationRequest(
-                request.getMember().getId(),
-                bookCopy.getId(),
-                request.getExpectedDueDate(),
-                request.getNotes()
-        );
-        borrowingService.borrowBook(borrowingDto);
-
-        request.setStatus(BorrowingRequestStatus.APPROVED);
-        request.setProcessedDate(LocalDateTime.now());
-        
-        long count = bookCopyRepository.countByBook_IdAndStatus(request.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE);
-        return mapper.toResponse(requestRepository.save(request), count);
-    }
-
-    @Override
-    public BorrowingRequestResponse rejectRequest(Long requestId, String reason) {
-        BorrowingRequest request = requestRepository.findById(requestId)
-                .orElseThrow(() -> new RuntimeException("Request not found"));
-
-        if (request.getStatus() != BorrowingRequestStatus.PENDING) {
-            throw new RuntimeException("Only pending requests can be rejected");
+        // Lấy danh sách các Yêu cầu mượn sách đang chờ duyệt
+        @Override
+        public List<BorrowingRequestResponse> getPendingRequests() {
+                return requestRepository.findByStatusWithRelations(BorrowingRequestStatus.PENDING)
+                                .stream()
+                                .map(r -> mapper.toResponse(r,
+                                                bookCopyRepository.countByBookIdAndStatus(r.getBook().getId(),
+                                                                BookCopyStatus.AVAILABLE)))
+                                .collect(Collectors.toList());
         }
 
-        request.setStatus(BorrowingRequestStatus.REJECTED);
-        request.setProcessedDate(LocalDateTime.now());
-        request.setNotes(reason);
+        @Override
+        public List<BorrowingRequestResponse> getHistoryRequests() {
+                return requestRepository.findHistoryWithRelations()
+                                .stream()
+                                .map(r -> mapper.toResponse(r,
+                                                bookCopyRepository.countByBookIdAndStatus(r.getBook().getId(),
+                                                                BookCopyStatus.AVAILABLE)))
+                                .collect(Collectors.toList());
+        }
 
-        long count = bookCopyRepository.countByBook_IdAndStatus(request.getBook().getId(), com.library.entity.enums.BookCopyStatus.AVAILABLE);
-        return mapper.toResponse(requestRepository.save(request), count);
-    }
+        // member xem danh sách yêu cầu mượn sách
+        @Override
+        public List<BorrowingRequestResponse> getRequestsByMember(Long memberId) {
+                return requestRepository.findByMemberIdWithRelations(memberId)
+                                .stream()
+                                .map(r -> mapper.toResponse(r,
+                                                bookCopyRepository.countByBookIdAndStatus(r.getBook().getId(),
+                                                                BookCopyStatus.AVAILABLE)))
+                                .collect(Collectors.toList());
+        }
+
+        // Xử lý việc phê duyệt một yêu cầu mượn sách của độc giả
+        @Override
+        @Transactional(rollbackFor = Exception.class)
+        public BorrowingRequestResponse approveRequest(Long requestId,
+                        BorrowingRequestApprovalRequest approvalRequest) {
+                BorrowingRequest request = requestRepository.findById(requestId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                "Yêu cầu không tồn tại"));
+
+                if (request.getStatus() != BorrowingRequestStatus.PENDING) {
+                        throw new AppException(ErrorCode.INVALID_REQUEST,
+                                        "Chỉ có thể phê duyệt yêu cầu đang chờ xử lý");
+                }
+
+                // gán bản sao đầu tiên có sẵn
+                BookCopy bookCopy = bookCopyRepository
+                                .findFirstByBook_IdAndStatus(request.getBook().getId(), BookCopyStatus.AVAILABLE)
+                                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_AVAILABLE,
+                                                "Không còn cuốn sách nào khả dụng trong kho"));
+
+                // tạo phiếu mượn từ yêu cầu đã được duyệt
+                BorrowingCreationRequest borrowingDto = new BorrowingCreationRequest(
+                                request.getMember().getId(),
+                                bookCopy.getId(),
+                                request.getExpectedDueDate(),
+                                request.getNotes());
+                borrowingService.borrowBook(borrowingDto);
+
+                request.setStatus(BorrowingRequestStatus.APPROVED);
+                request.setProcessedDate(LocalDateTime.now());
+
+                long count = bookCopyRepository.countByBookIdAndStatus(request.getBook().getId(),
+                                BookCopyStatus.AVAILABLE);
+                return mapper.toResponse(requestRepository.save(request), count);
+        }
+
+        @Override
+        @Transactional(rollbackFor = Exception.class)
+        public BorrowingRequestResponse rejectRequest(Long requestId, String reason) {
+                BorrowingRequest request = requestRepository.findById(requestId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                "Yêu cầu không tồn tại"));
+
+                if (request.getStatus() != BorrowingRequestStatus.PENDING) {
+                        throw new AppException(ErrorCode.INVALID_REQUEST, "Chỉ có thể từ chối yêu cầu đang chờ xử lý");
+                }
+
+                request.setStatus(BorrowingRequestStatus.REJECTED);
+                request.setProcessedDate(LocalDateTime.now());
+                request.setNotes(reason);
+
+                long count = bookCopyRepository.countByBookIdAndStatus(request.getBook().getId(),
+                                BookCopyStatus.AVAILABLE);
+                return mapper.toResponse(requestRepository.save(request), count);
+        }
+
+        @Override
+        @Transactional(rollbackFor = Exception.class)
+        public BorrowingRequestResponse cancelRequest(Long requestId, String username) {
+                BorrowingRequest request = requestRepository.findById(requestId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
+                                                "Không tìm thấy yêu cầu"));
+
+                if (!request.getMember().getUsername().equals(username)) {
+                        throw new AppException(ErrorCode.UNAUTHORIZED, "Bạn không có quyền hủy yêu cầu này");
+                }
+                if (request.getStatus() != BorrowingRequestStatus.PENDING) {
+                        throw new AppException(ErrorCode.INVALID_REQUEST, "Chỉ có thể hủy yêu cầu đang chờ duyệt");
+                }
+
+                request.setStatus(BorrowingRequestStatus.CANCELLED);
+                request.setProcessedDate(LocalDateTime.now());
+
+                long count = bookCopyRepository.countByBookIdAndStatus(request.getBook().getId(),
+                                BookCopyStatus.AVAILABLE);
+                return mapper.toResponse(requestRepository.save(request), count);
+        }
 }

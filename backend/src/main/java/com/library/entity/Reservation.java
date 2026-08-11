@@ -5,9 +5,14 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
 import java.time.LocalDateTime;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -34,31 +39,21 @@ public class Reservation {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    ReservationStatus status;
+    @Builder.Default
+    ReservationStatus status = ReservationStatus.PENDING;
 
+    @CreatedDate
     @Column(name = "request_date", nullable = false, updatable = false)
     LocalDateTime requestDate;
 
     @Column(name = "fulfilled_date")
-    LocalDateTime fulfilledDate; // Ngày có sách (đã gán fulfilledCopy)
+    LocalDateTime fulfilledDate; // Ngày có sách (gán fulfilledCopy)
 
     @Column(name = "expiry_date")
-    LocalDateTime expiryDate; // Hạn cuối để đến lấy sách (ví dụ: 48h sau fulfilledDate)
+    LocalDateTime expiryDate; // Hạn cuối để đến lấy sách
 
+    @LastModifiedDate
     @Column(name = "updated_at")
     LocalDateTime updatedAt;
 
-    @PrePersist
-    protected void prePersist() {
-        this.requestDate = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-        if (this.status == null) {
-            this.status = ReservationStatus.PENDING;
-        }
-    }
-
-    @PreUpdate
-    protected void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }

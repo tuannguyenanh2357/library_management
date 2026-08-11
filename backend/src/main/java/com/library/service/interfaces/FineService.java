@@ -10,4 +10,5 @@ public interface FineService {
     List<FineResponse> getByMemberId(Long memberId);
     List<FineResponse> getUnpaidFines();
     FineResponse payFine(Long fineId);
+    FineResponse cancelFine(Long fineId, String reason);
 }

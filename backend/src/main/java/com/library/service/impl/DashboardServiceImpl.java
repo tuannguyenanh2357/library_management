@@ -7,19 +7,23 @@ import com.library.repository.BookRepository;
 import com.library.repository.BorrowingRepository;
 import com.library.repository.MemberRepository;
 import com.library.service.interfaces.DashboardService;
+import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 
 @Service
 @RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class DashboardServiceImpl implements DashboardService {
 
-    private final BookRepository bookRepository;
-    private final BookCopyRepository bookCopyRepository;
-    private final MemberRepository memberRepository;
-    private final BorrowingRepository borrowingRepository;
+    BookRepository bookRepository;
+    BookCopyRepository bookCopyRepository;
+    MemberRepository memberRepository;
+    BorrowingRepository borrowingRepository;
 
     @Override
     public DashboardStatsResponse getDashboardStats() {

@@ -1,5 +1,6 @@
 package com.library.repository;
 
+import com.library.dto.response.TopBookProjection;
 import com.library.entity.Book;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -11,36 +12,47 @@ import java.util.List;
 import java.util.Optional;
 
 public interface BookRepository extends JpaRepository<Book, Long> {
-    boolean existsByIsbn(String isbn);
-    Optional<Book> findByIsbn(String isbn);
-    Optional<Book> findByTitle(String title);
-    List<Book> findByAuthor(String author);
-    List<Book> findByCategory(String category);
-    List<Book> findByTitleContainingIgnoreCase(String title);
 
-    @Query("SELECT b FROM Book b LEFT JOIN b.copies c LEFT JOIN c.borrowings br ON br.borrowDate >= :startDate " +
-           "GROUP BY b.id, b.title, b.author, b.publisher, b.isbn, b.category, b.description, b.imageUrl, b.publicationYear, b.dailyFineAmount, b.createdAt, b.updatedAt " +
-           "ORDER BY COUNT(br) DESC")
-    List<Book> findTop10MostBorrowedSince(@Param("startDate") java.time.LocalDate startDate, Pageable pageable);
+        // Kiểm tra ISBN đã tồn tại hay chưa.
+        boolean existsByIsbn(String isbn);
 
-    @Query("SELECT b FROM Book b WHERE " +
-           "(:id IS NULL OR b.id = :id) AND " +
-           "(:title IS NULL OR :title = '' OR LOWER(b.title) LIKE LOWER(CONCAT('%', :title, '%'))) AND " +
-           "(:author IS NULL OR :author = '' OR LOWER(b.author) LIKE LOWER(CONCAT('%', :author, '%'))) AND " +
-           "(:category IS NULL OR :category = '' OR LOWER(b.category) LIKE LOWER(CONCAT('%', :category, '%'))) AND " +
-           "(:publisher IS NULL OR :publisher = '' OR LOWER(b.publisher) LIKE LOWER(CONCAT('%', :publisher, '%'))) AND " +
-           "(:isbn IS NULL OR :isbn = '' OR LOWER(b.isbn) LIKE LOWER(CONCAT('%', :isbn, '%')))")
-    Page<Book> findByFilters(
-        @Param("id") Long id,
-        @Param("title") String title,
-        @Param("author") String author,
-        @Param("category") String category,
-        @Param("publisher") String publisher,
-        @Param("isbn") String isbn,
-        Pageable pageable
-    );
+        // Tìm sách theo ISBN.
+        Optional<Book> findByIsbn(String isbn);
 
-    @Query("SELECT DISTINCT b.category FROM Book b WHERE b.category IS NOT NULL AND b.category <> ''")
-    List<String> findUniqueCategories();
+        // Tìm sách theo tiêu đề.
+        Optional<Book> findByTitle(String title);
+
+        // Lấy danh sách sách của một tác giả.
+        List<Book> findByAuthor(String author);
+
+        // Lấy danh sách sách theo thể loại.
+        List<Book> findByCategory(String category);
+
+        // Tìm kiếm sách theo tiêu đề (không phân biệt hoa/thường).
+        List<Book> findByTitleContainingIgnoreCase(String title);
+
+        // Gọi Stored Procedure để lấy Top 10 sách được mượn nhiều nhất.
+        @Query(value = "EXEC dbo.GetTop10MostBorrowedBooks", nativeQuery = true)
+        List<TopBookProjection> getTop10MostBorrowedBooks();
+
+        // Tìm kiếm sách theo các tiêu chí lọc tùy chọn và hỗ trợ phân trang.
+        @Query("SELECT b FROM Book b WHERE " +
+                        "(:id IS NULL OR b.id = :id) AND " +
+                        "(:title IS NULL OR LOWER(b.title) LIKE LOWER(:title)) AND " +
+                        "(:author IS NULL OR LOWER(b.author) LIKE LOWER(:author)) AND " +
+                        "(:category IS NULL OR LOWER(b.category) LIKE LOWER(:category)) AND " +
+                        "(:publisher IS NULL OR LOWER(b.publisher) LIKE LOWER(:publisher)) AND " +
+                        "(:isbn IS NULL OR LOWER(b.isbn) LIKE LOWER(:isbn))")
+        Page<Book> findByFilters(
+                        @Param("id") Long id,
+                        @Param("title") String title,
+                        @Param("author") String author,
+                        @Param("category") String category,
+                        @Param("publisher") String publisher,
+                        @Param("isbn") String isbn,
+                        Pageable pageable);
+
+        // Lấy danh sách thể loại duy nhất để phục vụ bộ lọc hoặc danh mục.
+        @Query("SELECT DISTINCT b.category FROM Book b WHERE b.category IS NOT NULL AND b.category <> ''")
+        List<String> findUniqueCategories();
 }
-

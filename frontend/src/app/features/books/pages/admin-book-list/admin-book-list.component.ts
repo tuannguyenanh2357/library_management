@@ -1,12 +1,13 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { BookService } from '../../services/book.service';
-import { BooksResponse, CreateBookRequest } from '../../models/books.model';
+import { CreateBookRequest } from '../../models/books.model';
+import { BooksResponse } from '@shared/models/book.model';
 import { FileService } from '../../../../core/services/file.service';
-import { BookCopyService } from '../../../../core/services/book-copy.service';
-import { BookCopyResponse } from '../../../../core/models/book-copy.model';
+import { BookCopyService } from '../../services/book-copy.service';
+import { BookCopyResponse } from '../../models/book-copy.model';
 import { BorrowingService } from '../../../borrowings/services/borrowing.service';
-import { BorrowingResponse } from '../../../../core/models/borrowing.model';
+import { BorrowingResponse } from '../../../borrowings/models/borrowing.model';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { ConfirmService } from '../../../../shared/services/confirm.service';
 import { Subject, forkJoin } from 'rxjs';
@@ -207,7 +208,8 @@ export class AdminBookListComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toastService.error('Xóa sách thất bại! Cuốn sách này có thể đang có độc giả mượn.');
+          const errorMessage = err.error?.message || 'Xóa sách thất bại! Có lỗi xảy ra.';
+          this.toastService.error(errorMessage);
         }
       });
     }
@@ -431,7 +433,7 @@ export class AdminBookListComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.toastService.error('Thêm bản sao thất bại!');
+        this.toastService.error('Trùng mã BARCODE với bản sao khác!');
       }
     });
   }

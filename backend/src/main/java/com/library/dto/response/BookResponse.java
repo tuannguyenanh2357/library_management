@@ -1,10 +1,10 @@
 package com.library.dto.response;
 
-import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import java.math.BigDecimal;
 
 @Data
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
@@ -13,7 +13,7 @@ import lombok.experimental.FieldDefaults;
 public class BookResponse {
 
     Long id;
-    
+
     String title;
 
     String author;
@@ -30,7 +30,9 @@ public class BookResponse {
 
     String imageUrl;
 
-    java.math.BigDecimal dailyFineAmount;
+    BigDecimal dailyFineAmount;
+
+    BigDecimal replacementFee;
 
     long availableCopiesCount;
 

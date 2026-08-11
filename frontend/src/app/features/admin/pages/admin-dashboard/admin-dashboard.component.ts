@@ -42,13 +42,13 @@ export class AdminDashboardComponent implements OnInit {
     this.borrowingService.getAllBorrowings().subscribe({
       next: (data) => {
         // Lấy 4 giao dịch mới nhất
-        const recent = data.sort((a, b) => b.id - a.id).slice(0, 4);
+        const recent = data.sort((a, b) => b.id - a.id).slice(0, 8);
         const formattedActivities = recent.map((b, index) => {
           const isReturned = b.returnDate != null;
           return {
             id: index + 1,
             type: isReturned ? 'return' : 'borrow',
-            user: '@' + (b.memberName || 'thành viên').replace(/\s+/g, '').toLowerCase(),
+            user: 'Thành viên: ' + (b.memberName || 'thành viên').replace(/\s + /g, '').toLowerCase(),
             action: isReturned ? 'vừa trả sách' : 'vừa mượn sách',
             detail: b.bookTitle,
             time: isReturned ? (b.returnDate || 'Gần đây') : (b.borrowDate || 'Gần đây'),
@@ -81,7 +81,7 @@ export class AdminDashboardComponent implements OnInit {
 
   private updateGreetingAndDate(): void {
     const now = new Date();
-    
+
     // Greeting
     const hour = now.getHours();
     if (hour < 12) {

@@ -2,21 +2,22 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { BorrowingService } from '../../services/borrowing.service';
-import { BookCopyService } from '../../../../core/services/book-copy.service';
-import { BorrowingRequestService } from '../../../../core/services/borrowing-request.service';
-import { BorrowingResponse, BorrowingCreationRequest } from '../../../../core/models/borrowing.model';
-import { BookCopyResponse } from '../../../../core/models/book-copy.model';
-import { BorrowingRequestResponse, BorrowingRequestApprovalRequest } from '../../../../core/models/borrowing-request.model';
+import { BorrowingService, OverdueBookProjection } from '../../services/borrowing.service';
+import { BookCopyService } from '../../../books/services/book-copy.service';
+import { BorrowingRequestService } from '../../services/borrowing-request.service';
+import { BorrowingResponse, BorrowingCreationRequest } from '../../models/borrowing.model';
+import { BookCopyResponse } from '../../../books/models/book-copy.model';
+import { BorrowingRequestResponse, BorrowingRequestApprovalRequest } from '../../models/borrowing-request.model';
 import { ReservationService } from '../../../books/services/reservation.service';
 import { ReservationResponse } from '../../../books/models/reservation.model';
+import { RouterLink } from '@angular/router';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { PaginationComponent } from '../../../../shared/components/pagination/pagination.component';
 
 @Component({
   selector: 'app-admin-borrowing',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, PaginationComponent],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, PaginationComponent, RouterLink],
   templateUrl: './admin-borrowing.component.html',
   styleUrl: './admin-borrowing.component.css'
 })
@@ -34,6 +35,24 @@ export class AdminBorrowingComponent implements OnInit {
   pendingRequests = signal<BorrowingRequestResponse[]>([]);
   historyRequests = signal<BorrowingRequestResponse[]>([]);
   reservations = signal<ReservationResponse[]>([]);
+
+  overdueBooksSP = signal<OverdueBookProjection[]>([]);
+  isOverdueLoading = signal<boolean>(false);
+
+  loadOverdueBooksSP() {
+    this.isOverdueLoading.set(true);
+    this.borrowingService.getOverdueBooksFromSP().subscribe({
+      next: (data) => {
+        this.overdueBooksSP.set(data);
+        this.isOverdueLoading.set(false);
+      },
+      error: (err) => {
+        console.error('Lỗi khi tải danh sách sách quá hạn từ SP:', err);
+        this.toastService.error('Không thể tải danh sách sách quá hạn');
+        this.isOverdueLoading.set(false);
+      }
+    });
+  }
 
   // Search terms
   requestFilters = signal({
@@ -148,7 +167,7 @@ export class AdminBorrowingComponent implements OnInit {
   returnForm: FormGroup;
 
   loading = signal<boolean>(false);
-  activeTab = signal<'APPROVAL' | 'BORROW' | 'RETURN' | 'HISTORY' | 'RESERVATIONS'>('APPROVAL');
+  activeTab = signal<'APPROVAL' | 'BORROW' | 'RETURN' | 'HISTORY' | 'RESERVATIONS' | 'OVERDUE_SP'>('APPROVAL');
 
   // State for approval modal
   selectedRequestToApprove = signal<BorrowingRequestResponse | null>(null);
@@ -172,6 +191,7 @@ export class AdminBorrowingComponent implements OnInit {
     this.loadPendingRequests();
     this.loadHistoryRequests();
     this.loadReservations();
+    this.loadOverdueBooksSP();
 
     const defaultDueDate = new Date();
     defaultDueDate.setDate(defaultDueDate.getDate() + 14);
@@ -229,7 +249,7 @@ export class AdminBorrowingComponent implements OnInit {
         if (copy.status !== 'AVAILABLE' && copy.status !== 'RESERVED') {
           this.scanError.set('Sách này hiện không có sẵn.');
         } else if (copy.status === 'RESERVED') {
-          this.scanWarning.set('Sách này đang được GIỮ CHỖ. Bạn chỉ có thể mượn cho người đã xếp hàng.');
+          this.scanWarning.set('Bạn đã tạo lượt mượn thành công');
         }
       },
       error: () => this.scanError.set('Không tìm thấy mã vạch này.')
@@ -257,11 +277,15 @@ export class AdminBorrowingComponent implements OnInit {
     });
   }
 
+  private findActiveBorrowingForReturnForm(): BorrowingResponse | undefined {
+    const barcode = this.returnForm.value.barcode;
+    return this.borrowings().find(b => b.barCode === barcode && !b.returnDate);
+  }
+
   onSubmitReturn() {
     if (this.returnForm.invalid) return;
 
-    const barcode = this.returnForm.value.barcode;
-    const activeBorrowing = this.borrowings().find(b => b.barCode === barcode && !b.returnDate);
+    const activeBorrowing = this.findActiveBorrowingForReturnForm();
 
     if (!activeBorrowing) {
       this.toastService.warning('Không tìm thấy phiếu mượn nào chưa trả cho mã vạch này.');
@@ -275,6 +299,55 @@ export class AdminBorrowingComponent implements OnInit {
         this.loadBorrowings();
       },
       error: (err) => this.toastService.error('Lỗi khi trả sách: ' + err.error?.message)
+    });
+  }
+
+  reportLost() {
+    const activeBorrowing = this.findActiveBorrowingForReturnForm();
+    if (!activeBorrowing) {
+      this.toastService.warning('Không tìm thấy phiếu mượn nào chưa trả cho mã vạch này.');
+      return;
+    }
+    if (!confirm(`Xác nhận báo MẤT sách "${activeBorrowing.bookTitle}"? Hệ thống sẽ tạo khoản phạt đền bù.`)) return;
+
+    this.borrowingService.reportLost(activeBorrowing.id).subscribe({
+      next: () => {
+        this.toastService.success('Đã báo mất sách và tạo khoản phạt đền bù!');
+        this.returnForm.reset();
+        this.loadBorrowings();
+      },
+      error: (err) => this.toastService.error('Lỗi khi báo mất sách: ' + err.error?.message)
+    });
+  }
+
+  reportDamaged() {
+    const activeBorrowing = this.findActiveBorrowingForReturnForm();
+    if (!activeBorrowing) {
+      this.toastService.warning('Không tìm thấy phiếu mượn nào chưa trả cho mã vạch này.');
+      return;
+    }
+    if (!confirm(`Xác nhận báo HỎNG sách "${activeBorrowing.bookTitle}"? Hệ thống sẽ tạo khoản phạt đền bù.`)) return;
+
+    this.borrowingService.reportDamaged(activeBorrowing.id).subscribe({
+      next: () => {
+        this.toastService.success('Đã báo hỏng sách và tạo khoản phạt đền bù!');
+        this.returnForm.reset();
+        this.loadBorrowings();
+      },
+      error: (err) => this.toastService.error('Lỗi khi báo hỏng sách: ' + err.error?.message)
+    });
+  }
+
+  cancelReservationAsStaff(id: number) {
+    if (!confirm('Bạn có chắc chắn muốn hủy đặt chỗ này? Nếu sách đang được giữ, sách sẽ được nhường cho người tiếp theo trong hàng đợi.')) return;
+
+    this.reservationService.cancelReservation(id).subscribe({
+      next: () => {
+        this.toastService.success('Đã hủy đặt chỗ thành công!');
+        this.loadReservations();
+        this.loadBorrowings();
+      },
+      error: (err) => this.toastService.error('Lỗi khi hủy đặt chỗ: ' + (err.error?.message || ''))
     });
   }
 

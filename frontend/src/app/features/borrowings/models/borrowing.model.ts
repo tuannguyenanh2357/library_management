@@ -9,6 +9,7 @@ export interface BorrowingResponse {
   dueDate: string;
   returnDate?: string | null;
   bookCopy: string;
+  renewalCount?: number;
 }
 
 export interface BorrowingCreationRequest {

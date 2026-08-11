@@ -2,7 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../services/auth.service';
+import { AuthService } from '@core/services/auth.service';
 
 @Component({
   selector: 'app-register',
@@ -22,7 +22,12 @@ export class RegisterComponent {
   protected phone = signal<string>('');
   protected address = signal<string>('');
 
+  protected showPassword = signal<boolean>(false);
   protected errorMessage = signal<string>('');
+
+  toggleShowPassword(): void {
+    this.showPassword.update(v => !v);
+  }
   protected successMessage = signal<string>('');
   protected loading = signal<boolean>(false);
 
@@ -37,6 +42,12 @@ export class RegisterComponent {
       !this.address().trim()
     ) {
       this.errorMessage.set('Vui lòng nhập đầy đủ tất cả các trường!');
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(this.email().trim())) {
+      this.errorMessage.set('Email không đúng định dạng!');
       return;
     }
 

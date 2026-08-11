@@ -21,7 +21,6 @@ public class MemberResponse {
     String phone;
     String address;
     Boolean isActive;
-    String avatar;
     Integer age;
     MemberRole role;
 }

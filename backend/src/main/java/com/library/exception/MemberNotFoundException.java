@@ -1,16 +1,12 @@
 package com.library.exception;
 
-public class MemberNotFoundException extends RuntimeException {
+public class MemberNotFoundException extends ResourceNotFoundException {
     public MemberNotFoundException() {
-        super();
+        super(ErrorCode.MEMBER_NOT_FOUND);
     }
 
     public MemberNotFoundException(String message) {
-        super(message);
-    }
-
-    public MemberNotFoundException(String message, Throwable cause) {
-        super(message, cause);
+        super(ErrorCode.MEMBER_NOT_FOUND, message);
     }
 }
 

@@ -19,7 +19,7 @@ export class ConfirmService {
       config = { message: config };
     }
     this.config.set({
-      title: config.title || 'Xác nhận',
+      title: config.title || 'Xác nhận thanh toán khoản tiền phạt',
       message: config.message,
       confirmText: config.confirmText || 'Đồng ý',
       cancelText: config.cancelText || 'Hủy'

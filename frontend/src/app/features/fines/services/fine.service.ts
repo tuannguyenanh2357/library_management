@@ -30,4 +30,8 @@ export class FineService {
   payFine(fineId: number): Observable<FineResponse> {
     return this.http.put<FineResponse>(`${this.apiUrl}/${fineId}/pay`, {});
   }
+
+  cancelFine(fineId: number, reason: string): Observable<FineResponse> {
+    return this.http.put<FineResponse>(`${this.apiUrl}/${fineId}/cancel`, { reason });
+  }
 }
