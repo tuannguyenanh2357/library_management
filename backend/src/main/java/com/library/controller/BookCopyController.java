@@ -22,11 +22,6 @@ public class BookCopyController {
         return ResponseEntity.ok(bookCopyService.getBookCopyById(id));
     }
 
-    @GetMapping("/barcode/{barcode}")
-    public ResponseEntity<BookCopyResponse> getBookCopyByBarcode(@PathVariable String barcode) {
-        return ResponseEntity.ok(bookCopyService.getBookCopyByBarcode(barcode));
-    }
-
     @GetMapping
     @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
     public ResponseEntity<List<BookCopyResponse>> getAllBookCopies() {
@@ -46,6 +41,11 @@ public class BookCopyController {
             @Valid @RequestBody BookCopyUpdateRequest request) {
         BookCopyResponse updated = bookCopyService.updateBookCopy(id, request);
         return ResponseEntity.ok(updated);
+    }
+
+    @GetMapping("/barcode/{barcode}")
+    public ResponseEntity<BookCopyResponse> getBookCopyByBarcode(@PathVariable String barcode) {
+        return ResponseEntity.ok(bookCopyService.getBookCopyByBarcode(barcode));
     }
 
     @DeleteMapping("/{id}")

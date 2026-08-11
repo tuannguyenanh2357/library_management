@@ -16,6 +16,10 @@
   padding: 0 24px;
 }
 
+.text-center {
+  text-align: center;
+}
+
 /* --------------------------------------------------------------------------
    1. HERO SECTION
    -------------------------------------------------------------------------- */
@@ -66,7 +70,7 @@
   font-weight: 800;
   margin: 0 0 16px 0;
   letter-spacing: -0.5px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .hero-content p {
@@ -121,10 +125,25 @@
   flex-shrink: 0;
 }
 
-.highlight-icon.blue { background: #e0e7ff; color: #4338ca; }
-.highlight-icon.green { background: #dcfce7; color: #15803d; }
-.highlight-icon.orange { background: #ffedd5; color: #c2410c; }
-.highlight-icon.red { background: #ffe4e6; color: #be123c; }
+.highlight-icon.blue {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.highlight-icon.green {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.highlight-icon.orange {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.highlight-icon.red {
+  background: #ffe4e6;
+  color: #be123c;
+}
 
 .highlight-info {
   display: flex;
@@ -411,6 +430,7 @@
   font-size: 2.2rem;
   font-weight: 800;
   margin: 0 0 14px 0;
+  text-align: center;
 }
 
 .rules-cta-section p {
@@ -418,6 +438,7 @@
   opacity: 0.9;
   max-width: 600px;
   margin: 0 auto 32px auto;
+  text-align: center;
 }
 
 .cta-actions {
@@ -469,8 +490,15 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @media (max-width: 992px) {

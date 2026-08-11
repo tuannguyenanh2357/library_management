@@ -369,7 +369,8 @@
                   (input)="updateBorrowingFilter('barCode', $any($event.target).value)"></th>
               <th class="text-center"><input type="date" class="column-filter"
                   (change)="updateBorrowingFilter('borrowDate', $any($event.target).value)"></th>
-              <th class="text-center"></th>
+              <th class="text-center"><input type="date" class="column-filter"
+                  (change)="updateBorrowingFilter('dueDate', $any($event.target).value)"></th>
               <th class="text-center"><input type="date" class="column-filter"
                   (change)="updateBorrowingFilter('returnDate', $any($event.target).value)"></th>
               <th class="text-center">
