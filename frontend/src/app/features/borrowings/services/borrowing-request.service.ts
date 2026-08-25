@@ -23,6 +23,11 @@ export class BorrowingRequestService {
     return this.http.get<BorrowingRequestResponse[]>(`${this.apiUrl}/pending`);
   }
 
+  // Lấy danh sách yêu cầu đã duyệt - đang chờ độc giả đến lấy sách
+  getApprovedRequests(): Observable<BorrowingRequestResponse[]> {
+    return this.http.get<BorrowingRequestResponse[]>(`${this.apiUrl}/approved`);
+  }
+
   getHistoryRequests(): Observable<BorrowingRequestResponse[]> {
     return this.http.get<BorrowingRequestResponse[]>(`${this.apiUrl}/history`);
   }
@@ -33,6 +38,15 @@ export class BorrowingRequestService {
 
   approveRequest(id: number): Observable<BorrowingRequestResponse> {
     return this.http.post<BorrowingRequestResponse>(`${this.apiUrl}/${id}/approve`, {});
+  }
+
+  issueBook(id: number): Observable<BorrowingRequestResponse> {
+    return this.http.post<BorrowingRequestResponse>(`${this.apiUrl}/${id}/issue`, {});
+  }
+
+  // Hủy yêu cầu đã duyệt vì độc giả không đến lấy
+  expireRequest(id: number): Observable<BorrowingRequestResponse> {
+    return this.http.post<BorrowingRequestResponse>(`${this.apiUrl}/${id}/expire`, {});
   }
 
   rejectRequest(id: number, reason: string): Observable<BorrowingRequestResponse> {

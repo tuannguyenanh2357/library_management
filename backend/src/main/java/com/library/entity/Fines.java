@@ -28,12 +28,9 @@ public class Fines {
     @JoinColumn(name = "borrowing_id", nullable = false, unique = true)
     Borrowing borrowing;
 
-
-    // Số tiền phạt
     @Column(name = "amount", nullable = false, precision = 10, scale = 2)
     BigDecimal amount;
 
-    // Lý do phạt
     @Nationalized
     @Column(name = "reason", nullable = false)
     String reason;
@@ -47,7 +44,5 @@ public class Fines {
 
     @Column(name = "paid_date")
     LocalDate paidDate;
-
-
 
 }

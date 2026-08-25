@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class BorrowingRequestMapper {
-    
+
     public BorrowingRequestResponse toResponse(BorrowingRequest request, long availableCopiesCount) {
         return BorrowingRequestResponse.builder()
                 .id(request.getId())
@@ -20,6 +20,8 @@ public class BorrowingRequestMapper {
                 .processedDate(request.getProcessedDate())
                 .notes(request.getNotes())
                 .availableCopiesCount(availableCopiesCount)
+                .assignedBookCopyId(request.getAssignedBookCopyId()) // ID của cuốn sách cụ thể được gán
+                .approvedDate(request.getApprovedDate()) // Ngày duyệt yêu cầu
                 .build();
     }
 }

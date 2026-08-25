@@ -26,4 +26,9 @@ public class BorrowingRequestResponse {
     private LocalDateTime processedDate;
     private String notes;
     private long availableCopiesCount;
+    // ID của BookCopy đang được giữ chỗ (chỉ có giá trị khi status = APPROVED)
+    private Long assignedBookCopyId;
+    // Thời điểm được duyệt (dùng để hiển thị thời gian đã chờ)
+    private LocalDateTime approvedDate;
 }
+

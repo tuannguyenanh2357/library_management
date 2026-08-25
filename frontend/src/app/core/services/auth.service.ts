@@ -87,10 +87,20 @@ export class AuthService {
     return this.state().memberId;
   }
 
-  // Kiểm tra quyền Admin hoặc Librarian
+  // Kiểm tra quyền Admin hoặc Librarian (Dùng chung cho các tác vụ quản lý cơ bản)
   isAdmin(): boolean {
     const role = this.getUserRole();
     return role === 'ADMIN' || role === 'LIBRARIAN';
+  }
+
+  // Chỉ kiểm tra quyền Admin (Dùng cho các tác vụ nhạy cảm như xóa tài khoản, quản lý thủ thư)
+  isStrictAdmin(): boolean {
+    return this.getUserRole() === 'ADMIN';
+  }
+
+  // Chỉ kiểm tra quyền Thủ thư
+  isLibrarian(): boolean {
+    return this.getUserRole() === 'LIBRARIAN';
   }
 
   logout(): void {

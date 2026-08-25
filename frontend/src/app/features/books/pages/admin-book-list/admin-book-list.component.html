@@ -199,7 +199,7 @@
                       {{ copy.status === 'AVAILABLE' ? 'Sẵn sàng' : (copy.status === 'BORROWED' ? 'Đang mượn' : (copy.status === 'RESERVED' ? 'Giữ chỗ' : (copy.status === 'DAMAGED' ? 'Bị hỏng' : (copy.status === 'LOST' ? 'Bị mất' : copy.status)))) }}
                     </span>
                   </td>
-                  <td>{{ copy.dueDate || '-' }}</td>
+                  <td>{{ copy.dueDate ? (copy.dueDate | date: 'dd/MM/yyyy') : '-' }}</td>
                   <td>
                     <div class="action-buttons">
                       <button class="btn-action btn-edit" [disabled]="copy.status === 'BORROWED' || copy.status === 'RESERVED'" (click)="openEditCopyModal(copy)" [title]="(copy.status === 'BORROWED' || copy.status === 'RESERVED') ? 'Không thể sửa bản sao đang mượn hoặc giữ chỗ' : 'Cập nhật trạng thái'">✏️</button>

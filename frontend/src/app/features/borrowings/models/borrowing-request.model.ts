@@ -10,6 +10,8 @@ export interface BorrowingRequestResponse {
   processedDate?: string | null;
   notes?: string | null;
   availableCopiesCount: number;
+  assignedBookCopyId?: number | null;
+  approvedDate?: string | null;
 }
 
 export interface BorrowingRequestCreationRequest {

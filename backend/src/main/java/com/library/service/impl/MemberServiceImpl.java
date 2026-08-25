@@ -58,7 +58,6 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public MemberResponse createMember(MemberCreationRequest request) {
         Member member = memberMapper.toMember(request);
         member.setPassword(passwordEncoder.encode(member.getPassword()));
@@ -67,7 +66,6 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public MemberResponse updateMember(Long memberId, MemberUpdateRequest request) {
         Member member = getMemberByIdOrThrow(memberId);
 
@@ -87,7 +85,7 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public void deleteMember(Long memberId) {
         Member member = getMemberByIdOrThrow(memberId);
 
@@ -115,7 +113,6 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public MemberResponse updateMyProfile(String username, MyProfileUpdateRequest request) {
         Member member = getMemberByUsernameOrThrow(username);
 
@@ -133,7 +130,6 @@ public class MemberServiceImpl implements MemberService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
     public void changePassword(String username, ChangePasswordRequest request) {
         Member member = getMemberByUsernameOrThrow(username);
 

@@ -51,7 +51,7 @@ public class ReservationServiceImpl implements ReservationService {
     RabbitTemplate rabbitTemplate;
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public ReservationResponse createReservation(ReservationCreationRequest request) {
         Member member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
@@ -130,7 +130,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public void cancelReservation(Long reservationId, String username) {
         Reservation reservation = reservationRepository.findById(reservationId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND,
@@ -167,7 +167,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public void fulfillNextReservationIfAny(Long bookId, BookCopy returnedCopy) {
         // 1. Tìm người đặt chỗ SỚM NHẤT đang ở trạng thái PENDING
         Optional<Reservation> nextReservation = reservationRepository
@@ -209,7 +209,7 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public void completeReservationByCopyId(Long copyId) {
         reservationRepository.findFirstByFulfilledCopyIdAndStatus(copyId, ReservationStatus.FULFILLED)
                 .ifPresent(r -> {

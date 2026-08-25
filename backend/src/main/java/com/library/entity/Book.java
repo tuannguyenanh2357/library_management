@@ -28,6 +28,7 @@ import java.math.BigDecimal;
         @Index(name = "idx_book_category", columnList = "category")
 })
 public class Book {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Long id;

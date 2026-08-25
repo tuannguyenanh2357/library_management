@@ -106,12 +106,16 @@ public class GlobalExceptionHandler {
                 errors.put(error.getField(), error.getDefaultMessage())
         );
 
+        String errorMessage = ex.getBindingResult().getFieldErrors().isEmpty() ? 
+                "Dữ liệu đầu vào không hợp lệ" : 
+                ex.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
+
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .code(ErrorCode.INVALID_REQUEST.getCode())
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Validation Error")
-                .message("Dữ liệu đầu vào không hợp lệ")
+                .message(errorMessage)
                 .path(extractPath(request))
                 .details(errors)
                 .build();

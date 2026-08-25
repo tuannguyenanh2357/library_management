@@ -17,8 +17,8 @@
   <div class="tabs">
     <button [class.active]="activeTab() === 'APPROVAL'" (click)="activeTab.set('APPROVAL')">
       Chờ Phê Duyệt
-      @if (pendingRequests().length > 0) {
-      <span class="badge">{{ pendingRequests().length }}</span>
+      @if (pendingRequests().length + approvedRequests().length > 0) {
+      <span class="badge">{{ pendingRequests().length + approvedRequests().length }}</span>
       }
     </button>
     <button [class.active]="activeTab() === 'BORROW'" (click)="activeTab.set('BORROW')">
@@ -46,7 +46,8 @@
     <!-- CHỜ PHÊ DUYỆT -->
     @if (activeTab() === 'APPROVAL') {
     <div class="card">
-      <h3>Yêu Cầu Mượn Sách Online</h3>
+      <!-- Phần 1: Chờ duyệt -->
+      <h3>📦Yêu Cầu Đang Chờ Duyệt</h3>
       @if (loading()) {
       <p>Đang tải danh sách...</p>
       } @else if (pendingRequests().length === 0) {
@@ -55,7 +56,7 @@
       </div>
       } @else {
       <div class="request-grid">
-        @for (req of pendingRequests(); track req.id) {
+        @for (req of paginatedPendingRequests(); track req.id) {
         <div class="request-card">
           <div class="req-header">
             <span class="req-time">{{ req.requestDate | date:'short' }}</span>
@@ -71,7 +72,70 @@
         </div>
         }
       </div>
+
+      <!-- Pagination cho Yêu cầu đang chờ duyệt -->
+      <div style="margin-top: 15px;">
+        <app-pagination [currentPage]="pendingCurrentPage()" [totalItems]="pendingRequests().length"
+          [pageSize]="pendingPageSize()" itemLabel="yêu cầu" (pageChange)="goToPendingPage($event)" />
+      </div>
       }
+
+      <!-- Phần 2: Đã duyệt - chờ độc giả đến lấy sách -->
+      <div class="section-divider" style="margin: 28px 0 20px 0; border-top: 2px dashed #e2e8f0; padding-top: 24px;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+          <h3 style="margin: 0;">📦 Đã Duyệt - Chờ Giao Sách</h3>
+          @if (approvedRequests().length > 0) {
+          <span class="badge" style="background: #f59e0b; color: white; font-size: 0.8rem;">{{ approvedRequests().length
+            }}</span>
+          }
+        </div>
+        <p class="sub-text" style="margin-bottom: 16px;">Sách đã được giữ chỗ, đợi độc giả đến thư viện nhận. Khi nào
+          gúi sách thì nhấn "Giao Sách".</p>
+        @if (approvedRequests().length === 0) {
+        <div class="empty-state" style="padding: 20px;">
+          <p style="color: #10b981;">✅ Không có sách nào đang chờ giao.</p>
+        </div>
+        } @else {
+        <div class="table-responsive">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>Độc giả</th>
+                <th>Đầu sách</th>
+                <th class="text-center">Ngày duyệt</th>
+                <th class="text-center">Hạn trả mong muốn</th>
+                <th class="text-center">Hành động</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (req of paginatedApprovedRequests(); track req.id) {
+              <tr>
+                <td>
+                  <strong>{{ req.memberName }}</strong><br>
+                  <small class="text-muted">ID: {{ req.memberId }}</small>
+                </td>
+                <td><strong>{{ req.bookTitle }}</strong></td>
+                <td class="text-center">{{ req.approvedDate | date:'short' }}</td>
+                <td class="text-center">{{ req.expectedDueDate | date:'dd/MM/yyyy' }}</td>
+                <td class="text-center" style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;">
+                  <button class="btn-submit" style="padding: 6px 14px; font-size: 0.85rem;" (click)="issueBook(req)">✅
+                    Giao Sách</button>
+                  <button class="btn-reject-large" style="padding: 6px 14px; font-size: 0.85rem;"
+                    (click)="expireRequest(req)">❌ Hủy (không đến)</button>
+                </td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination cho Yêu cầu đã duyệt (Chờ giao sách) -->
+        <div style="margin-top: 15px;">
+          <app-pagination [currentPage]="approvedCurrentPage()" [totalItems]="approvedRequests().length"
+            [pageSize]="approvedPageSize()" itemLabel="đơn" (pageChange)="goToApprovedPage($event)" />
+        </div>
+        }
+      </div>
     </div>
     }
 
@@ -317,10 +381,14 @@
               <td class="text-center">{{ req.requestDate | date:'shortDate' }}</td>
               <td class="text-center">{{ req.processedDate | date:'shortDate' }}</td>
               <td class="text-center">
-                <span class="status-badge" [class.returned]="req.status === 'APPROVED'"
-                  [class.rejected]="req.status === 'REJECTED'">
-                  {{ req.status === 'APPROVED' ? 'Đã duyệt' : (req.status === 'REJECTED' ? 'Từ chối' : (req.status ===
-                  'PENDING' ? 'Đang chờ' : req.status)) }}
+                <span class="status-badge" [class.returned]="req.status === 'APPROVED' || req.status === 'COMPLETED'"
+                  [class.rejected]="req.status === 'REJECTED' || req.status === 'EXPIRED'"
+                  [class.pending]="req.status === 'CANCELLED'">
+                  {{ req.status === 'APPROVED' ? 'Đã duyệt' :
+                  req.status === 'COMPLETED' ? '✅ Đã giao sách' :
+                  req.status === 'REJECTED' ? 'Từ chối' :
+                  req.status === 'EXPIRED' ? '⏰ Hết hạn lấy sách' :
+                  req.status === 'CANCELLED' ? 'Đã hủy' : req.status }}
                 </span>
               </td>
               <td>
@@ -479,6 +547,32 @@
       </button>
     </div>
     }
+  </div>
+</div>
+}
+
+<!-- Custom Confirm Modal -->
+@if (confirmModalState().isOpen) {
+<div class="modal-overlay">
+  <div class="modal-content card" style="max-width: 500px;">
+    <div class="modal-header">
+      <h3 style="color: #0f172a;">{{ confirmModalState().title }}</h3>
+      <button class="btn-close" (click)="closeConfirmModal()">×</button>
+    </div>
+
+    <div style="padding: 20px 0;">
+      <p style="font-size: 1rem; color: #475569; line-height: 1.5;">{{ confirmModalState().message }}</p>
+    </div>
+
+    <div class="modal-actions" style="margin-top: 20px;">
+      <button type="button" class="btn-cancel" (click)="closeConfirmModal()">{{ confirmModalState().cancelText
+        }}</button>
+      <button type="button" [class.btn-submit]="confirmModalState().confirmText.includes('✅')"
+        [class.btn-reject-large]="confirmModalState().confirmText.includes('❌')" style="padding: 10px 20px;"
+        (click)="executeConfirmAction()">
+        {{ confirmModalState().confirmText }}
+      </button>
+    </div>
   </div>
 </div>
 }

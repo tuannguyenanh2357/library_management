@@ -97,7 +97,6 @@ public class BookServiceImpl implements BookService {
 
         @Override
         @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
-        @Transactional(rollbackFor = Exception.class)
         public BookResponse createBook(CreateBookRequest request) {
                 Book book = bookMapper.toBook(request);
                 book = bookRepository.save(book);
@@ -106,7 +105,6 @@ public class BookServiceImpl implements BookService {
 
         @Override
         @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
-        @Transactional(rollbackFor = Exception.class)
         public BookResponse updateBook(Long bookId, UpdateBookRequest request) {
                 Book book = bookRepository.findById(bookId)
                                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
@@ -127,7 +125,7 @@ public class BookServiceImpl implements BookService {
 
         @Override
         @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
-        @Transactional(rollbackFor = Exception.class)
+        @Transactional
         public void deleteBook(Long bookId) {
                 Book book = bookRepository.findById(bookId)
                                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));

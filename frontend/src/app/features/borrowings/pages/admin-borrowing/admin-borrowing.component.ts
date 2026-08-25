@@ -33,11 +33,29 @@ export class AdminBorrowingComponent implements OnInit {
 
   borrowings = signal<BorrowingResponse[]>([]);
   pendingRequests = signal<BorrowingRequestResponse[]>([]);
+  approvedRequests = signal<BorrowingRequestResponse[]>([]);
   historyRequests = signal<BorrowingRequestResponse[]>([]);
   reservations = signal<ReservationResponse[]>([]);
 
   overdueBooksSP = signal<OverdueBookProjection[]>([]);
   isOverdueLoading = signal<boolean>(false);
+
+  // Confirmation Modal State
+  confirmModalState = signal<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    confirmText: 'Xác nhận',
+    cancelText: 'Hủy',
+    onConfirm: () => {}
+  });
 
   loadOverdueBooksSP() {
     this.isOverdueLoading.set(true);
@@ -137,6 +155,32 @@ export class AdminBorrowingComponent implements OnInit {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
   });
 
+  // Pagination for pending requests
+  pendingCurrentPage = signal(1);
+  pendingPageSize = signal(8);
+  paginatedPendingRequests = computed(() => {
+    const start = (this.pendingCurrentPage() - 1) * this.pendingPageSize();
+    const end = start + this.pendingPageSize();
+    return this.pendingRequests().slice(start, end);
+  });
+  pendingPagesArray = computed(() => {
+    const totalPages = Math.ceil(this.pendingRequests().length / this.pendingPageSize());
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  });
+
+  // Pagination for approved requests
+  approvedCurrentPage = signal(1);
+  approvedPageSize = signal(10);
+  paginatedApprovedRequests = computed(() => {
+    const start = (this.approvedCurrentPage() - 1) * this.approvedPageSize();
+    const end = start + this.approvedPageSize();
+    return this.approvedRequests().slice(start, end);
+  });
+  approvedPagesArray = computed(() => {
+    const totalPages = Math.ceil(this.approvedRequests().length / this.approvedPageSize());
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  });
+
   updateRequestFilter(field: keyof typeof this.requestFilters.prototype, value: string) {
     this.requestFilters.update(f => ({ ...f, [field]: value }));
     this.reqCurrentPage.set(1); // Reset to page 1 on filter
@@ -156,6 +200,18 @@ export class AdminBorrowingComponent implements OnInit {
   goToBorrowPage(page: number) {
     if (page >= 1 && page <= this.borrowPagesArray().length) {
       this.borrowCurrentPage.set(page);
+    }
+  }
+
+  goToPendingPage(page: number) {
+    if (page >= 1 && page <= this.pendingPagesArray().length) {
+      this.pendingCurrentPage.set(page);
+    }
+  }
+
+  goToApprovedPage(page: number) {
+    if (page >= 1 && page <= this.approvedPagesArray().length) {
+      this.approvedCurrentPage.set(page);
     }
   }
 
@@ -189,6 +245,7 @@ export class AdminBorrowingComponent implements OnInit {
   ngOnInit() {
     this.loadBorrowings();
     this.loadPendingRequests();
+    this.loadApprovedRequests();
     this.loadHistoryRequests();
     this.loadReservations();
     this.loadOverdueBooksSP();
@@ -218,6 +275,13 @@ export class AdminBorrowingComponent implements OnInit {
         console.error('Lỗi tải danh sách yêu cầu chờ duyệt', err);
         this.loading.set(false);
       }
+    });
+  }
+
+  loadApprovedRequests() {
+    this.requestService.getApprovedRequests().subscribe({
+      next: (data) => this.approvedRequests.set(data),
+      error: (err) => console.error('Lỗi tải danh sách chờ lấy sách', err)
     });
   }
 
@@ -369,14 +433,74 @@ export class AdminBorrowingComponent implements OnInit {
 
     this.requestService.approveRequest(req.id).subscribe({
       next: () => {
-        this.toastService.success('Đã duyệt và tự động giao sách thành công!');
+        this.toastService.success('Đã duyệt! Sách đang được giữ chỗ, chờ độc giả đến lấy.');
         this.closeApprovalModal();
         this.loadPendingRequests();
-        this.loadBorrowings();
+        this.loadApprovedRequests();
         this.loadHistoryRequests();
       },
       error: (err) => this.toastService.error('Lỗi khi duyệt: ' + err.error?.message)
     });
+  }
+
+  // --------------------------------------------------------
+  // CUSTOM CONFIRMATION MODAL
+  // --------------------------------------------------------
+  openConfirmModal(title: string, message: string, confirmText: string, onConfirm: () => void) {
+    this.confirmModalState.set({
+      isOpen: true,
+      title,
+      message,
+      confirmText,
+      cancelText: 'Hủy',
+      onConfirm
+    });
+  }
+
+  closeConfirmModal() {
+    this.confirmModalState.update(s => ({ ...s, isOpen: false }));
+  }
+
+  executeConfirmAction() {
+    this.confirmModalState().onConfirm();
+    this.closeConfirmModal();
+  }
+
+  issueBook(req: BorrowingRequestResponse) {
+    this.openConfirmModal(
+      'Xác Nhận Giao Sách',
+      `Bạn có chắc chắn muốn giao sách "${req.bookTitle}" cho độc giả ${req.memberName}? Phiếu mượn sẽ được tạo và thời hạn bắt đầu tính từ hôm nay.`,
+      '✅ Xác nhận Giao Sách',
+      () => {
+        this.requestService.issueBook(req.id).subscribe({
+          next: () => {
+            this.toastService.success(`Đã giao sách thành công! Phiếu mượn đã được tạo.`);
+            this.loadApprovedRequests();
+            this.loadBorrowings();
+            this.loadHistoryRequests();
+          },
+          error: (err) => this.toastService.error('Lỗi khi giao sách: ' + err.error?.message)
+        });
+      }
+    );
+  }
+
+  expireRequest(req: BorrowingRequestResponse) {
+    this.openConfirmModal(
+      'Xác Nhận Hủy Yêu Cầu',
+      `Bạn có chắc chắn muốn HỦY yêu cầu của độc giả ${req.memberName} vì không đến lấy sách? Sách sẽ được trả về kho.`,
+      '❌ Xác nhận Hủy',
+      () => {
+        this.requestService.expireRequest(req.id).subscribe({
+          next: () => {
+            this.toastService.success('Đã hủy yêu cầu và trả sách về kho!');
+            this.loadApprovedRequests();
+            this.loadHistoryRequests();
+          },
+          error: (err) => this.toastService.error('Lỗi khi hủy: ' + err.error?.message)
+        });
+      }
+    );
   }
 
   toggleRejectMode() {

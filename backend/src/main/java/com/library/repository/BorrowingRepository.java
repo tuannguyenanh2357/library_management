@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import com.library.dto.response.OverdueBookProjection;
 
@@ -17,6 +18,8 @@ public interface BorrowingRepository extends JpaRepository<Borrowing, Long> {
         @Query("SELECT b FROM Borrowing b " + "JOIN FETCH b.member m " + "JOIN FETCH b.bookCopy bc "
                         + "JOIN FETCH bc.book bk")
         List<Borrowing> findAllWithRelations();
+
+        Optional<Borrowing> findByBookCopyIdAndStatus(Long bookCopyId, BorrowingStatus status);
 
         // Lấy danh sách phiếu mượn đang hoạt động nhưng đã quá hạn trả.
         @Query("SELECT b FROM Borrowing b " +

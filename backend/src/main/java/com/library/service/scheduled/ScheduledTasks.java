@@ -50,7 +50,7 @@ public class ScheduledTasks {
     @Scheduled(cron = "0 5 0 * * *")
     // @Scheduled(cron = "0 * * * * *")
     @SchedulerLock(name = "expireFulfilledReservationsTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public void expireFulfilledReservations() {
         List<Reservation> expired;
         try {
@@ -80,7 +80,6 @@ public class ScheduledTasks {
     @Scheduled(cron = "0 0 8 * * *")
     // @Scheduled(cron = "0 * * * * *")
     @SchedulerLock(name = "sendOverdueRemindersTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
-    @Transactional(rollbackFor = Exception.class)
     public void sendOverdueReminders() {
         List<Borrowing> overdue;
         try {
@@ -126,10 +125,10 @@ public class ScheduledTasks {
     }
 
     // Tự động hủy các yêu cầu mượn PENDING quá 3 ngày không được nhân viên xử lý
-    @Scheduled(cron = "0 15 0 * * *")
-    // @Scheduled(cron = "0 * * * * *")
+    // @Scheduled(cron = "0 15 0 * * *")
+    @Scheduled(cron = "0 * * * * *")
     @SchedulerLock(name = "cancelStalePendingRequestsTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public void cancelStalePendingRequests() {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(3);
         List<BorrowingRequest> stale;

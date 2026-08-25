@@ -64,4 +64,47 @@ public class NotificationConsumer {
         log.info("Đã gửi email xác nhận mượn sách tới độc giả: {}", event.getMemberEmail());
         log.info("=========================================================");
     }
+
+    @RabbitListener(queues = RabbitMQConfig.REQUEST_APPROVED_QUEUE)
+    public void handleRequestApproved(BorrowingRequestApprovedEvent event) {
+        log.info("=========================================================");
+        log.info("[RABBITMQ CONSUMER] Nhận được yêu cầu gửi thông báo Đã duyệt đơn mượn sách!");
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        String formattedDueDate = event.getExpectedDueDate() != null ? event.getExpectedDueDate().format(formatter)
+                : "N/A";
+
+        String subject = "THÔNG BÁO: Yêu cầu mượn sách đã được duyệt";
+        String text = String.format("Kính gửi %s,\n\n" +
+                "Yêu cầu mượn cuốn sách '%s' của bạn đã được thư viện phê duyệt.\n" +
+                "Chúng tôi đã giữ lại 1 cuốn cho bạn. Mong muốn trả vào ngày: %s.\n\n" +
+                "Vui lòng đến thư viện (Địa chỉ: 123 Nguyễn Khang, Hà Nội) trong vòng 48h tới để nhận sách. " +
+                "Nếu quá hạn, hệ thống sẽ tự động hủy yêu cầu của bạn để nhường sách cho người khác.\n\n" +
+                "Trân trọng,\nBan Quản lý Thư viện",
+                event.getMemberName(), event.getBookTitle(), formattedDueDate);
+
+        emailService.sendEmail(event.getMemberEmail(), subject, text);
+
+        log.info("Đã gửi email báo duyệt đơn mượn sách tới: {}", event.getMemberEmail());
+        log.info("=========================================================");
+    }
+
+    @RabbitListener(queues = RabbitMQConfig.REQUEST_REJECTED_QUEUE)
+    public void handleRequestRejected(BorrowingRequestRejectedEvent event) {
+        log.info("=========================================================");
+        log.info("[RABBITMQ CONSUMER] Nhận được yêu cầu gửi thông báo Từ chối đơn mượn sách!");
+
+        String subject = "THÔNG BÁO: Yêu cầu mượn sách bị từ chối";
+        String text = String.format("Kính gửi %s,\n\n" +
+                "Chúng tôi rất tiếc phải thông báo rằng yêu cầu mượn cuốn sách '%s' của bạn đã bị từ chối.\n" +
+                "Lý do từ chối: %s\n\n" +
+                "Mong bạn thông cảm và vui lòng tìm kiếm các cuốn sách khác tại thư viện.\n\n" +
+                "Trân trọng,\nBan Quản lý Thư viện",
+                event.getMemberName(), event.getBookTitle(), event.getReason());
+
+        emailService.sendEmail(event.getMemberEmail(), subject, text);
+
+        log.info("Đã gửi email báo từ chối đơn mượn sách tới: {}", event.getMemberEmail());
+        log.info("=========================================================");
+    }
 }

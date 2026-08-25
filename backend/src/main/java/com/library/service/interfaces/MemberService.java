@@ -27,9 +27,4 @@ public interface MemberService {
 
     List<UnpaidMemberProjection> getMembersWithUnpaidFines();
 
-    // void addFavoriteBook(String username, Long bookId);
-
-    // void removeFavoriteBook(String username, Long bookId);
-
-    // List<BookResponse> getFavoriteBooks(String username);
 }

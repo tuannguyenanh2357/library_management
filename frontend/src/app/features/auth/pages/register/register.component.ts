@@ -33,15 +33,28 @@ export class RegisterComponent {
 
   onSubmit(): void {
     const phoneStr = this.phone().trim();
-    if (
-      !this.username().trim() ||
-      !this.password().trim() ||
-      !this.email().trim() ||
-      !this.name().trim() ||
-      !this.phone().trim() ||
-      !this.address().trim()
-    ) {
-      this.errorMessage.set('Vui lòng nhập đầy đủ tất cả các trường!');
+    if (!this.username().trim()) {
+      this.errorMessage.set('Tên đăng nhập không được để trống');
+      return;
+    }
+    if (!this.password().trim()) {
+      this.errorMessage.set('Mật khẩu không được để trống');
+      return;
+    }
+    if (!this.email().trim()) {
+      this.errorMessage.set('Email không được để trống');
+      return;
+    }
+    if (!this.name().trim()) {
+      this.errorMessage.set('Họ tên không được để trống');
+      return;
+    }
+    if (!this.phone().trim()) {
+      this.errorMessage.set('Số điện thoại không được để trống');
+      return;
+    }
+    if (!this.address().trim()) {
+      this.errorMessage.set('Địa chỉ không được để trống');
       return;
     }
 

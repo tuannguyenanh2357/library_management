@@ -50,7 +50,7 @@ public class FineServiceImpl implements FineService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public FineResponse payFine(Long fineId) {
         Fines fine = repository.findById(fineId)
                 .orElseThrow(
@@ -62,7 +62,7 @@ public class FineServiceImpl implements FineService {
     }
 
     @Override
-    @Transactional(rollbackFor = Exception.class)
+    @Transactional
     public FineResponse cancelFine(Long fineId, String reason) {
         Fines fine = repository.findById(fineId)
                 .orElseThrow(

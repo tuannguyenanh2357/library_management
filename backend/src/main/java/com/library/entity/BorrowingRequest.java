@@ -53,4 +53,13 @@ public class BorrowingRequest {
     @Column(name = "notes", columnDefinition = "NVARCHAR(MAX)")
     String notes;
 
+    // ID của BookCopy được giữ chỗ sau khi Admin duyệt
+    @Column(name = "assigned_book_copy_id")
+    Long assignedBookCopyId;
+
+    // Thời điểm Admin duyệt (dùng để kiểm tra quá hạn lấy sách)
+    @Column(name = "approved_date")
+    LocalDateTime approvedDate;
+
 }
+

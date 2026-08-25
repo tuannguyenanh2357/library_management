@@ -6,12 +6,12 @@ export const authGuard: CanActivateFn = (route, state) => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
-  // Check if logged in
+  // Kiểm tra xem đã đăng nhập chưa
   if (authService.isLoggedIn()) {
     return true;
   }
 
-  // Redirect to login if unauthorized
+  // Chuyển hướng sang trang đăng nhập nếu chưa đăng nhập
   router.navigate(['/login']);
   return false;
 };
