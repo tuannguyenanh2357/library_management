@@ -2,17 +2,23 @@ package com.library.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.NoArgsConstructor;
 
-@Data
+import lombok.AccessLevel;
+import lombok.experimental.FieldDefaults;
+
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class DashboardStatsResponse {
-    private long totalBooks;
-    private long totalBookCopies;
-    private long totalMembers;
-    private long activeBorrowings;
-    private long overdueBorrowings;
+    long totalBooks;
+    long totalBookCopies;
+    long totalMembers;
+    long activeBorrowings;
+    long overdueBorrowings;
 }

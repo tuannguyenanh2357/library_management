@@ -2,6 +2,8 @@ package com.library.service.rabbitmq;
 
 import com.library.config.RabbitMQConfig;
 import com.library.dto.event.BorrowingCreatedEvent;
+import com.library.dto.event.BorrowingRequestApprovedEvent;
+import com.library.dto.event.BorrowingRequestRejectedEvent;
 import com.library.dto.event.ReservationFulfilledEvent;
 import com.library.service.interfaces.EmailService;
 import lombok.RequiredArgsConstructor;

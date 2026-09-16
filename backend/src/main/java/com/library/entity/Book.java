@@ -22,11 +22,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "books", indexes = {
-        @Index(name = "idx_book_title", columnList = "title"),
-        @Index(name = "idx_book_author", columnList = "author"),
-        @Index(name = "idx_book_category", columnList = "category")
-})
+@Table(name = "books")
 public class Book {
 
     @Id

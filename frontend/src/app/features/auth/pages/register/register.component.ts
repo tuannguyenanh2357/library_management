@@ -60,13 +60,13 @@ export class RegisterComponent {
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
     if (!emailRegex.test(this.email().trim())) {
-      this.errorMessage.set('Email không đúng định dạng!');
+      this.errorMessage.set('Email không đúng định dạng');
       return;
     }
 
-    const phoneRegex = /^(\+84|0)[3-9]\d{8}$/;
+    const phoneRegex = /(\+84|0)[3-9]\d{8}$/;
     if (!phoneRegex.test(phoneStr)) {
-      this.errorMessage.set('Số điện thoại không hợp lệ!');
+      this.errorMessage.set('Số điện thoại không đúng định dạng');
       return;
     }
 

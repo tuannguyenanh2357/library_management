@@ -5,7 +5,6 @@ import com.library.entity.Fines;
 import com.library.entity.enums.FineStatus;
 import com.library.exception.AppException;
 import com.library.exception.ErrorCode;
-import com.library.exception.ResourceNotFoundException;
 import com.library.mapper.FineMapper;
 import com.library.repository.FineRepository;
 import com.library.service.interfaces.FineService;
@@ -26,7 +25,7 @@ public class FineServiceImpl implements FineService {
     public FineResponse getById(Long id) {
         Fines fine = repository.findById(id)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Khoản phạt không tồn tại"));
+                        () -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Khoản phạt không tồn tại"));
         return mapper.toResponse(fine);
     }
 
@@ -54,7 +53,7 @@ public class FineServiceImpl implements FineService {
     public FineResponse payFine(Long fineId) {
         Fines fine = repository.findById(fineId)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Khoản phạt không tồn tại"));
+                        () -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Khoản phạt không tồn tại"));
         fine.setStatus(FineStatus.PAID);
         fine.setPaidDate(LocalDate.now());
         repository.save(fine);
@@ -66,7 +65,7 @@ public class FineServiceImpl implements FineService {
     public FineResponse cancelFine(Long fineId, String reason) {
         Fines fine = repository.findById(fineId)
                 .orElseThrow(
-                        () -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND, "Khoản phạt không tồn tại"));
+                        () -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Khoản phạt không tồn tại"));
         if (fine.getStatus() != FineStatus.UNPAID) {
             throw new AppException(ErrorCode.INVALID_REQUEST, "Chỉ có thể miễn khoản phạt chưa thanh toán");
         }

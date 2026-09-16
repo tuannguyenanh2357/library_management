@@ -20,7 +20,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Table(name = "borrowing_requests")
+@Table(name = "borrowing_requests", indexes = {
+        @Index(name = "idx_borrowingrequest_notes", columnList = "notes")
+})
 public class BorrowingRequest {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

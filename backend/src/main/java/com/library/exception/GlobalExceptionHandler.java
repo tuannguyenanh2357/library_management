@@ -70,29 +70,16 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex, WebRequest request) {
-        log.warn("Data integrity violation: {}", ex.getMessage());
-        String message = ex.getMessage();
-        if (message != null) {
-            if (message.contains("email") || message.contains("EMAIL")) {
-                message = "Email đã tồn tại trong hệ thống";
-            } else if (message.contains("username") || message.contains("USERNAME")) {
-                message = "Tên đăng nhập đã tồn tại trong hệ thống";
-            } else if (message.contains("phone") || message.contains("PHONE")) {
-                message = "Số điện thoại đã tồn tại trong hệ thống";
-            } else {
-                message = "Ràng buộc dữ liệu không hợp lệ";
-            }
-        } else {
-            message = "Ràng buộc dữ liệu không hợp lệ";
-        }
+    public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(DataIntegrityViolationException ex,
+            WebRequest request) {
+        log.warn("Vi phạm tính toàn vẹn dữ liệu: {}", ex.getMessage());
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .code(ErrorCode.INVALID_REQUEST.getCode())
                 .timestamp(LocalDateTime.now())
                 .status(HttpStatus.BAD_REQUEST.value())
                 .error("Bad Request")
-                .message(message)
+                .message("Dữ liệu vi phạm ràng buộc, vui lòng kiểm tra lại")
                 .path(extractPath(request))
                 .build();
 
@@ -100,15 +87,14 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex,
+            WebRequest request) {
         Map<String, String> errors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors().forEach(error ->
-                errors.put(error.getField(), error.getDefaultMessage())
-        );
+        ex.getBindingResult().getFieldErrors()
+                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
 
-        String errorMessage = ex.getBindingResult().getFieldErrors().isEmpty() ? 
-                "Dữ liệu đầu vào không hợp lệ" : 
-                ex.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
+        String errorMessage = ex.getBindingResult().getFieldErrors().isEmpty() ? "Dữ liệu đầu vào không hợp lệ"
+                : ex.getBindingResult().getFieldErrors().get(0).getDefaultMessage();
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .code(ErrorCode.INVALID_REQUEST.getCode())
@@ -124,7 +110,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex,
+            WebRequest request) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .code(ErrorCode.INVALID_REQUEST.getCode())
                 .timestamp(LocalDateTime.now())
@@ -138,7 +125,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleHttpMessageNotReadable(HttpMessageNotReadableException ex,
+            WebRequest request) {
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .code(ErrorCode.INVALID_REQUEST.getCode())
                 .timestamp(LocalDateTime.now())

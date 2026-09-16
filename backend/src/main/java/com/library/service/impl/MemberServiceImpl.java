@@ -22,9 +22,10 @@ import com.library.dto.request.MemberUpdateRequest;
 
 import com.library.entity.Member;
 import com.library.entity.enums.MemberRole;
+import com.library.repository.BorrowingRepository;
+import com.library.repository.FineRepository;
 import com.library.exception.AppException;
 import com.library.exception.ErrorCode;
-import com.library.exception.MemberNotFoundException;
 import com.library.dto.request.MyProfileUpdateRequest;
 import com.library.dto.request.ChangePasswordRequest;
 
@@ -33,12 +34,14 @@ import com.library.dto.request.ChangePasswordRequest;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class MemberServiceImpl implements MemberService {
     MemberRepository memberRepository;
+    BorrowingRepository borrowingRepository;
+    FineRepository fineRepository;
     MemberMapper memberMapper;
     PasswordEncoder passwordEncoder;
 
     @Override
     public List<MemberResponse> getAllMembers() {
-        List<Member> members = memberRepository.findAll();
+        List<Member> members = memberRepository.findAllByOrderByIdDesc();
 
         // Nếu là thử thư và không phải ADMIN Chỉ được xem danh sách Độc giả
         if (!SecurityUtils.isAdmin() && SecurityUtils.isLibrarian()) {
@@ -59,6 +62,16 @@ public class MemberServiceImpl implements MemberService {
 
     @Override
     public MemberResponse createMember(MemberCreationRequest request) {
+        if (memberRepository.existsByUsername(request.getUsername())) {
+            throw new AppException(ErrorCode.USER_EXISTED);
+        }
+        if (memberRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
+        }
+        if (memberRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_EXISTED);
+        }
+
         Member member = memberMapper.toMember(request);
         member.setPassword(passwordEncoder.encode(member.getPassword()));
         member = memberRepository.save(member);
@@ -72,6 +85,18 @@ public class MemberServiceImpl implements MemberService {
         if (!SecurityUtils.isAdmin() && SecurityUtils.isLibrarian() && member.getRole() != MemberRole.MEMBER) {
             throw new AppException(ErrorCode.UNAUTHORIZED,
                     "Thủ thư chỉ có quyền cập nhật thông tin tài khoản Độc giả (MEMBER).");
+        }
+
+        if (request.getUsername() != null && !request.getUsername().equals(member.getUsername())) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Tên đăng nhập không được phép thay đổi.");
+        }
+        if (!request.getEmail().equals(member.getEmail())
+                && memberRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
+        }
+        if (!request.getPhone().equals(member.getPhone())
+                && memberRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_EXISTED);
         }
 
         String newPassword = request.getPassword();
@@ -94,11 +119,18 @@ public class MemberServiceImpl implements MemberService {
         }
 
         if (!SecurityUtils.isAdmin()) {
-            throw new AppException(ErrorCode.UNAUTHORIZED, "Chỉ Quản trị viên (ADMIN) mới có quyền xóa tài khoản.");
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Chỉ ADMIN mới có quyền xóa tài khoản.");
         }
 
         if (member.hasBorrowedBooks()) {
             throw new AppException(ErrorCode.CANNOT_DELETE_MEMBER_WITH_BOOKS);
+        }
+
+        // Kiểm tra nếu độc giả đã từng có lịch sử mượn trả hoặc phiếu phạt
+        boolean hasBorrowingHistory = !borrowingRepository.findByMemberId(memberId).isEmpty();
+        boolean hasFineHistory = !fineRepository.findByMemberIdWithRelations(memberId).isEmpty();
+        if (hasBorrowingHistory || hasFineHistory) {
+            throw new AppException(ErrorCode.CANNOT_DELETE_MEMBER_WITH_HISTORY);
         }
 
         memberRepository.delete(member);
@@ -108,13 +140,23 @@ public class MemberServiceImpl implements MemberService {
     public MemberResponse getMemberByUsername(String username) {
         Member member = memberRepository.findByUsername(username)
                 .orElseThrow(
-                        () -> new MemberNotFoundException("Không tìm thấy thành viên với tên người dùng: " + username));
+                        () -> new AppException(ErrorCode.MEMBER_NOT_FOUND,
+                                "Không tìm thấy thành viên với tên người dùng: " + username));
         return memberMapper.toMemberResponse(member);
     }
 
     @Override
     public MemberResponse updateMyProfile(String username, MyProfileUpdateRequest request) {
         Member member = getMemberByUsernameOrThrow(username);
+
+        if (request.getEmail() != null && !request.getEmail().equals(member.getEmail())
+                && memberRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
+        }
+        if (request.getPhone() != null && !request.getPhone().equals(member.getPhone())
+                && memberRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_EXISTED);
+        }
 
         if (request.getName() != null)
             member.setName(request.getName());
@@ -148,12 +190,12 @@ public class MemberServiceImpl implements MemberService {
 
     private Member getMemberByIdOrThrow(Long memberId) {
         return memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy độc giả"));
     }
 
     private Member getMemberByUsernameOrThrow(String username) {
         return memberRepository.findByUsername(username)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy độc giả"));
     }
 
 }

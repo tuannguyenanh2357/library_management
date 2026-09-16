@@ -96,7 +96,8 @@ export class AdminMemberListComponent implements OnInit {
 
     this.memberService.getAllMembers().subscribe({
       next: (data) => {
-        this.members.set(data);
+        const sorted = (data || []).sort((a, b) => b.id - a.id);
+        this.members.set(sorted);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -122,7 +123,7 @@ export class AdminMemberListComponent implements OnInit {
       name: member.name,
       email: member.email,
       username: member.username,
-      password: '', // Leave blank unless they want to change
+      password: '',
       phone: member.phone,
       address: member.address,
       age: member.age,
@@ -135,12 +136,63 @@ export class AdminMemberListComponent implements OnInit {
     this.isMemberModalOpen.set(false);
   }
 
+
+  // thông báo chi tiết các lỗi khi thêm, cập nhật, xóa độc giả
+  private extractErrorMessage(err: any, fallback: string): string {
+    if (!err) return fallback;
+    if (typeof err.error === 'string') return err.error;
+    if (err.error?.message) return err.error.message;
+    if (err.error?.details && typeof err.error.details === 'object') {
+      const messages = Object.values(err.error.details).filter(msg => typeof msg === 'string');
+      if (messages.length > 0) {
+        return messages.join(', ');
+      }
+    }
+    if (err.message) return err.message;
+    return fallback;
+  }
+
   saveMember(): void {
     const data = this.currentMember();
 
-    // Basic validation
-    if (!data.name || !data.email || !data.username) {
-      this.toastService.warning('Vui lòng điền các trường bắt buộc (Tên, Email, Username).');
+    if (!data.name?.trim()) {
+      this.toastService.warning('Họ và tên không được để trống');
+      return;
+    }
+    if (!data.email?.trim()) {
+      this.toastService.warning('Email không được để trống');
+      return;
+    }
+    if (!data.username?.trim()) {
+      this.toastService.warning('Tên đăng nhập không được để trống');
+      return;
+    }
+    if (data.name.trim().length > 100) {
+      this.toastService.warning('Họ tên không được vượt quá 100 ký tự');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(data.email.trim())) {
+      this.toastService.warning('Định dạng Email không hợp lệ');
+      return;
+    }
+    if (data.username.trim().length < 3 || data.username.trim().length > 50) {
+      this.toastService.warning('Tên đăng nhập phải từ 3 đến 50 ký tự');
+      return;
+    }
+    if (data.phone?.trim()) {
+      const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+      if (!phoneRegex.test(data.phone.trim())) {
+        this.toastService.warning('Số điện thoại không đúng định dạng VN (VD: 0912345678)');
+        return;
+      }
+    }
+    if (data.address?.trim() && data.address.trim().length > 255) {
+      this.toastService.warning('Địa chỉ không được vượt quá 255 ký tự');
+      return;
+    }
+    if (data.age !== undefined && data.age !== null && data.age < 1) {
+      this.toastService.warning('Tuổi phải lớn hơn 0');
       return;
     }
 
@@ -164,12 +216,16 @@ export class AdminMemberListComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toastService.error('Lỗi cập nhật độc giả!');
+          this.toastService.error(this.extractErrorMessage(err, 'Lỗi cập nhật độc giả!'));
         }
       });
     } else {
       if (!data.password) {
-        this.toastService.warning('Vui lòng nhập mật khẩu cho tài khoản mới.');
+        this.toastService.warning('Mật khẩu không được để trống');
+        return;
+      }
+      if (data.password.length < 8) {
+        this.toastService.warning('Mật khẩu phải có ít nhất 8 ký tự');
         return;
       }
       const createReq: MemberCreationRequest = {
@@ -189,7 +245,7 @@ export class AdminMemberListComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toastService.error('Lỗi thêm độc giả! Có thể username/email đã tồn tại.');
+          this.toastService.error(this.extractErrorMessage(err, 'Lỗi thêm độc giả!'));
         }
       });
     }
@@ -212,12 +268,8 @@ export class AdminMemberListComponent implements OnInit {
           console.error(err);
           if (err.status === 403) {
             this.toastService.error('Bạn không có quyền xóa độc giả! Chỉ ADMIN mới được phép.');
-          } else if (err.error && typeof err.error === 'string') {
-            this.toastService.error(err.error);
-          } else if (err.error && err.error.message) {
-            this.toastService.error(err.error.message);
           } else {
-            this.toastService.error('Không thể xóa độc giả này. Đã xảy ra lỗi.');
+            this.toastService.error(this.extractErrorMessage(err, 'Không thể xóa độc giả này. Đã xảy ra lỗi.'));
           }
         }
       });
@@ -245,7 +297,7 @@ export class AdminMemberListComponent implements OnInit {
         },
         error: (err) => {
           console.error(err);
-          this.toastService.error(`Lỗi khi ${action} tài khoản!`);
+          this.toastService.error(this.extractErrorMessage(err, `Lỗi khi ${action} tài khoản!`));
         }
       });
     }

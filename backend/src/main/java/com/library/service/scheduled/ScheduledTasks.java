@@ -106,8 +106,6 @@ public class ScheduledTasks {
                         "Mức phạt là %s VNĐ/ngày. TỔNG SỐ TIỀN PHẠT TẠM TÍNH ĐẾN HÔM NAY LÀ: %s VNĐ.\n" +
                         "Vui lòng mang sách đến trả sớm để tránh phát sinh thêm phí phạt.\n\n"
                         +
-                        "Hoặc có thể thanh toán qua STK: ....."
-                        +
                         "Trân trọng,\nBan Quản lý Thư viện",
                         borrowing.getMember().getName(),
                         book.getTitle(),
@@ -125,8 +123,8 @@ public class ScheduledTasks {
     }
 
     // Tự động hủy các yêu cầu mượn PENDING quá 3 ngày không được nhân viên xử lý
-    // @Scheduled(cron = "0 15 0 * * *")
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "0 15 0 * * *")
+    // @Scheduled(cron = "0 * * * * *")
     @SchedulerLock(name = "cancelStalePendingRequestsTask", lockAtLeastFor = "1m", lockAtMostFor = "5m")
     @Transactional
     public void cancelStalePendingRequests() {

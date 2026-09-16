@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.FieldDefaults;
+import lombok.AccessLevel;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -14,21 +16,21 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@FieldDefaults(level = AccessLevel.PRIVATE)
 public class BorrowingRequestResponse {
-    private Long id;
-    private Long memberId;
-    private String memberName;
-    private Long bookId;
-    private String bookTitle;
-    private String status;
-    private LocalDateTime requestDate;
-    private LocalDate expectedDueDate;
-    private LocalDateTime processedDate;
-    private String notes;
-    private long availableCopiesCount;
+    Long id;
+    Long memberId;
+    String memberName;
+    Long bookId;
+    String bookTitle;
+    String status;
+    LocalDateTime requestDate;
+    LocalDate expectedDueDate;
+    LocalDateTime processedDate;
+    String notes;
+    long availableCopiesCount;
     // ID của BookCopy đang được giữ chỗ (chỉ có giá trị khi status = APPROVED)
-    private Long assignedBookCopyId;
+    Long assignedBookCopyId;
     // Thời điểm được duyệt (dùng để hiển thị thời gian đã chờ)
-    private LocalDateTime approvedDate;
+    LocalDateTime approvedDate;
 }
-

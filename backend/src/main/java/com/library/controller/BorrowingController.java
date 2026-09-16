@@ -20,13 +20,13 @@ public class BorrowingController {
     private final BorrowingService borrowingService;
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<List<BorrowingResponse>> getAllBorrowings() {
         return ResponseEntity.ok(borrowingService.getAll());
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BorrowingResponse> getBorrowingById(@PathVariable Long id) {
         return ResponseEntity.ok(borrowingService.getById(id));
     }
@@ -38,25 +38,25 @@ public class BorrowingController {
     }
 
     @GetMapping("/sp-overdue")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<List<OverdueBookProjection>> getOverdueBooksFromSP() {
         return ResponseEntity.ok(borrowingService.getOverdueBooksFromSP());
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BorrowingResponse> borrowBook(@Valid @RequestBody BorrowingCreationRequest request) {
         return ResponseEntity.ok(borrowingService.borrowBook(request));
     }
 
     @PutMapping("/{borrowingId}/return")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BorrowingResponse> returnBook(@PathVariable Long borrowingId) {
         return ResponseEntity.ok(borrowingService.returnBook(borrowingId));
     }
 
     @GetMapping("/copy/{copyId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<List<BorrowingResponse>> getBorrowingsByCopyId(@PathVariable Long copyId) {
         return ResponseEntity.ok(borrowingService.getByCopyId(copyId));
     }
@@ -69,13 +69,13 @@ public class BorrowingController {
     }
 
     @PutMapping("/{borrowingId}/report-lost")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BorrowingResponse> reportLost(@PathVariable Long borrowingId) {
         return ResponseEntity.ok(borrowingService.reportLost(borrowingId));
     }
 
     @PutMapping("/{borrowingId}/report-damaged")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BorrowingResponse> reportDamaged(@PathVariable Long borrowingId) {
         return ResponseEntity.ok(borrowingService.reportDamaged(borrowingId));
     }

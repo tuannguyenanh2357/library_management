@@ -1,10 +1,6 @@
 package com.library.dto.request;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,28 +13,32 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class MemberCreationRequest {
-    @NotBlank(message = "Name is required")
+    @NotBlank(message = "Họ và tên không được để trống")
+    @Size(max = 100, message = "Họ tên không được vượt quá 100 ký tự")
     String name;
 
-    @NotBlank(message = "Username is required")
+    @NotBlank(message = "Tên đăng nhập không được để trống")
+    @Size(min = 3, max = 50, message = "Tên đăng nhập phải từ 3 đến 50 ký tự")
     String username;
 
-    @NotBlank(message = "Password is required")
-    @Size(message = "Password must be at least 8 characters long", min = 8)
+    @NotBlank(message = "Mật khẩu không được để trống")
+    @Size(min = 8, message = "Mật khẩu phải có ít nhất 8 ký tự")
     String password;
 
-    @Email(message = "Invalid email format")
-    @NotBlank(message = "Email is required")
+    @NotBlank(message = "Email không được để trống")
+    @Email(message = "Định dạng Email không hợp lệ")
     String email;
 
-    @NotBlank(message = "Phone is required")
+    @NotBlank(message = "Số điện thoại không được để trống")
+    @Pattern(regexp = "^(0[3|5|7|8|9])+([0-9]{8})$", message = "Số điện thoại không đúng định dạng VN (VD: 0912345678)")
     String phone;
 
-    @NotBlank(message = "Address is required")
+    @NotBlank(message = "Địa chỉ không được để trống")
+    @Size(max = 255, message = "Địa chỉ không được vượt quá 255 ký tự")
     String address;
 
-    @NotNull(message = "Age is required")
-    @Min(value = 0, message = "Age must be greater than 0")
+    @NotNull(message = "Tuổi không được để trống")
+    @Min(value = 1, message = "Tuổi phải lớn hơn 0")
+    @Max(value = 100, message = "Tuổi phải nhỏ hơn 100")
     Integer age;
-
 }

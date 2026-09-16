@@ -136,6 +136,11 @@
   font-weight: 600;
 }
 
+.input-wrapper input::-ms-reveal,
+.input-wrapper input::-ms-clear {
+  display: none;
+}
+
 .toggle-password-btn {
   position: absolute !important;
   right: 10px !important;

@@ -18,7 +18,6 @@ import com.library.service.interfaces.ReservationService;
 
 import com.library.exception.AppException;
 import com.library.exception.ErrorCode;
-import com.library.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.AccessLevel;
@@ -46,15 +45,12 @@ public class BookCopyServiceImpl implements BookCopyService {
     @Override
     public List<BookCopyResponse> getAllBookCopies() {
         List<BookCopy> copies = bookCopyRepository.findAllWithBook();
-        
+
         List<Borrowing> activeBorrowings = borrowingRepository.findByStatus(BorrowingStatus.ACTIVE);
         Map<Long, LocalDate> copyIdToDueDate = activeBorrowings.stream()
                 .filter(b -> b.getBookCopy() != null)
                 .collect(Collectors.toMap(
-                        b -> b.getBookCopy().getId(),
-                        Borrowing::getDueDate,
-                        (existing, replacement) -> existing
-                ));
+                        b -> b.getBookCopy().getId(), Borrowing::getDueDate, (existing, replacement) -> existing));
 
         return copies.stream()
                 .map(copy -> {
@@ -68,7 +64,7 @@ public class BookCopyServiceImpl implements BookCopyService {
     @Override
     public BookCopyResponse getBookCopyById(Long bookCopyId) {
         BookCopy bookCopy = bookCopyRepository.findById(bookCopyId)
-                .orElseThrow(() -> new RuntimeException("Book copy not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOK_COPY_NOT_FOUND));
         BookCopyResponse response = bookCopyMapper.toResponse(bookCopy);
         if (bookCopy.getStatus() == BookCopyStatus.BORROWED) {
             borrowingRepository.findByBookCopyIdAndStatus(bookCopyId, BorrowingStatus.ACTIVE)
@@ -80,7 +76,7 @@ public class BookCopyServiceImpl implements BookCopyService {
     @Override
     public BookCopyResponse getBookCopyByBarcode(String barcode) {
         BookCopy bookCopy = bookCopyRepository.findByBarCode(barcode)
-                .orElseThrow(() -> new RuntimeException("Book copy not found with barcode: " + barcode));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOK_COPY_NOT_FOUND));
         BookCopyResponse response = bookCopyMapper.toResponse(bookCopy);
         if (bookCopy.getStatus() == BookCopyStatus.BORROWED) {
             borrowingRepository.findByBookCopyIdAndStatus(bookCopy.getId(), BorrowingStatus.ACTIVE)
@@ -93,15 +89,30 @@ public class BookCopyServiceImpl implements BookCopyService {
     @Transactional
     @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
     public BookCopyResponse createBookCopy(BookCopyCreationRequest request) {
+        if (request.getQuantity() != null && (request.getQuantity() < 1 || request.getQuantity() > 50)) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Số lượng bản sao mỗi lần thêm phải từ 1 đến 50");
+        }
+
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new RuntimeException("Book not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
 
         BookCopy bookCopy = bookCopyMapper.toBookCopy(request);
-        bookCopy.setBook(book);
+
+        // 1. Sinh barcode an toàn không trùng trước khi đính kèm vào Book
         if (bookCopy.getBarCode() == null || bookCopy.getBarCode().isBlank()) {
-            int randomNum = ThreadLocalRandom.current().nextInt(100000, 1000000);
-            bookCopy.setBarCode("BC-" + randomNum);
+            String generatedBarcode;
+            do {
+                int randomNum = ThreadLocalRandom.current().nextInt(100000, 1000000);
+                generatedBarcode = "BC-" + randomNum;
+            } while (bookCopyRepository.existsByBarCode(generatedBarcode));
+
+            bookCopy.setBarCode(generatedBarcode);
+        } else if (bookCopyRepository.existsByBarCode(bookCopy.getBarCode())) {
+            throw new AppException(ErrorCode.BARCODE_ALREADY_EXISTS);
         }
+
+        // 2. Dùng addCopy để đồng bộ 2 chiều sau khi đã có Barcode hoàn chỉnh
+        book.addCopy(bookCopy);
 
         BookCopy savedBookCopy = bookCopyRepository.save(bookCopy);
 
@@ -114,9 +125,9 @@ public class BookCopyServiceImpl implements BookCopyService {
     @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
     public BookCopyResponse updateBookCopy(Long bookCopyId, BookCopyUpdateRequest request) {
         BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOK_COPY_NOT_FOUND));
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
 
         if (existingBookCopy.getStatus() == BookCopyStatus.BORROWED) {
             throw new AppException(ErrorCode.INVALID_REQUEST,
@@ -135,7 +146,7 @@ public class BookCopyServiceImpl implements BookCopyService {
     @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
     public void deleteBookCopy(Long bookCopyId) {
         BookCopy existingBookCopy = bookCopyRepository.findById(bookCopyId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOK_COPY_NOT_FOUND));
 
         if (existingBookCopy.getStatus() == BookCopyStatus.BORROWED) {
             throw new AppException(ErrorCode.INVALID_REQUEST, "Không thể xóa bản sao đang được mượn.");

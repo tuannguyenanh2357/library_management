@@ -11,6 +11,7 @@ export interface BookCopyResponse {
 export interface BookCopyCreationRequest {
   bookId: number;
   barCode?: string;
+  quantity?: number;
 }
 
 export interface BookCopyUpdateRequest {

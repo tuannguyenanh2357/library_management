@@ -2,7 +2,8 @@
   <div class="header-section">
     <div class="title-group">
       <button class="btn-back" routerLink="/admin/dashboard">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <line x1="19" y1="12" x2="5" y2="12"></line>
           <polyline points="12 19 5 12 12 5"></polyline>
         </svg>
@@ -11,9 +12,9 @@
       <h2>Quản Lý Kho Sách</h2>
     </div>
     @if (activeTab() === 'books') {
-      <button class="btn btn-primary" (click)="openAddModal()">+ Thêm sách mới</button>
+    <button class="btn btn-primary" (click)="openAddModal()">+ Thêm sách mới</button>
     } @else {
-      <button class="btn btn-indigo" (click)="openAddCopyModal()">+ Thêm bản sao</button>
+    <button class="btn btn-indigo" (click)="openAddCopyModal()">+ Thêm bản sao</button>
     }
   </div>
 
@@ -28,204 +29,208 @@
   </div>
 
   @if (loading() || (activeTab() === 'copies' && loadingCopies())) {
-    <div class="loading-state">
-      <div class="spinner"></div>
-      <p>Đang tải dữ liệu từ cơ sở dữ liệu...</p>
-    </div>
+  <div class="loading-state">
+    <div class="spinner"></div>
+    <p>Đang tải dữ liệu từ cơ sở dữ liệu...</p>
+  </div>
   } @else if (errorMessage()) {
-    <div class="error-state">
-      <p class="error-text">⚠️ {{ errorMessage() }}</p>
-      <button class="btn btn-secondary" (click)="activeTab() === 'books' ? loadBooks() : loadCopies()">Thử kết nối lại</button>
-    </div>
+  <div class="error-state">
+    <p class="error-text">⚠️ {{ errorMessage() }}</p>
+    <button class="btn btn-secondary" (click)="activeTab() === 'books' ? loadBooks() : loadCopies()">Thử kết nối
+      lại</button>
+  </div>
   } @else {
-    @if (activeTab() === 'books') {
-      <!-- Bộ lọc tìm kiếm Đầu sách -->
-      <div class="search-filter-panel">
-        <h4>🔍 Bộ Lọc Tìm Kiếm Đầu Sách</h4>
-        <div class="filter-grid">
-          <div class="filter-item">
-            <label>ID Đầu sách:</label>
-            <input type="number" [(ngModel)]="searchId" (ngModelChange)="onSearchBooks()" name="searchId" placeholder="ID..." />
-          </div>
-          <div class="filter-item">
-            <label>Tiêu đề:</label>
-            <input type="text" [(ngModel)]="searchTitle" (ngModelChange)="onSearchBooks()" name="searchTitle" placeholder="Tiêu đề..." />
-          </div>
-          <div class="filter-item">
-            <label>Tác giả:</label>
-            <input type="text" [(ngModel)]="searchAuthor" (ngModelChange)="onSearchBooks()" name="searchAuthor" placeholder="Tác giả..." />
-          </div>
-          <div class="filter-item">
-            <label>Thể loại:</label>
-            <input type="text" [(ngModel)]="searchCategory" (ngModelChange)="onSearchBooks()" name="searchCategory" placeholder="Thể loại..." />
-          </div>
-          <div class="filter-item">
-            <label>Nhà xuất bản:</label>
-            <input type="text" [(ngModel)]="searchPublisher" (ngModelChange)="onSearchBooks()" name="searchPublisher" placeholder="Nhà xuất bản..." />
-          </div>
-          <div class="filter-item">
-            <label>ISBN:</label>
-            <input type="text" [(ngModel)]="searchIsbn" (ngModelChange)="onSearchBooks()" name="searchIsbn" placeholder="ISBN..." />
-          </div>
-        </div>
-        <div class="filter-actions">
-          <button class="btn btn-secondary" (click)="onResetBooks()">🔄 Reset Bộ Lọc</button>
-        </div>
+  @if (activeTab() === 'books') {
+  <!-- Bộ lọc tìm kiếm Đầu sách (Đã ẩn)
+  <div class="search-filter-panel">
+    <h4>🔍 Bộ Lọc Tìm Kiếm Đầu Sách</h4>
+    <div class="filter-grid">
+      <div class="filter-item">
+        <label>ID Đầu sách:</label>
+        <input type="number" [(ngModel)]="searchId" (ngModelChange)="onSearchBooks()" name="searchId"
+          placeholder="ID..." />
       </div>
-
-      @if (books().length === 0) {
-        <div class="empty-state">
-          <p>Chưa có cuốn sách nào hoặc không tìm thấy kết quả phù hợp.</p>
-        </div>
-      } @else {
-        <div class="table-responsive">
-          <table class="book-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Ảnh bìa</th>
-                <th>Tiêu đề</th>
-                <th>Tác giả</th>
-                <th>Thể loại</th>
-                <th>Năm xuất bản</th>
-                <th>ISBN</th>
-                <th>Nhà xuất bản</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (book of books(); track book.id) {
-                <tr>
-                  <td>{{ book.id }}</td>
-                  <td>
-                    <img [src]="book.imageUrl || 'assets/images/book-placeholder.png'" alt="Ảnh bìa" class="book-cover-img" />
-                  </td>
-                  <td><strong>{{ book.title }}</strong></td>
-                  <td>{{ book.author }}</td>
-                  <td><span class="category-badge">{{ book.category }}</span></td>
-                  <td>{{ book.publicationYear }}</td>
-                  <td><code>{{ book.isbn }}</code></td>
-                  <td>{{ book.publisher || '-' }}</td>
-                  <td>
-                    <div class="action-buttons">
-                      <button class="btn-action btn-edit" (click)="openEditModal(book)" title="Sửa thông tin">✏️</button>
-                      <button class="btn-action btn-delete" (click)="onDelete(book.id)" title="Xóa sách">🗑️</button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Phân trang Đầu Sách -->
-        <app-pagination
-          [currentPage]="currentPage() + 1"
-          [totalItems]="totalElements()"
-          [pageSize]="pageSize"
-          itemLabel="đầu sách"
-          (pageChange)="onBooksPageChange($event)"
-        />
-      }
-    } @else {
-      <!-- Bộ lọc tìm kiếm Bản sao vật lý -->
-      <div class="search-filter-panel">
-        <h4>🔍 Bộ Lọc Tìm Kiếm Bản Sao</h4>
-        <div class="filter-grid">
-          <div class="filter-item">
-            <label>ID Bản Sao:</label>
-            <input type="text" [(ngModel)]="searchCopyId" name="searchCopyId" placeholder="ID..." />
-          </div>
-          <div class="filter-item">
-            <label>Mã Barcode:</label>
-            <input type="text" [(ngModel)]="searchCopyBarcode" name="searchCopyBarcode" placeholder="Barcode..." />
-          </div>
-          <div class="filter-item">
-            <label>Tiêu đề Đầu Sách:</label>
-            <input type="text" [(ngModel)]="searchCopyTitle" name="searchCopyTitle" placeholder="Tiêu đề sách..." />
-          </div>
-          <div class="filter-item">
-            <label>Tác giả:</label>
-            <input type="text" [(ngModel)]="searchCopyAuthor" name="searchCopyAuthor" placeholder="Tác giả..." />
-          </div>
-          <div class="filter-item">
-            <label>Trạng thái:</label>
-            <select [(ngModel)]="searchCopyStatus" name="searchCopyStatus" class="form-select">
-              <option value="">-- Tất cả trạng thái --</option>
-              <option value="AVAILABLE">Sẵn sàng</option>
-              <option value="BORROWED">Đang mượn</option>
-              <option value="RESERVED">Đã đặt trước</option>
-              <option value="DAMAGED">Bị hỏng</option>
-              <option value="LOST">Bị mất</option>
-            </select>
-          </div>
-          <div class="filter-item">
-            <label>Ngày Hạn Trả:</label>
-            <input type="text" [(ngModel)]="searchCopyDueDate" name="searchCopyDueDate" placeholder="Hạn trả..." />
-          </div>
-        </div>
-        <div class="filter-actions">
-          <button class="btn btn-secondary" (click)="onResetCopies()">🔄 Reset Bộ Lọc</button>
-        </div>
+      <div class="filter-item">
+        <label>Tiêu đề:</label>
+        <input type="text" [(ngModel)]="searchTitle" (ngModelChange)="onSearchBooks()" name="searchTitle"
+          placeholder="Tiêu đề..." />
       </div>
+      <div class="filter-item">
+        <label>Tác giả:</label>
+        <input type="text" [(ngModel)]="searchAuthor" (ngModelChange)="onSearchBooks()" name="searchAuthor"
+          placeholder="Tác giả..." />
+      </div>
+      <div class="filter-item">
+        <label>Thể loại:</label>
+        <input type="text" [(ngModel)]="searchCategory" (ngModelChange)="onSearchBooks()" name="searchCategory"
+          placeholder="Thể loại..." />
+      </div>
+      <div class="filter-item">
+        <label>Nhà xuất bản:</label>
+        <input type="text" [(ngModel)]="searchPublisher" (ngModelChange)="onSearchBooks()" name="searchPublisher"
+          placeholder="Nhà xuất bản..." />
+      </div>
+      <div class="filter-item">
+        <label>ISBN:</label>
+        <input type="text" [(ngModel)]="searchIsbn" (ngModelChange)="onSearchBooks()" name="searchIsbn"
+          placeholder="ISBN..." />
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-secondary" (click)="onResetBooks()">🔄 Reset Bộ Lọc</button>
+    </div>
+  </div>
+  -->
 
-      @if (filteredCopies().length === 0) {
-        <div class="empty-state">
-          <p>Không tìm thấy bản sao vật lý nào phù hợp.</p>
-        </div>
-      } @else {
-        <div class="table-responsive">
-          <table class="book-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Mã Barcode</th>
-                <th>Tiêu đề Đầu Sách</th>
-                <th>Tác giả</th>
-                <th>Trạng thái</th>
-                <th>Ngày Hạn Trả</th>
-                <th>Hành động</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (copy of paginatedCopies(); track copy.id) {
-                <tr>
-                  <td>{{ copy.id }}</td>
-                  <td><code>{{ copy.barCode }}</code></td>
-                  <td><strong>{{ copy.title || '-' }}</strong></td>
-                  <td>{{ copy.author || '-' }}</td>
-                  <td>
-                    <span class="status-badge" [class]="copy.status.toLowerCase()">
-                      {{ copy.status === 'AVAILABLE' ? 'Sẵn sàng' : (copy.status === 'BORROWED' ? 'Đang mượn' : (copy.status === 'RESERVED' ? 'Giữ chỗ' : (copy.status === 'DAMAGED' ? 'Bị hỏng' : (copy.status === 'LOST' ? 'Bị mất' : copy.status)))) }}
-                    </span>
-                  </td>
-                  <td>{{ copy.dueDate ? (copy.dueDate | date: 'dd/MM/yyyy') : '-' }}</td>
-                  <td>
-                    <div class="action-buttons">
-                      <button class="btn-action btn-edit" [disabled]="copy.status === 'BORROWED' || copy.status === 'RESERVED'" (click)="openEditCopyModal(copy)" [title]="(copy.status === 'BORROWED' || copy.status === 'RESERVED') ? 'Không thể sửa bản sao đang mượn hoặc giữ chỗ' : 'Cập nhật trạng thái'">✏️</button>
-                      <button class="btn-action btn-history" (click)="openHistoryModal(copy)" title="Lịch sử mượn trả">📜</button>
-                      <button class="btn-action btn-delete" (click)="onDeleteCopy(copy.id)" title="Xóa bản sao">🗑️</button>
-                    </div>
-                  </td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        </div>
+  @if (books().length === 0) {
+  <div class="empty-state">
+    <p>Chưa có cuốn sách nào hoặc không tìm thấy kết quả phù hợp.</p>
+  </div>
+  } @else {
+  <div class="table-responsive">
+    <table class="book-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Ảnh bìa</th>
+          <th>Tiêu đề</th>
+          <th>Tác giả</th>
+          <th>Thể loại</th>
+          <th>Năm xuất bản</th>
+          <th>ISBN</th>
+          <th>Nhà xuất bản</th>
+          <th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (book of books(); track book.id) {
+        <tr>
+          <td>{{ book.id }}</td>
+          <td>
+            <img [src]="book.imageUrl || 'assets/images/book-placeholder.png'" alt="Ảnh bìa" class="book-cover-img" />
+          </td>
+          <td><strong>{{ book.title }}</strong></td>
+          <td>{{ book.author }}</td>
+          <td><span class="category-badge">{{ book.category }}</span></td>
+          <td>{{ book.publicationYear }}</td>
+          <td><code>{{ book.isbn }}</code></td>
+          <td>{{ book.publisher || '-' }}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-action btn-edit" (click)="openEditModal(book)" title="Sửa thông tin">✏️</button>
+              <button class="btn-action btn-delete" (click)="onDelete(book.id)" title="Xóa sách">🗑️</button>
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
 
-        <!-- Phân trang Bản Sao -->
-        <app-pagination
-          [currentPage]="copiesCurrentPage()"
-          [totalItems]="filteredCopies().length"
-          [pageSize]="copiesPageSize()"
-          itemLabel="bản sao"
-          (pageChange)="goToCopiesPage($event)"
-        />
-      }
-    }
+  <!-- Phân trang Đầu Sách -->
+  <app-pagination [currentPage]="currentPage() + 1" [totalItems]="totalElements()" [pageSize]="pageSize"
+    itemLabel="đầu sách" (pageChange)="onBooksPageChange($event)" />
+  }
+  } @else {
+  <!-- Bộ lọc tìm kiếm Bản sao vật lý (Đã ẩn)
+  <div class="search-filter-panel">
+    <h4>🔍 Bộ Lọc Tìm Kiếm Bản Sao</h4>
+    <div class="filter-grid">
+      <div class="filter-item">
+        <label>ID Bản Sao:</label>
+        <input type="text" [(ngModel)]="searchCopyId" name="searchCopyId" placeholder="ID..." />
+      </div>
+      <div class="filter-item">
+        <label>Mã Barcode:</label>
+        <input type="text" [(ngModel)]="searchCopyBarcode" name="searchCopyBarcode" placeholder="Barcode..." />
+      </div>
+      <div class="filter-item">
+        <label>Tiêu đề Đầu Sách:</label>
+        <input type="text" [(ngModel)]="searchCopyTitle" name="searchCopyTitle" placeholder="Tiêu đề sách..." />
+      </div>
+      <div class="filter-item">
+        <label>Tác giả:</label>
+        <input type="text" [(ngModel)]="searchCopyAuthor" name="searchCopyAuthor" placeholder="Tác giả..." />
+      </div>
+      <div class="filter-item">
+        <label>Trạng thái:</label>
+        <select [(ngModel)]="searchCopyStatus" name="searchCopyStatus" class="form-select">
+          <option value="">-- Tất cả trạng thái --</option>
+          <option value="AVAILABLE">Sẵn sàng</option>
+          <option value="BORROWED">Đang mượn</option>
+          <option value="RESERVED">Đã đặt trước</option>
+          <option value="DAMAGED">Bị hỏng</option>
+          <option value="LOST">Bị mất</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>Ngày Hạn Trả:</label>
+        <input type="date" [(ngModel)]="searchCopyDueDate" name="searchCopyDueDate" class="form-input" />
+      </div>
+    </div>
+    <div class="filter-actions">
+      <button class="btn btn-secondary" (click)="onResetCopies()">🔄 Reset Bộ Lọc</button>
+    </div>
+  </div>
+  -->
+
+  @if (filteredCopies().length === 0) {
+  <div class="empty-state">
+    <p>Không tìm thấy bản sao vật lý nào phù hợp.</p>
+  </div>
+  } @else {
+  <div class="table-responsive">
+    <table class="book-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Mã Barcode</th>
+          <th>Tiêu đề Đầu Sách</th>
+          <th>Tác giả</th>
+          <th>Trạng thái</th>
+          <th>Ngày Hạn Trả</th>
+          <th>Hành động</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (copy of paginatedCopies(); track copy.id) {
+        <tr>
+          <td>{{ copy.id }}</td>
+          <td><code>{{ copy.barCode }}</code></td>
+          <td><strong>{{ copy.title || '-' }}</strong></td>
+          <td>{{ copy.author || '-' }}</td>
+          <td>
+            <span class="status-badge" [class]="copy.status.toLowerCase()">
+              {{ copy.status === 'AVAILABLE' ? 'Sẵn sàng' : (copy.status === 'BORROWED' ? 'Đang mượn' : (copy.status ===
+              'RESERVED' ? 'Giữ chỗ' : (copy.status === 'DAMAGED' ? 'Bị hỏng' : (copy.status === 'LOST' ? 'Bị mất' :
+              copy.status)))) }}
+            </span>
+          </td>
+          <td>{{ copy.dueDate ? (copy.dueDate | date: 'dd/MM/yyyy') : '-' }}</td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-action btn-edit" [disabled]="copy.status === 'BORROWED' || copy.status === 'RESERVED'"
+                (click)="openEditCopyModal(copy)"
+                [title]="(copy.status === 'BORROWED' || copy.status === 'RESERVED') ? 'Không thể sửa bản sao đang mượn hoặc giữ chỗ' : 'Cập nhật trạng thái'">✏️</button>
+              <button class="btn-action btn-history" (click)="openHistoryModal(copy)"
+                title="Lịch sử mượn trả">📜</button>
+              <button class="btn-action btn-delete" (click)="onDeleteCopy(copy.id)" title="Xóa bản sao">🗑️</button>
+            </div>
+          </td>
+        </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Phân trang Bản Sao -->
+  <app-pagination [currentPage]="copiesCurrentPage()" [totalItems]="filteredCopies().length"
+    [pageSize]="copiesPageSize()" itemLabel="bản sao" (pageChange)="goToCopiesPage($event)" />
+  }
+  }
   }
   <!-- Modal sửa sách -->
-@if (isEditModalOpen() && selectedBook()) {
+  @if (isEditModalOpen() && selectedBook()) {
   <div class="modal-backdrop" (click)="closeEditModal()">
     <!-- (click)="$event.stopPropagation()" ngăn không cho đóng modal khi click vào form bên trong -->
     <div class="modal-content" (click)="$event.stopPropagation()">
@@ -267,11 +272,13 @@
 
         <div class="form-group-row">
           <div class="form-group">
-            <label>Ảnh bìa sách (Tải lên hoặc URL):</label>
+            <label>Ảnh bìa sách:</label>
             <div class="upload-wrapper" style="display: flex; gap: 8px;">
-              <input type="text" [(ngModel)]="selectedBook()!.imageUrl" name="imageUrl" style="flex: 1;" />
-              <button type="button" class="btn btn-secondary" style="white-space: nowrap; padding: 0 12px; font-size: 14px;" (click)="editFileInput.click()">Tải lên</button>
-              <input type="file" #editFileInput (change)="onFileSelected($event, 'edit')" accept="image/*" style="display: none;" />
+              <input type="text" [(ngModel)]="selectedBook()!.imageUrl" name="imageUrl" readonly placeholder="Bấm 'Chọn tệp ảnh' để tải từ máy..." style="flex: 1; background-color: #f8fafc; cursor: not-allowed;" />
+              <button type="button" class="btn btn-secondary"
+                style="white-space: nowrap; padding: 0 12px; font-size: 14px;" (click)="editFileInput.click()">📁 Chọn tệp ảnh</button>
+              <input type="file" #editFileInput (change)="onFileSelected($event, 'edit')" accept="image/*"
+                style="display: none;" />
             </div>
           </div>
           <div class="form-group">
@@ -292,201 +299,213 @@
       </form>
     </div>
   </div>
-}
+  }
 
   <!-- Modal thêm sách mới -->
   @if (isAddModalOpen()) {
-    <div class="modal-backdrop" (click)="closeAddModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <h3>➕ Thêm Sách Mới Vào Thư Viện</h3>
+  <div class="modal-backdrop" (click)="closeAddModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>➕ Thêm Sách Mới Vào Thư Viện</h3>
 
-        <form (ngSubmit)="onCreateBook()">
+      <form (ngSubmit)="onCreateBook()">
+        <div class="form-group">
+          <label>Tiêu đề sách <span class="required" style="color: red;">*</span>:</label>
+          <input type="text" [(ngModel)]="newBook().title" name="title" required placeholder="Nhập tiêu đề sách" />
+        </div>
+
+        <div class="form-group">
+          <label>Tác giả <span class="required" style="color: red;">*</span>:</label>
+          <input type="text" [(ngModel)]="newBook().author" name="author" required placeholder="Nhập tên tác giả" />
+        </div>
+
+        <div class="form-group-row">
           <div class="form-group">
-            <label>Tiêu đề sách <span class="required" style="color: red;">*</span>:</label>
-            <input type="text" [(ngModel)]="newBook().title" name="title" required placeholder="Nhập tiêu đề sách" />
+            <label>Thể loại <span class="required" style="color: red;">*</span>:</label>
+            <input type="text" [(ngModel)]="newBook().category" name="category" required placeholder="Nhập thể loại" />
           </div>
-
           <div class="form-group">
-            <label>Tác giả <span class="required" style="color: red;">*</span>:</label>
-            <input type="text" [(ngModel)]="newBook().author" name="author" required placeholder="Nhập tên tác giả" />
+            <label>Năm xuất bản <span class="required" style="color: red;">*</span>:</label>
+            <input type="number" [(ngModel)]="newBook().publicationYear" name="publicationYear" required
+              placeholder="Ví dụ: 2026" />
           </div>
+        </div>
 
-          <div class="form-group-row">
-            <div class="form-group">
-              <label>Thể loại <span class="required" style="color: red;">*</span>:</label>
-              <input type="text" [(ngModel)]="newBook().category" name="category" required placeholder="Nhập thể loại" />
-            </div>
-            <div class="form-group">
-              <label>Năm xuất bản <span class="required" style="color: red;">*</span>:</label>
-              <input type="number" [(ngModel)]="newBook().publicationYear" name="publicationYear" required placeholder="Ví dụ: 2026" />
-            </div>
-          </div>
-
-          <div class="form-group-row">
-            <div class="form-group">
-              <label>ISBN <span class="required" style="color: red;">*</span>:</label>
-              <input type="text" [(ngModel)]="newBook().isbn" name="isbn" required placeholder="Nhập mã định danh ISBN" />
-            </div>
-            <div class="form-group">
-              <label>Nhà xuất bản:</label>
-              <input type="text" [(ngModel)]="newBook().publisher" name="publisher" placeholder="Nhập nhà xuất bản" />
-            </div>
-          </div>
-
-          <div class="form-group-row">
-            <div class="form-group">
-              <label>Ảnh bìa sách (Tải lên hoặc URL):</label>
-              <div class="upload-wrapper" style="display: flex; gap: 8px;">
-                <input type="text" [(ngModel)]="newBook().imageUrl" name="imageUrl" placeholder="http://example.com/image.jpg" style="flex: 1;" />
-                <button type="button" class="btn btn-secondary" style="white-space: nowrap; padding: 0 12px; font-size: 14px;" (click)="fileInput.click()">Tải lên</button>
-                <input type="file" #fileInput (change)="onFileSelected($event, 'new')" accept="image/*" style="display: none;" />
-              </div>
-            </div>
-            <div class="form-group">
-              <label>Phí phạt/ngày (VND) <span class="required" style="color: red;">*</span>:</label>
-              <input type="number" [(ngModel)]="newBook().dailyFineAmount" name="dailyFineAmount" required placeholder="Ví dụ: 5000" />
-            </div>
-          </div>
-
+        <div class="form-group-row">
           <div class="form-group">
-            <label>Mô tả sách:</label>
-            <textarea [(ngModel)]="newBook().description" name="description" rows="3" placeholder="Nhập nội dung mô tả ngắn về sách"></textarea>
+            <label>ISBN <span class="required" style="color: red;">*</span>:</label>
+            <input type="text" [(ngModel)]="newBook().isbn" name="isbn" required placeholder="Nhập mã định danh ISBN" />
           </div>
+          <div class="form-group">
+            <label>Nhà xuất bản:</label>
+            <input type="text" [(ngModel)]="newBook().publisher" name="publisher" placeholder="Nhập nhà xuất bản" />
+          </div>
+        </div>
 
-          <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Hủy</button>
-            <button type="submit" class="btn btn-primary">Lưu sách</button>
+        <div class="form-group-row">
+          <div class="form-group">
+            <label>Ảnh bìa sách:</label>
+            <div class="upload-wrapper" style="display: flex; gap: 8px;">
+              <input type="text" [(ngModel)]="newBook().imageUrl" name="imageUrl" readonly
+                placeholder="Bấm 'Chọn tệp ảnh' để tải từ máy..." style="flex: 1; background-color: #f8fafc; cursor: not-allowed;" />
+              <button type="button" class="btn btn-secondary"
+                style="white-space: nowrap; padding: 0 12px; font-size: 14px;" (click)="fileInput.click()">📁 Chọn tệp ảnh</button>
+              <input type="file" #fileInput (change)="onFileSelected($event, 'add')" accept="image/*"
+                style="display: none;" />
+            </div>
           </div>
-        </form>
-      </div>
+          <div class="form-group">
+            <label>Phí phạt/ngày (VND) <span class="required" style="color: red;">*</span>:</label>
+            <input type="number" [(ngModel)]="newBook().dailyFineAmount" name="dailyFineAmount" required
+              placeholder="Ví dụ: 5000" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Mô tả sách:</label>
+          <textarea [(ngModel)]="newBook().description" name="description" rows="3"
+            placeholder="Nhập nội dung mô tả ngắn về sách"></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" (click)="closeAddModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary">Lưu sách</button>
+        </div>
+      </form>
     </div>
+  </div>
   }
   <!-- Modal thêm bản sao mới -->
   @if (isAddCopyModalOpen()) {
-    <div class="modal-backdrop" (click)="closeAddCopyModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <h3>➕ Thêm Bản Sao Vật Lý</h3>
+  <div class="modal-backdrop" (click)="closeAddCopyModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>➕ Thêm Bản Sao Vật Lý</h3>
 
-        <form (ngSubmit)="onCreateCopy()">
-          <div class="form-group-row">
-            <div class="form-group" style="flex: 2;">
-              <label>Chọn Đầu Sách <span class="required" style="color: red;">*</span>:</label>
-              <select [(ngModel)]="selectedBookIdForCopy" name="selectedBookId" required class="form-select">
-                <option [value]="null" disabled>-- Chọn đầu sách --</option>
-                @for (b of allBooksList(); track b.id) {
-                  <option [value]="b.id">{{ b.title }} ({{ b.author }})</option>
-                }
-              </select>
-            </div>
-            <div class="form-group" style="flex: 1;">
-              <label>Số lượng bản sao:</label>
-              <input type="number" [(ngModel)]="numberOfCopiesToAdd" name="numberOfCopies" min="1" max="50" required class="form-input" style="padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem;">
-            </div>
+      <form (ngSubmit)="onCreateCopy()">
+        <div class="form-group-row">
+          <div class="form-group" style="flex: 2;">
+            <label>Chọn Đầu Sách <span class="required" style="color: red;">*</span>:</label>
+            <select [(ngModel)]="selectedBookIdForCopy" name="selectedBookId" required class="form-select">
+              <option [value]="null" disabled>-- Chọn đầu sách --</option>
+              @for (b of allBooksList(); track b.id) {
+              <option [value]="b.id">{{ b.title }} ({{ b.author }})</option>
+              }
+            </select>
           </div>
+          <div class="form-group" style="flex: 1;">
+            <label>Số lượng bản sao:</label>
+            <input type="number" [(ngModel)]="numberOfCopiesToAdd" name="numberOfCopies" min="1" max="50" required
+              class="form-input"
+              style="padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem;">
+          </div>
+        </div>
 
-          <div class="form-group" style="margin-top: 16px;">
-            <label>Mã Barcode (Tùy chọn):</label>
-            <input type="text" [(ngModel)]="customBarcode" name="customBarcode" placeholder="Để trống hệ thống sẽ tự tạo mã ngẫu nhiên..." class="form-input" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; box-sizing: border-box;">
-            <small style="color: #6b7280; display: block; margin-top: 6px; font-size: 0.85rem;">* Nếu để trống, hệ thống tự sinh mã ngẫu nhiên. Nếu tự nhập mã và thêm số lượng lớn hơn 1, hệ thống sẽ tự nối thêm hậu tố (vd: -1, -2...).</small>
-          </div>
+        <div class="form-group" style="margin-top: 16px;">
+          <label>Mã Barcode (Tùy chọn):</label>
+          <input type="text" [(ngModel)]="customBarcode" name="customBarcode"
+            placeholder="Để trống hệ thống sẽ tự tạo mã ngẫu nhiên..." class="form-input"
+            style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.95rem; box-sizing: border-box;">
+          <small style="color: #6b7280; display: block; margin-top: 6px; font-size: 0.85rem;">* Nếu để trống, hệ thống
+            tự sinh mã ngẫu nhiên. Nếu tự nhập mã và thêm số lượng lớn hơn 1, hệ thống sẽ tự nối thêm hậu tố (vd: -1,
+            -2...).</small>
+        </div>
 
-          <div class="modal-actions" style="margin-top: 2rem;">
-            <button type="button" class="btn btn-secondary" (click)="closeAddCopyModal()">Hủy</button>
-            <button type="submit" class="btn btn-indigo">Tạo bản sao</button>
-          </div>
-        </form>
-      </div>
+        <div class="modal-actions" style="margin-top: 2rem;">
+          <button type="button" class="btn btn-secondary" (click)="closeAddCopyModal()">Hủy</button>
+          <button type="submit" class="btn btn-indigo">Tạo bản sao</button>
+        </div>
+      </form>
     </div>
+  </div>
   }
 
   <!-- Modal sửa trạng thái bản sao -->
   @if (isEditCopyModalOpen() && selectedCopy()) {
-    <div class="modal-backdrop" (click)="closeEditCopyModal()">
-      <div class="modal-content" (click)="$event.stopPropagation()">
-        <h3>✏️ Cập Nhật Trạng Thái Bản Sao</h3>
-        <div class="history-info-box">
-          <p>Mã vạch: <code>{{ selectedCopy()?.barCode }}</code></p>
-          <p>Sách: <strong>{{ selectedCopy()?.title }}</strong></p>
+  <div class="modal-backdrop" (click)="closeEditCopyModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <h3>✏️ Cập Nhật Trạng Thái Bản Sao</h3>
+      <div class="history-info-box">
+        <p>Mã vạch: <code>{{ selectedCopy()?.barCode }}</code></p>
+        <p>Sách: <strong>{{ selectedCopy()?.title }}</strong></p>
+      </div>
+
+      <form (ngSubmit)="onUpdateCopyStatus()">
+        <div class="form-group">
+          <label>Trạng thái bản sao <span class="required" style="color: red;">*</span>:</label>
+          <select [(ngModel)]="editCopyStatus" name="status" required class="form-select">
+            <option value="AVAILABLE">Sẵn sàng</option>
+            <option value="BORROWED" disabled>Đang mượn (Cập nhật tự động)</option>
+            <option value="RESERVED" disabled>Giữ chỗ (Cập nhật tự động)</option>
+            <option value="DAMAGED">Bị hỏng</option>
+            <option value="LOST">Bị mất</option>
+          </select>
         </div>
 
-        <form (ngSubmit)="onUpdateCopyStatus()">
-          <div class="form-group">
-            <label>Trạng thái bản sao <span class="required" style="color: red;">*</span>:</label>
-            <select [(ngModel)]="editCopyStatus" name="status" required class="form-select">
-              <option value="AVAILABLE">Sẵn sàng</option>
-              <option value="BORROWED" disabled>Đang mượn (Cập nhật tự động)</option>
-              <option value="RESERVED" disabled>Giữ chỗ (Cập nhật tự động)</option>
-              <option value="DAMAGED">Bị hỏng</option>
-              <option value="LOST">Bị mất</option>
-            </select>
-          </div>
-
-          <div class="modal-actions" style="margin-top: 2rem;">
-            <button type="button" class="btn btn-secondary" (click)="closeEditCopyModal()">Hủy</button>
-            <button type="submit" class="btn btn-primary">Cập nhật</button>
-          </div>
-        </form>
-      </div>
+        <div class="modal-actions" style="margin-top: 2rem;">
+          <button type="button" class="btn btn-secondary" (click)="closeEditCopyModal()">Hủy</button>
+          <button type="submit" class="btn btn-primary">Cập nhật</button>
+        </div>
+      </form>
     </div>
+  </div>
   }
 
   <!-- Modal xem lịch sử mượn trả bản sao -->
   @if (isHistoryModalOpen() && selectedCopy()) {
-    <div class="modal-backdrop" (click)="closeHistoryModal()">
-      <div class="modal-content modal-large" (click)="$event.stopPropagation()">
-        <h3>📜 Lịch Sử Độc Giả Mượn Bản Sao</h3>
-        <div class="history-info-box">
-          <p>Mã vạch: <code>{{ selectedCopy()?.barCode }}</code></p>
-          <p>Sách: <strong>{{ selectedCopy()?.title }}</strong></p>
-        </div>
+  <div class="modal-backdrop" (click)="closeHistoryModal()">
+    <div class="modal-content modal-large" (click)="$event.stopPropagation()">
+      <h3>📜 Lịch Sử Độc Giả Mượn Bản Sao</h3>
+      <div class="history-info-box">
+        <p>Mã vạch: <code>{{ selectedCopy()?.barCode }}</code></p>
+        <p>Sách: <strong>{{ selectedCopy()?.title }}</strong></p>
+      </div>
 
-        @if (loadingHistory()) {
-          <div class="loading-state" style="padding: 40px 0;">
-            <div class="spinner"></div>
-            <p>Đang tải lịch sử mượn trả...</p>
-          </div>
-        } @else {
-          @if (copyHistory().length === 0) {
-            <div class="empty-state" style="padding: 40px 0;">
-              <p>Chưa có giao dịch mượn nào đối với bản sao này.</p>
-            </div>
-          } @else {
-            <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
-              <table class="book-table">
-                <thead>
-                  <tr>
-                    <th>Người Mượn</th>
-                    <th>Ngày Mượn</th>
-                    <th>Hạn Trả</th>
-                    <th>Ngày Trả Thực Tế</th>
-                    <th>Trạng Thái</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  @for (b of copyHistory(); track b.id) {
-                    <tr>
-                      <td>{{ b.memberName }} (ID: {{ b.memberId }})</td>
-                      <td>{{ b.borrowDate }}</td>
-                      <td>{{ b.dueDate }}</td>
-                      <td>{{ b.returnDate || '-' }}</td>
-                      <td>
-                        <span class="status-badge" [class.returned]="b.returnDate" [class.borrowed]="!b.returnDate">
-                          {{ b.returnDate ? 'Đã trả' : 'Đang mượn' }}
-                        </span>
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
-          }
-        }
+      @if (loadingHistory()) {
+      <div class="loading-state" style="padding: 40px 0;">
+        <div class="spinner"></div>
+        <p>Đang tải lịch sử mượn trả...</p>
+      </div>
+      } @else {
+      @if (copyHistory().length === 0) {
+      <div class="empty-state" style="padding: 40px 0;">
+        <p>Chưa có giao dịch mượn nào đối với bản sao này.</p>
+      </div>
+      } @else {
+      <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+        <table class="book-table">
+          <thead>
+            <tr>
+              <th>Người Mượn</th>
+              <th>Ngày Mượn</th>
+              <th>Hạn Trả</th>
+              <th>Ngày Trả Thực Tế</th>
+              <th>Trạng Thái</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (b of copyHistory(); track b.id) {
+            <tr>
+              <td>{{ b.memberName }} (ID: {{ b.memberId }})</td>
+              <td>{{ b.borrowDate }}</td>
+              <td>{{ b.dueDate }}</td>
+              <td>{{ b.returnDate || '-' }}</td>
+              <td>
+                <span class="status-badge" [class.returned]="b.returnDate" [class.borrowed]="!b.returnDate">
+                  {{ b.returnDate ? 'Đã trả' : 'Đang mượn' }}
+                </span>
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      }
+      }
 
-        <div class="modal-actions">
-          <button type="button" class="btn btn-secondary" (click)="closeHistoryModal()">Đóng</button>
-        </div>
+      <div class="modal-actions">
+        <!-- <button type="button" class="btn btn-secondary" (click)="closeHistoryModal()">Đóng</button> -->
       </div>
     </div>
+  </div>
   }
 
 </div>

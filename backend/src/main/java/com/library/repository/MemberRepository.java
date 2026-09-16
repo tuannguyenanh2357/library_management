@@ -9,6 +9,9 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
+    // Lấy danh sách thành viên sắp xếp theo ID giảm dần (người mới tạo lên đầu)
+    List<Member> findAllByOrderByIdDesc();
+
     // Kiểm tra xem email đã được đăng ký hay chưa
     boolean existsByEmail(String email);
 
@@ -22,8 +25,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Optional<Member> findByUsername(String username);
 
     // Lấy danh sách các thành viên đang có khoản phạt chưa đóng
-    @Query("SELECT m.id AS memberId, m.memberCode AS memberCode, m.name AS name, m.email AS email, m.phone AS phone, "
-            +
+    @Query("SELECT m.id AS memberId, m.memberCode AS memberCode, m.name AS name, m.email AS email, m.phone AS phone, " +
             "SUM(f.amount) AS totalUnpaidAmount, COUNT(f.id) AS unpaidFinesCount " +
             "FROM Member m " +
             "JOIN m.borrowings br " +

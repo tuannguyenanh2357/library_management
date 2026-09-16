@@ -10,11 +10,11 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class BorrowingCreationRequest {
-    @NotNull (message = "Member ID is required")
+    @NotNull(message = "ID thành viên không được để trống")
     private Long memberId;
-    @NotNull (message = "Book Copy ID is required")
+    @NotNull(message = "ID bản sao sách không được để trống")
     private Long bookCopyId;
-    @NotNull (message = "Due Date is required")
+    @NotNull(message = "Ngày hết hạn không được để trống")
     private LocalDate dueDate;
 
     String note;

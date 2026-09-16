@@ -26,8 +26,6 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import lombok.extern.slf4j.Slf4j;
 import com.library.exception.AppException;
 import com.library.exception.ErrorCode;
-import com.library.exception.MemberNotFoundException;
-import com.library.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.stereotype.Service;
@@ -56,7 +54,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         @Transactional
         public BorrowingRequestResponse createRequest(BorrowingRequestCreationRequest requestt) {
                 Member member = memberRepository.findById(requestt.getMemberId())
-                                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+                                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy độc giả"));
 
                 if (member.hasOverdueBorrowings()) {
                         throw new AppException(ErrorCode.HAS_OVERDUE_BOOKS,
@@ -68,7 +66,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                 }
 
                 Book book = bookRepository.findById(requestt.getBookId())
-                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND,
+                                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND,
                                                 "Không tìm thấy đầu sách"));
 
                 BorrowingRequest request = BorrowingRequest.builder()
@@ -97,8 +95,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                                 .collect(Collectors.toList());
         }
 
-        // Lấy danh sách các Yêu cầu mượn sách đã được duyệt - đang chờ độc giả đến lấy
-        // (APPROVED)
+        // Lấy danh sách các Yêu cầu mượn sách đã được duyệt - đang chờ độc giả đến lấy (APPROVED)
         @Override
         public List<BorrowingRequestResponse> getApprovedRequests() {
                 return requestRepository.findByStatusWithRelations(BorrowingRequestStatus.APPROVED)
@@ -130,29 +127,20 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                                 .collect(Collectors.toList());
         }
 
-        /**
-         * Bước 1 - DUYỆT: Admin xem xét và duyệt yêu cầu.
-         * Hệ thống sẽ giữ chỗ 1 BookCopy (RESERVED) và lưu ID đó vào yêu cầu.
-         * Chưa tạo Borrowing - chờ độc giả đến lấy sách thực tế.
-         */
+
         @Override
         @Transactional
-        public BorrowingRequestResponse approveRequest(Long requestId,
-                        BorrowingRequestApprovalRequest approvalRequest) {
+        public BorrowingRequestResponse approveRequest(Long requestId, BorrowingRequestApprovalRequest approvalRequest) {
                 BorrowingRequest request = requestRepository.findById(requestId)
-                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
-                                                "Yêu cầu không tồn tại"));
+                                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND, "Yêu cầu không tồn tại"));
 
                 if (request.getStatus() != BorrowingRequestStatus.PENDING) {
-                        throw new AppException(ErrorCode.INVALID_REQUEST,
-                                        "Chỉ có thể phê duyệt yêu cầu đang chờ xử lý");
+                        throw new AppException(ErrorCode.INVALID_REQUEST, "Chỉ có thể phê duyệt yêu cầu đang chờ xử lý");
                 }
 
                 // Tìm và giữ chỗ bản sao sách đầu tiên có sẵn
-                BookCopy bookCopy = bookCopyRepository
-                                .findFirstByBook_IdAndStatus(request.getBook().getId(), BookCopyStatus.AVAILABLE)
-                                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_AVAILABLE,
-                                                "Không còn cuốn sách nào khả dụng trong kho"));
+                BookCopy bookCopy = bookCopyRepository.findFirstByBook_IdAndStatus(request.getBook().getId(), BookCopyStatus.AVAILABLE)
+                                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_AVAILABLE, "Không còn cuốn sách nào khả dụng trong kho"));
 
                 // Đặt sách về trạng thái RESERVED - người khác không thể mượn cuốn này
                 bookCopy.setStatus(BookCopyStatus.RESERVED);
@@ -164,8 +152,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                 request.setStatus(BorrowingRequestStatus.APPROVED);
                 request.setProcessedDate(LocalDateTime.now());
 
-                long count = bookCopyRepository.countByBookIdAndStatus(request.getBook().getId(),
-                                BookCopyStatus.AVAILABLE);
+                long count = bookCopyRepository.countByBookIdAndStatus(request.getBook().getId(), BookCopyStatus.AVAILABLE);
                 BorrowingRequest savedRequest = requestRepository.save(request);
                 BorrowingRequestResponse response = mapper.toResponse(savedRequest, count);
 
@@ -198,7 +185,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         @Transactional
         public BorrowingRequestResponse issueBook(Long requestId) {
                 BorrowingRequest request = requestRepository.findById(requestId)
-                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
+                                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND,
                                                 "Yêu cầu không tồn tại"));
 
                 if (request.getStatus() != BorrowingRequestStatus.APPROVED) {
@@ -211,8 +198,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
                                         "Yêu cầu này chưa được gán bản sao sách nào");
                 }
 
-                // Tạm thời đặt BookCopy về AVAILABLE để hàm borrowBook() có thể xử lý mượn bình
-                // thường
+                // Tạm thời đặt BookCopy về AVAILABLE để hàm borrowBook() có thể xử lý mượn bình thường
                 bookCopyRepository.findById(request.getAssignedBookCopyId()).ifPresent(copy -> {
                         copy.setStatus(BookCopyStatus.AVAILABLE);
                         bookCopyRepository.save(copy);
@@ -243,7 +229,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         @Transactional
         public BorrowingRequestResponse expireRequest(Long requestId) {
                 BorrowingRequest request = requestRepository.findById(requestId)
-                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
+                                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND,
                                                 "Yêu cầu không tồn tại"));
 
                 if (request.getStatus() != BorrowingRequestStatus.APPROVED) {
@@ -271,7 +257,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         @Transactional
         public BorrowingRequestResponse rejectRequest(Long requestId, String reason) {
                 BorrowingRequest request = requestRepository.findById(requestId)
-                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
+                                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND,
                                                 "Yêu cầu không tồn tại"));
 
                 if (request.getStatus() != BorrowingRequestStatus.PENDING) {
@@ -312,7 +298,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         @Transactional
         public BorrowingRequestResponse cancelRequest(Long requestId, String username) {
                 BorrowingRequest request = requestRepository.findById(requestId)
-                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
+                                .orElseThrow(() -> new AppException(ErrorCode.RESOURCE_NOT_FOUND,
                                                 "Không tìm thấy yêu cầu"));
 
                 if (!request.getMember().getUsername().equals(username)) {

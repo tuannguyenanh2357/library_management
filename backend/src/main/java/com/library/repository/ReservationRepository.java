@@ -34,4 +34,6 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     // Tìm các yêu cầu đặt trước đã được đáp ứng (sách đã về) nhưng người dùng không đến lấy và đã quá hạn, để hệ thống tự động hủy
     @Query("SELECT r FROM Reservation r WHERE r.status = 'FULFILLED' AND r.expiryDate < CURRENT_TIMESTAMP")
     List<Reservation> findExpiredFulfilledReservations();
+
+    boolean existsByBookId(Long bookId);
 }

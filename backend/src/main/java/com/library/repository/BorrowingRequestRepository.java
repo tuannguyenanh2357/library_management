@@ -11,8 +11,7 @@ import java.util.List;
 
 public interface BorrowingRequestRepository extends JpaRepository<BorrowingRequest, Long> {
 
-    // Lấy danh sách yêu cầu mượn theo trạng thái và tải sẵn thông tin thành viên
-    // đầu sách để phục vụ hiển thị.
+    // Lấy danh sách yêu cầu mượn theo trạng thái và tải sẵn thông tin thành viên đầu sách để phục vụ hiển thị.
     @Query("SELECT br FROM BorrowingRequest br JOIN FETCH br.member JOIN FETCH br.book WHERE br.status = :status ORDER BY br.requestDate DESC")
     List<BorrowingRequest> findByStatusWithRelations(BorrowingRequestStatus status);
 
@@ -20,13 +19,13 @@ public interface BorrowingRequestRepository extends JpaRepository<BorrowingReque
     @Query("SELECT br FROM BorrowingRequest br JOIN FETCH br.member JOIN FETCH br.book WHERE br.status IN ('REJECTED', 'CANCELLED', 'COMPLETED', 'EXPIRED') ORDER BY br.processedDate DESC")
     List<BorrowingRequest> findHistoryWithRelations();
 
-    // Lấy danh sách yêu cầu mượn của một thành viên và tải sẵn thông tin thành
-    // viên, đầu sách.
+    // Lấy danh sách yêu cầu mượn của một thành viên và tải sẵn thông tin thành viên, đầu sách.
     @Query("SELECT br FROM BorrowingRequest br JOIN FETCH br.member JOIN FETCH br.book WHERE br.member.id = :memberId ORDER BY br.requestDate DESC")
     List<BorrowingRequest> findByMemberIdWithRelations(Long memberId);
 
-    // Lấy các yêu cầu đang chờ xử lý nhưng đã quá thời gian quy định để cron job tự
-    // động hủy.
+    // Lấy các yêu cầu đang chờ xử lý nhưng đã quá thời gian quy định để cron job tự động hủy.
     @Query("SELECT br FROM BorrowingRequest br WHERE br.status = 'PENDING' AND br.requestDate < :cutoff")
     List<BorrowingRequest> findStalePendingRequests(@Param("cutoff") LocalDateTime cutoff);
+
+    boolean existsByBookId(Long bookId);
 }

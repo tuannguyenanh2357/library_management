@@ -27,20 +27,20 @@ public class BorrowingRequestController {
     }
 
     @GetMapping("/pending")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<List<BorrowingRequestResponse>> getPendingRequests() {
         return ResponseEntity.ok(service.getPendingRequests());
     }
 
     // Danh sách đã duyệt - đang chờ độc giả đến lấy sách
     @GetMapping("/approved")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<List<BorrowingRequestResponse>> getApprovedRequests() {
         return ResponseEntity.ok(service.getApprovedRequests());
     }
 
     @GetMapping("/history")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<List<BorrowingRequestResponse>> getHistoryRequests() {
         return ResponseEntity.ok(service.getHistoryRequests());
     }
@@ -52,27 +52,28 @@ public class BorrowingRequestController {
     }
 
     @PostMapping("/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BorrowingRequestResponse> approveRequest(@PathVariable Long id) {
         return ResponseEntity.ok(service.approveRequest(id, null));
     }
 
-    // Bước 2: Admin xác nhận giao sách khi độc giả đến lấy - lúc này mới tạo Borrowing
+    // Bước 2: Admin xác nhận giao sách khi độc giả đến lấy - lúc này mới tạo
+    // Borrowing
     @PostMapping("/{id}/issue")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BorrowingRequestResponse> issueBook(@PathVariable Long id) {
         return ResponseEntity.ok(service.issueBook(id));
     }
 
     // Hủy yêu cầu đã duyệt vì độc giả không đến lấy - trả sách về kho
     @PostMapping("/{id}/expire")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BorrowingRequestResponse> expireRequest(@PathVariable Long id) {
         return ResponseEntity.ok(service.expireRequest(id));
     }
 
     @PostMapping("/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BorrowingRequestResponse> rejectRequest(
             @PathVariable Long id,
             @RequestParam String reason) {
@@ -86,4 +87,3 @@ public class BorrowingRequestController {
         return ResponseEntity.ok(service.cancelRequest(id, username));
     }
 }
-

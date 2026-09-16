@@ -20,11 +20,11 @@ public class EmailServiceImpl implements EmailService {
     public void sendEmail(String to, String subject, String text) {
         try {
             SimpleMailMessage message = new SimpleMailMessage();
-            message.setFrom("tuannguyenanh2357@gmail.com");
+            message.setFrom("[EMAIL_ADDRESS]");
             message.setTo(to);
             message.setSubject(subject);
             message.setText(text);
-            
+
             mailSender.send(message);
             log.info("Email đã được gửi thành công đến: {}", to);
         } catch (Exception e) {

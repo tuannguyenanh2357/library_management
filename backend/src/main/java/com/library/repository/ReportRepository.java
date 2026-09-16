@@ -31,17 +31,13 @@ public interface ReportRepository extends JpaRepository<Fines, Long> {
        // Lấy danh sách những thành viên vi phạm nhiều nhất trong kỳ
        @Query("SELECT m.id AS memberId, m.name AS memberName, m.email AS email, " +
                      "COUNT(f.id) AS fineCount, SUM(f.amount) AS totalFineAmount, " +
-                     "SUM(CASE WHEN f.status = FineStatus.PAID THEN f.amount ELSE 0 END) AS paidAmount, "
-                     +
-                     "SUM(CASE WHEN f.status = FineStatus.UNPAID THEN f.amount ELSE 0 END) AS unpaidAmount "
-                     +
+                     "SUM(CASE WHEN f.status = FineStatus.PAID THEN f.amount ELSE 0 END) AS paidAmount, " +
+                     "SUM(CASE WHEN f.status = FineStatus.UNPAID THEN f.amount ELSE 0 END) AS unpaidAmount " +
                      "FROM Fines f " +
                      "JOIN f.borrowing br " +
                      "JOIN br.member m " +
-                     "WHERE (f.status = FineStatus.PAID AND f.paidDate BETWEEN :fromDate AND :toDate) "
-                     +
-                     "   OR (f.status = FineStatus.UNPAID AND f.issuedDate BETWEEN :fromDate AND :toDate) "
-                     +
+                     "WHERE (f.status = FineStatus.PAID AND f.paidDate BETWEEN :fromDate AND :toDate) " +
+                     "OR (f.status = FineStatus.UNPAID AND f.issuedDate BETWEEN :fromDate AND :toDate) " +
                      "GROUP BY m.id, m.name, m.email " +
                      "ORDER BY SUM(f.amount) DESC")
        List<TopOffenderProjection> getTopOffenders(
@@ -56,10 +52,8 @@ public interface ReportRepository extends JpaRepository<Fines, Long> {
                      "JOIN f.borrowing br " +
                      "JOIN br.bookCopy bc " +
                      "JOIN bc.book bk " +
-                     "WHERE (f.status = FineStatus.PAID AND f.paidDate BETWEEN :fromDate AND :toDate) "
-                     +
-                     "   OR (f.status = FineStatus.UNPAID AND f.issuedDate BETWEEN :fromDate AND :toDate) "
-                     +
+                     "WHERE (f.status = FineStatus.PAID AND f.paidDate BETWEEN :fromDate AND :toDate) " +
+                     "OR (f.status = FineStatus.UNPAID AND f.issuedDate BETWEEN :fromDate AND :toDate) " +
                      "GROUP BY bk.id, bk.title, bk.author " +
                      "ORDER BY COUNT(f.id) DESC")
        List<TopPenalizedBookProjection> getTopPenalizedBooks(

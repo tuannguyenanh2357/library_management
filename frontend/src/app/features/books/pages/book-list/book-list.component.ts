@@ -146,12 +146,14 @@ export class BookListComponent implements OnInit {
       this.toastService.warning('Vui lòng đăng nhập tài khoản để đăng ký mượn sách!');
       return;
     }
-    
-    // MemberId is presumably fetched from token/authService in backend, but our DTO requires it.
-    // Wait, the backend requires memberId in the DTO?
-    // Let's check authService to get the memberId.
+
+    if (this.authService.isAdmin()) {
+      this.toastService.warning('Tài khoản Quản trị viên / Thủ thư không thể đăng ký mượn sách!');
+      return;
+    }
+
     const memberId = this.authService.getCurrentUserId();
-    
+
     if (!memberId) {
       this.toastService.warning('Không lấy được thông tin tài khoản. Vui lòng đăng nhập lại.');
       return;
@@ -164,7 +166,6 @@ export class BookListComponent implements OnInit {
       notes: event.notes
     };
 
-    // Need to inject BorrowingRequestService
     this.requestService.createRequest(payload).subscribe({
       next: () => {
         this.toastService.success('Đăng ký mượn sách thành công! Yêu cầu của bạn đã được gửi tới thủ thư.');
@@ -181,9 +182,14 @@ export class BookListComponent implements OnInit {
       this.toastService.warning('Vui lòng đăng nhập tài khoản để đặt chỗ!');
       return;
     }
-    
+
+    if (this.authService.isAdmin()) {
+      this.toastService.warning('Tài khoản Quản trị viên / Thủ thư không thể đăng ký đặt chỗ!');
+      return;
+    }
+
     const memberId = this.authService.getCurrentUserId();
-    
+
     if (!memberId) {
       this.toastService.warning('Không lấy được thông tin tài khoản. Vui lòng đăng nhập lại.');
       return;

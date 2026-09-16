@@ -183,7 +183,8 @@
 }
 
 /* States */
-.loading-state, .empty-state {
+.loading-state,
+.empty-state {
   padding: 80px 20px;
   text-align: center;
   color: #64748b;
@@ -208,7 +209,9 @@
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Responsive */
@@ -217,6 +220,7 @@
     padding: 16px;
   }
 }
+
 /* Backdrop - Phủ đen mờ nền đằng sau */
 .modal-backdrop {
   position: fixed;
@@ -236,7 +240,7 @@
 .modal-content {
   background: white;
   width: 100%;
-  max-width: 750px;
+  max-width: 850px;
   padding: 28px;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
@@ -244,8 +248,15 @@
 }
 
 @keyframes slideDown {
-  from { transform: translateY(-30px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-30px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .modal-content h3 {

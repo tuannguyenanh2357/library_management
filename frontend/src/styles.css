@@ -10,3 +10,10 @@ body {
 *, *::before, *::after {
   box-sizing: inherit;
 }
+
+/* Hide native browser password reveal icon (Edge / IE) */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+

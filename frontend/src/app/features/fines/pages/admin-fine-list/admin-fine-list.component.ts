@@ -147,7 +147,8 @@ export class AdminFineListComponent implements OnInit {
         },
         error: (err) => {
           console.error('Lỗi khi thanh toán khoản phạt:', err);
-          this.toastService.error('Thanh toán thất bại! Vui lòng thử lại.');
+          const errorMessage = err.error?.message || 'Thanh toán thất bại! Vui lòng thử lại.';
+          this.toastService.error(errorMessage);
         }
       });
     }
@@ -171,7 +172,8 @@ export class AdminFineListComponent implements OnInit {
         },
         error: (err) => {
           console.error('Lỗi khi miễn khoản phạt:', err);
-          this.toastService.error('Miễn phạt thất bại! Vui lòng thử lại.');
+          const errorMessage = err.error?.message || 'Miễn phạt thất bại! Vui lòng thử lại.';
+          this.toastService.error(errorMessage);
         }
       });
     }

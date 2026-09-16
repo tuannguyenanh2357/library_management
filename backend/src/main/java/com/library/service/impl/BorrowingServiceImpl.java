@@ -21,8 +21,6 @@ import com.library.repository.ReservationRepository;
 import com.library.service.interfaces.BorrowingService;
 import com.library.exception.AppException;
 import com.library.exception.ErrorCode;
-import com.library.exception.MemberNotFoundException;
-import com.library.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
@@ -87,12 +85,12 @@ public class BorrowingServiceImpl implements BorrowingService {
     public BorrowingResponse borrowBook(BorrowingCreationRequest request) {
 
         Member member = memberRepository.findById(request.getMemberId())
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy độc giả"));
 
         validateMemberEligibleToBorrow(member);
 
         BookCopy bookCopy = bookCopyRepository.findById(request.getBookCopyId())
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_COPY_NOT_FOUND,
+                .orElseThrow(() -> new AppException(ErrorCode.BOOK_COPY_NOT_FOUND,
                         "Không tìm thấy bản sao sách"));
 
         resolveBookCopyForBorrowing(bookCopy, member);
@@ -188,7 +186,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     public BorrowingResponse returnBook(Long borrowingId) {
 
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.BORROWING_NOT_FOUND));
 
         if (borrowing.getStatus() == BorrowingStatus.RETURNED) {
             throw new AppException(ErrorCode.BORROWING_ACTION_FAILED, "Sách đã được trả lại rồi");
@@ -237,7 +235,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     @Override
     public BorrowingResponse getById(Long id) {
         return borrowingMapper.toResponse(borrowingRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND)));
+                .orElseThrow(() -> new AppException(ErrorCode.BORROWING_NOT_FOUND)));
     }
 
     @Override
@@ -284,7 +282,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     public void deleteBorrowing(Long borrowingId) {
 
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.BORROWING_NOT_FOUND));
 
         if (borrowing.getFine() != null && borrowing.getFine().getStatus() == FineStatus.UNPAID) {
             throw new AppException(ErrorCode.INVALID_REQUEST,
@@ -297,7 +295,7 @@ public class BorrowingServiceImpl implements BorrowingService {
     @Override
     public BorrowingResponse renewBorrowing(Long borrowingId, String username) {
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.BORROWING_NOT_FOUND));
 
         if (!borrowing.getMember().getUsername().equals(username)) {
             throw new AppException(ErrorCode.UNAUTHORIZED, "Bạn không có quyền gia hạn phiếu mượn này");
@@ -339,7 +337,7 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     private BorrowingResponse closeWithReplacementFee(Long borrowingId, DamageType damageType) {
         Borrowing borrowing = borrowingRepository.findById(borrowingId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BORROWING_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.BORROWING_NOT_FOUND));
 
         if (borrowing.getStatus() != BorrowingStatus.ACTIVE) {
             throw new AppException(ErrorCode.BORROWING_ACTION_FAILED,

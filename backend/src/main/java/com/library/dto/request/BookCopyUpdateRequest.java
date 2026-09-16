@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class BookCopyUpdateRequest {
-    @NotNull(message = "Book ID is required")
+    @NotNull(message = "ID đầu sách không được để trống")
     Long bookId;
     BookCopyStatus status;
 }

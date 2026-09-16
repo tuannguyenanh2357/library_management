@@ -42,7 +42,7 @@
   font-weight: 800;
   margin: 0 0 16px 0;
   letter-spacing: -0.5px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .hero-content p {
@@ -78,7 +78,7 @@
 .about-image-wrapper {
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 15px 30px rgba(0,0,0,0.1);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
   height: 380px;
 }
 
@@ -149,7 +149,7 @@
   background: white;
   padding: 36px 24px;
   border-radius: 16px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.03);
   border: 1px solid rgba(226, 232, 240, 0.8);
   transition: all 0.3s ease;
   text-align: center;
@@ -157,7 +157,7 @@
 
 .value-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
   border-color: #667eea;
 }
 
@@ -193,7 +193,7 @@
   background: white;
   padding: 30px;
   border-radius: 16px;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.03);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.03);
   border: 1px solid rgba(226, 232, 240, 0.8);
   width: 250px;
   text-align: center;
@@ -202,7 +202,7 @@
 
 .team-member:hover {
   transform: translateY(-5px);
-  box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.08);
 }
 
 .member-avatar {
@@ -239,9 +239,11 @@
     grid-template-columns: 1fr;
     gap: 30px;
   }
+
   .about-image-wrapper {
     height: 300px;
   }
+
   .values-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -251,6 +253,7 @@
   .hero-content h1 {
     font-size: 2rem;
   }
+
   .values-grid {
     grid-template-columns: 1fr;
   }

@@ -22,7 +22,7 @@ public class ReportController {
 
     // đang mặc định lay 7 ngày gần nhất
     @GetMapping("/revenue")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<WeeklyRevenueReportResponse> getRevenueReport(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
 
@@ -35,7 +35,7 @@ public class ReportController {
     }
 
     @GetMapping(value = "/revenue/export", produces = MediaType.APPLICATION_PDF_VALUE)
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<byte[]> exportRevenuePdf(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
 

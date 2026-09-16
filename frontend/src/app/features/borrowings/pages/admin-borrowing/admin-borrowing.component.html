@@ -145,10 +145,24 @@
       <h3>Tạo Phiếu Mượn Trực Tiếp</h3>
       <p class="sub-text">Dùng khi thành viên đến lấy sách mà chưa đăng ký online.</p>
       <form [formGroup]="borrowForm" (ngSubmit)="onSubmitBorrow()">
-        <div class="form-group">
+        <div class="form-group barcode-group">
           <label>ID Thành viên:</label>
-          <input type="number" formControlName="memberId" placeholder="Nhập ID thành viên..." class="modern-input">
+          <div class="input-with-btn">
+            <input type="number" formControlName="memberId" placeholder="Nhập ID thành viên..." class="modern-input">
+            <button type="button" class="btn-scan" (click)="checkMemberId()">Kiểm tra</button>
+          </div>
         </div>
+        @if (memberCheckError()) {
+        <div class="error-msg" style="color: #ef4444; font-size: 0.85rem; margin-top: 5px;">{{ memberCheckError() }}
+        </div>
+        }
+        @if (checkedMember(); as member) {
+        <div class="book-info-card available"
+          style="margin-top: 6px; margin-bottom: 12px; background-color: #f0fdf4; border-color: #bbf7d0;">
+          <div><strong>Độc giả:</strong> {{ member.name }} ({{ member.username }})</div>
+          <div><strong>Email/SĐT:</strong> {{ member.email }} | {{ member.phone || 'Chưa cập nhật' }}</div>
+        </div>
+        }
 
         <div class="form-group barcode-group">
           <label>Mã vạch cuốn sách:</label>
@@ -186,17 +200,79 @@
     @if (activeTab() === 'RETURN') {
     <div class="card">
       <h3>Trả Sách</h3>
+      <p class="sub-text">Nhập hoặc quét mã vạch để tra cứu thông tin người mượn và thực hiện trả sách.</p>
+
       <form [formGroup]="returnForm" (ngSubmit)="onSubmitReturn()">
-        <div class="form-group">
+        <div class="form-group barcode-group">
           <label>Mã vạch cuốn sách:</label>
-          <input type="text" formControlName="barcode" placeholder="Quét mã vạch sách cần trả..." class="modern-input">
+          <div class="input-with-btn">
+            <input type="text" formControlName="barcode" placeholder="Quét hoặc nhập mã vạch cuốn sách cần trả..."
+              class="modern-input">
+            <!-- <button type="button" class="btn-scan" (click)="checkReturnBarcode()">Kiểm tra</button> -->
+          </div>
         </div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <button type="submit" class="btn-submit" [disabled]="returnForm.invalid">Xác nhận trả</button>
-          <button type="button" class="btn-reject-large" [disabled]="returnForm.invalid" (click)="reportLost()">Báo
-            Mất</button>
-          <button type="button" class="btn-reject-large" [disabled]="returnForm.invalid" (click)="reportDamaged()">Báo
-            Hỏng</button>
+
+        @if (returnFormBarcode().trim()) {
+        @if (activeReturnBorrowing(); as b) {
+        <div class="return-preview-card">
+          <div class="preview-header">
+            <div class="borrower-badge">
+              <div class="avatar-circle">{{ b.memberName ? b.memberName.charAt(0).toUpperCase() : 'U' }}</div>
+              <div class="borrower-info">
+                <h4 class="borrower-name">{{ b.memberName }}</h4>
+                <span class="member-id">Mã độc giả: #{{ b.memberId }}</span>
+              </div>
+            </div>
+            <div class="status-badge" [class.overdue]="isOverdue(b.dueDate)">
+              @if (isOverdue(b.dueDate)) {
+              ⚠️ Quá hạn {{ getDaysOverdue(b.dueDate) }} ngày
+              } @else {
+              ✅ Trong hạn mượn
+              }
+            </div>
+          </div>
+
+          <div class="preview-details">
+            <div class="detail-item">
+              <span class="detail-label">Sách đang mượn:</span>
+              <strong class="detail-value">{{ b.bookTitle }}</strong>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Mã vạch:</span>
+              <code class="barcode-tag">{{ b.barCode }}</code>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Ngày mượn:</span>
+              <span class="detail-value">{{ b.borrowDate | date:'dd/MM/yyyy' }}</span>
+            </div>
+            <div class="detail-item">
+              <span class="detail-label">Hạn trả:</span>
+              <span class="detail-value" [style.color]="isOverdue(b.dueDate) ? '#ef4444' : '#10b981'"
+                style="font-weight: 700;">
+                {{ b.dueDate | date:'dd/MM/yyyy' }}
+              </span>
+            </div>
+          </div>
+        </div>
+        } @else {
+        <div class="return-warning-box">
+          ⚠️ Không tìm thấy phiếu mượn nào chưa trả cho mã vạch <code>"{{ returnFormBarcode() }}"</code>.
+        </div>
+        }
+        }
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-top: 24px;">
+          <button type="submit" class="btn-submit" [disabled]="returnForm.invalid || !activeReturnBorrowing()">
+            ✓ Xác Nhận Trả Sách
+          </button>
+          <button type="button" class="btn-reject-large" [disabled]="returnForm.invalid || !activeReturnBorrowing()"
+            (click)="reportLost()">
+            ❌ Báo Mất Sách
+          </button>
+          <button type="button" class="btn-reject-large" [disabled]="returnForm.invalid || !activeReturnBorrowing()"
+            (click)="reportDamaged()" style="background-color: #f59e0b; border-color: #f59e0b;">
+            ⚠️ Báo Hỏng Sách
+          </button>
         </div>
       </form>
     </div>
@@ -280,7 +356,7 @@
           <h3>⚠️ Danh Sách Sách Đang Quá Hạn</h3>
           <p class="sub-text">Cảnh báo các khoản mượn đã trễ hạn chưa trả để gọi điện / thông báo đòi sách</p>
         </div>
-        <button class="btn-scan" (click)="loadOverdueBooksSP()">🔄 Tải lại</button>
+        <!-- <button class="btn-scan" (click)="loadOverdueBooksSP()">🔄 Tải lại</button> -->
       </div>
 
       @if (isOverdueLoading()) {
@@ -353,7 +429,7 @@
               <th class="text-center">Trạng thái</th>
               <th>Lý do từ chối</th>
             </tr>
-            <tr class="filter-row">
+            <!-- <tr class="filter-row">
               <th class="text-center"><input type="text" class="column-filter" placeholder="Tìm tên..."
                   (input)="updateRequestFilter('memberName', $any($event.target).value)"></th>
               <th><input type="text" class="column-filter" placeholder="Tìm sách..."
@@ -371,7 +447,7 @@
               </th>
               <th><input type="text" class="column-filter" placeholder="Tìm lý do..."
                   (input)="updateRequestFilter('notes', $any($event.target).value)"></th>
-            </tr>
+            </tr> -->
           </thead>
           <tbody>
             @for (req of paginatedHistoryRequests(); track req.id) {
@@ -428,7 +504,7 @@
               <th class="text-center">Ngày trả</th>
               <th class="text-center">Trạng thái</th>
             </tr>
-            <tr class="filter-row">
+            <!-- <tr class="filter-row">
               <th class="text-center"><input type="text" class="column-filter" placeholder="Tìm tên..."
                   (input)="updateBorrowingFilter('memberName', $any($event.target).value)"></th>
               <th><input type="text" class="column-filter" placeholder="Tìm sách..."
@@ -448,7 +524,7 @@
                   <option value="đang mượn">Đang mượn</option>
                 </select>
               </th>
-            </tr>
+            </tr> -->
           </thead>
           <tbody>
             @for (b of paginatedBorrowings(); track b.id) {
@@ -568,8 +644,8 @@
       <button type="button" class="btn-cancel" (click)="closeConfirmModal()">{{ confirmModalState().cancelText
         }}</button>
       <button type="button" [class.btn-submit]="confirmModalState().confirmText.includes('✅')"
-        [class.btn-reject-large]="confirmModalState().confirmText.includes('❌')" style="padding: 10px 20px;"
-        (click)="executeConfirmAction()">
+        [class.btn-reject-large]="confirmModalState().confirmText.includes('❌') || confirmModalState().confirmText.includes('⚠️')"
+        style="padding: 10px 20px;" (click)="executeConfirmAction()">
         {{ confirmModalState().confirmText }}
       </button>
     </div>

@@ -17,7 +17,7 @@ BEGIN
         COUNT(DISTINCT br.id) AS BorrowCount
     FROM dbo.books b
     LEFT JOIN dbo.book_copies bc ON b.id = bc.book_id
-    LEFT JOIN dbo.borrowings br ON bc.id = br.book_copy_id AND br.borrow_date >= DATEADD(day, -30, GETDATE())
+    LEFT JOIN dbo.borrowings br ON bc.id = br.book_copy_id AND br.borrow_date >= DATEADD(day, -60, GETDATE())
     GROUP BY b.id, b.title, b.author, b.category, b.image_url
     ORDER BY BorrowCount DESC, b.id DESC;
 END;
@@ -62,10 +62,10 @@ BEGIN
     WHERE borrow_date BETWEEN @FromDate AND @ToDate;
 
     -- Kỳ trước 
-    DECLARE @PrevCollected DECIMAL(18,2);
-    DECLARE @RangeDays     INT = DATEDIFF(day, @FromDate, @ToDate) + 1;
-    DECLARE @PrevFrom DATE = DATEADD(day, -@RangeDays, @FromDate);
-    DECLARE @PrevTo   DATE = DATEADD(day, -1, @FromDate);
+    DECLARE @PrevCollected DECIMAL(18,2); -- tiền thu kỳ trước
+    DECLARE @RangeDays     INT = DATEDIFF(day, @FromDate, @ToDate) + 1;  -- Tính số ngày của kỳ hiện tại
+    DECLARE @PrevFrom DATE = DATEADD(day, -@RangeDays, @FromDate); -- Xác định ngày BẮT ĐẦU của kỳ trước
+    DECLARE @PrevTo   DATE = DATEADD(day, -1, @FromDate); -- Xác định ngày KẾT THÚC của kỳ trước
 
     SELECT @PrevCollected = ISNULL(SUM(f.amount), 0)
     FROM dbo.fines f
@@ -73,11 +73,11 @@ BEGIN
       AND f.paid_date BETWEEN @PrevFrom AND @PrevTo;
 
     SELECT
-        @CurrentCollected  AS CollectedAmount,
-        @CurrentCount      AS CollectedCount,
-        @CurrentPending    AS PendingAmount,
-        @CurrentPendingCnt AS PendingCount,
-        @TotalBorrowings   AS TotalBorrowings,
+        @CurrentCollected  AS CollectedAmount,  -- tổng tiền thu được trong kỳ hiện tại 
+        @CurrentCount      AS CollectedCount, -- số lượng phiếu phạt đã nôpj tiền trong kỳ hiện tại
+        @CurrentPending    AS PendingAmount,  -- tổng tiền phạt chưa thu trong kỳ hiện tại 
+        @CurrentPendingCnt AS PendingCount,   -- số lượng phiếu phạt chưa thanh toán trong kỳ hiện tại
+        @TotalBorrowings   AS TotalBorrowings,  -- tổng số lượt mượn trong kỳ hiện tại
         @PrevCollected     AS PrevCollectedAmount, -- tiền phạt đã thu kỳ trước 
         @RangeDays         AS RangeDays;  -- khoảng thời gian bao nhiêu ngày
 END;
@@ -104,10 +104,10 @@ BEGIN
         WHERE dt < @ToDate
     )
     SELECT
-        d.dt                                  AS ReportDate,
-        DATENAME(weekday, d.dt)               AS DayName,
-        ISNULL(SUM(f.amount), 0)              AS CollectedAmount,
-        ISNULL(COUNT(f.id), 0)                AS CollectedCount
+        d.dt                                  AS ReportDate,   -- ngày thống kê
+        DATENAME(weekday, d.dt)               AS DayName,      -- tên thứ trong ngày
+        ISNULL(SUM(f.amount), 0)              AS CollectedAmount, -- tổng tiền thu được trong ngày 
+        ISNULL(COUNT(f.id), 0)                AS CollectedCount -- số lần đã nộp tiền trong ngày
     FROM Dates d
     LEFT JOIN dbo.fines f
         ON f.paid_date = d.dt AND f.status = 'PAID'

@@ -31,7 +31,7 @@ public class BookController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BookResponse> createBook(@Valid @RequestBody CreateBookRequest bookRequest) {
         BookResponse createdBook = bookService.createBook(bookRequest);
         return ResponseEntity.ok(createdBook);
@@ -46,7 +46,7 @@ public class BookController {
             @RequestParam(required = false) String publisher,
             @RequestParam(required = false) String isbn,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(defaultValue = "12") int size) {
         return ResponseEntity.ok(bookService.getAllBooks(id, title, author, category, publisher, isbn, page, size));
     }
 
@@ -56,14 +56,14 @@ public class BookController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<Void> deleteBook(@PathVariable Long id) {
         bookService.deleteBook(id);
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<BookResponse> updateBook(@PathVariable Long id,
             @Valid @RequestBody UpdateBookRequest bookRequest) {
         BookResponse updatedBook = bookService.updateBook(id, bookRequest);

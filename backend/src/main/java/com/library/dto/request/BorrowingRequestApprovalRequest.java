@@ -14,9 +14,9 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BorrowingRequestApprovalRequest {
-    @NotBlank(message = "Barcode is required")
+    @NotBlank(message = "Barcode không được để trống")
     private String barcode;
 
-    @NotNull(message = "Due Date is required")
+    @NotNull(message = "Ngày hết hạn không được để trống")
     private LocalDate dueDate;
 }

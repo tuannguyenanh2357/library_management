@@ -5,12 +5,15 @@ import { Member, ProfileUpdateRequest, ChangePasswordRequest } from '../models/m
 import { BooksResponse } from '../../shared/models/book.model';
 import { environment } from '../../../environments/environment';
 
+import { AuthService } from './auth.service';
+
 /** Thông tin & thao tác của user đang đăng nhập (khác với quản trị member ở features/members) */
 @Injectable({
   providedIn: 'root'
 })
 export class CurrentUserService {
   private http = inject(HttpClient);
+  private authService = inject(AuthService);
   private apiUrl = `${environment.apiUrl}/members`;
 
   public currentUserProfile = signal<Member | null>(null);
@@ -19,7 +22,12 @@ export class CurrentUserService {
   /** Lấy thông tin profile của user đang đăng nhập (/members/me) */
   getMyProfile(): Observable<Member> {
     return this.http.get<Member>(`${this.apiUrl}/me`).pipe(
-      tap(member => this.currentUserProfile.set(member))
+      tap(member => {
+        this.currentUserProfile.set(member);
+        if (member && member.id) {
+          this.authService.setMemberId(member.id);
+        }
+      })
     );
   }
 
@@ -67,4 +75,5 @@ export class CurrentUserService {
       })
     );
   }
+
 }

@@ -19,3 +19,12 @@ export interface RegisterRequest {
   phone: string;
   address: string;
 }
+
+export interface UserResponse {
+  id: number;
+  username: string;
+  name: string;
+  email: string;
+  role: string;
+}
+

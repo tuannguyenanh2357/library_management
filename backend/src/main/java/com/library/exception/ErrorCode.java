@@ -21,8 +21,8 @@ public enum ErrorCode {
     INVALID_PASSWORD(2005, "Mật khẩu cũ không chính xác", HttpStatus.BAD_REQUEST),
     INVALID_CREDENTIALS(2006, "Tên đăng nhập hoặc mật khẩu không chính xác", HttpStatus.BAD_REQUEST),
     CANNOT_DELETE_ADMIN(2007, "Không thể xóa tài khoản Quản trị viên (ADMIN)", HttpStatus.BAD_REQUEST),
-    CANNOT_DELETE_MEMBER_WITH_BOOKS(2008, "Không thể xóa độc giả vì họ đang mượn sách chưa trả",
-            HttpStatus.BAD_REQUEST),
+    CANNOT_DELETE_MEMBER_WITH_BOOKS(2008, "Không thể xóa độc giả vì họ đang mượn sách chưa trả", HttpStatus.BAD_REQUEST),
+    CANNOT_DELETE_MEMBER_WITH_HISTORY(2009, "Không thể xóa độc giả này vì tài khoản đã có lịch sử mượn sách hoặc phiếu phạt trong hệ thống", HttpStatus.BAD_REQUEST),
 
     // Tài nguyên / Thực thể
     RESOURCE_NOT_FOUND(3001, "Không tìm thấy tài nguyên yêu cầu", HttpStatus.NOT_FOUND),
@@ -30,6 +30,7 @@ public enum ErrorCode {
     BOOK_COPY_NOT_FOUND(3003, "Không tìm thấy bản sao sách", HttpStatus.NOT_FOUND),
     BORROWING_NOT_FOUND(3004, "Không tìm thấy thông tin lượt mượn", HttpStatus.NOT_FOUND),
     RESERVATION_NOT_FOUND(3005, "Không tìm thấy thông tin đặt chỗ", HttpStatus.NOT_FOUND),
+    BARCODE_ALREADY_EXISTS(3006, "Mã vạch (Barcode) đã tồn tại", HttpStatus.BAD_REQUEST),
 
     // Quy tắc nghiệp vụ
     BOOK_NOT_AVAILABLE(4001, "Sách hiện tại không có sẵn để mượn", HttpStatus.BAD_REQUEST),

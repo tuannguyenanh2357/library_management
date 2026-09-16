@@ -233,6 +233,48 @@ export class AdminBookListComponent implements OnInit {
     const booktoUpdate = this.selectedBook();
     if (!booktoUpdate) return;
 
+    if (!booktoUpdate.title?.trim()) {
+      this.toastService.warning('Tiêu đề không được để trống');
+      return;
+    }
+    if (!booktoUpdate.author?.trim()) {
+      this.toastService.warning('Tên tác giả không được để trống');
+      return;
+    }
+    if (!booktoUpdate.isbn?.trim()) {
+      this.toastService.warning('ISBN không được để trống');
+      return;
+    }
+    if (!booktoUpdate.category?.trim()) {
+      this.toastService.warning('Thể loại không được để trống');
+      return;
+    }
+    if (booktoUpdate.title.trim().length > 40) {
+      this.toastService.warning('tiêu đề tối đa 40 chữ, vui lòng kiểm tra lại');
+      return;
+    }
+    if (booktoUpdate.author.trim().length > 40) {
+      this.toastService.warning('Tên tác giả tối đa 40 ký tự, vui lòng kiểm tra lại');
+      return;
+    }
+    if (booktoUpdate.isbn.trim().length > 13) {
+      this.toastService.warning('ISBN tối đa 13 ký tự, vui lòng kiểm tra lại');
+      return;
+    }
+    if (booktoUpdate.category.trim().length > 40) {
+      this.toastService.warning('Thể loại sách tối đa 40 chữ, vui lòng kiểm tra lại');
+      return;
+    }
+    const currentYear = new Date().getFullYear();
+    if (booktoUpdate.publicationYear && (booktoUpdate.publicationYear <= 0 || booktoUpdate.publicationYear > currentYear)) {
+      this.toastService.warning(`Năm xuất bản phải là số dương và không vượt quá ${currentYear}`);
+      return;
+    }
+    if (booktoUpdate.dailyFineAmount !== undefined && booktoUpdate.dailyFineAmount < 0) {
+      this.toastService.warning('Số tiền phạt theo ngày không được là số âm');
+      return;
+    }
+
     const updateRequest = {
       id: booktoUpdate.id,
       title: booktoUpdate.title,
@@ -254,7 +296,8 @@ export class AdminBookListComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.toastService.error('Cập nhật sách thất bại!');
+        const errorMessage = err.error?.message || 'Cập nhật sách thất bại!';
+        this.toastService.error(errorMessage);
       }
     });
   }
@@ -294,8 +337,45 @@ export class AdminBookListComponent implements OnInit {
 
   onCreateBook(): void {
     const bookToCreate = this.newBook();
-    if (!bookToCreate.title || !bookToCreate.author || !bookToCreate.isbn || !bookToCreate.category) {
-      this.toastService.warning('Vui lòng nhập đầy đủ các thông tin bắt buộc (Tiêu đề, Tác giả, ISBN, Thể loại)!');
+    if (!bookToCreate.title?.trim()) {
+      this.toastService.warning('Tiêu đề không được để trống');
+      return;
+    }
+    if (!bookToCreate.author?.trim()) {
+      this.toastService.warning('Tên tác giả không được để trống');
+      return;
+    }
+    if (!bookToCreate.isbn?.trim()) {
+      this.toastService.warning('ISBN không được để trống');
+      return;
+    }
+    if (!bookToCreate.category?.trim()) {
+      this.toastService.warning('Thể loại không được để trống');
+      return;
+    }
+    if (bookToCreate.title.trim().length > 40) {
+      this.toastService.warning('tiêu đề tối đa 40 chữ, vui lòng kiểm tra lại');
+      return;
+    }
+    if (bookToCreate.author.trim().length > 40) {
+      this.toastService.warning('Tên tác giả tối đa 40 ký tự, vui lòng kiểm tra lại');
+      return;
+    }
+    if (bookToCreate.isbn.trim().length > 13) {
+      this.toastService.warning('ISBN tối đa 13 ký tự, vui lòng kiểm tra lại');
+      return;
+    }
+    if (bookToCreate.category.trim().length > 40) {
+      this.toastService.warning('Thể loại sách tối đa 40 chữ, vui lòng kiểm tra lại');
+      return;
+    }
+    const currentYear = new Date().getFullYear();
+    if (bookToCreate.publicationYear && (bookToCreate.publicationYear <= 0 || bookToCreate.publicationYear > currentYear)) {
+      this.toastService.warning(`Năm xuất bản phải là số dương và không vượt quá ${currentYear}`);
+      return;
+    }
+    if (bookToCreate.dailyFineAmount !== undefined && bookToCreate.dailyFineAmount < 0) {
+      this.toastService.warning('Số tiền phạt theo ngày không được là số âm');
       return;
     }
 
@@ -307,20 +387,21 @@ export class AdminBookListComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.toastService.error('Thêm sách mới thất bại! Vui lòng kiểm tra lại (mã ISBN có thể đã tồn tại).');
+        const errorMessage = err.error?.message || 'Thêm sách mới thất bại! Vui lòng kiểm tra lại.';
+        this.toastService.error(errorMessage);
       }
     });
   }
 
-  protected onFileSelected(event: any, type: 'new' | 'edit'): void {
+  protected onFileSelected(event: any, type: 'add' | 'edit'): void {
     const file = event.target.files[0];
     if (file) {
       this.fileService.uploadFile(file).subscribe({
         next: (res) => {
-          if (type === 'new') {
-            this.newBook().imageUrl = res.url;
+          if (type === 'add') {
+            this.newBook.update(book => ({ ...book, imageUrl: res.url }));
           } else if (type === 'edit') {
-            this.selectedBook()!.imageUrl = res.url;
+            this.selectedBook.update(book => book ? { ...book, imageUrl: res.url } : null);
           }
           this.toastService.success('Tải ảnh lên thành công!');
         },
@@ -347,7 +428,7 @@ export class AdminBookListComponent implements OnInit {
     this.errorMessage.set('');
     this.bookCopyService.getAllBookCopies().subscribe({
       next: (res) => {
-        this.copies.set(res);
+        this.copies.set(res.sort((a, b) => b.id - a.id));
         this.loadingCopies.set(false);
       },
       error: (err) => {
@@ -427,13 +508,15 @@ export class AdminBookListComponent implements OnInit {
 
     forkJoin(requests).subscribe({
       next: () => {
+        this.copiesCurrentPage.set(1);
         this.loadCopies();
         this.toastService.success(`Thêm thành công ${quantity} bản sao mới!`);
         this.closeAddCopyModal();
       },
       error: (err) => {
         console.error(err);
-        this.toastService.error('Trùng mã BARCODE với bản sao khác!');
+        const errorMessage = err.error?.message || (typeof err.error === 'string' ? err.error : 'Tạo bản sao thất bại!');
+        this.toastService.error(errorMessage);
       }
     });
   }
@@ -473,7 +556,8 @@ export class AdminBookListComponent implements OnInit {
       },
       error: (err) => {
         console.error(err);
-        this.toastService.error('Cập nhật trạng thái bản sao thất bại!');
+        const errorMessage = err.error?.message || 'Cập nhật trạng thái bản sao thất bại!';
+        this.toastService.error(errorMessage);
       }
     });
   }

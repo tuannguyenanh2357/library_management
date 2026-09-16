@@ -122,8 +122,13 @@ export class DashboardComponent implements OnInit {
       return;
     }
 
+    if (this.authService.isAdmin()) {
+      this.toastService.warning('Tài khoản Quản trị viên / Thủ thư không thể đăng ký mượn sách!');
+      return;
+    }
+
     const memberId = this.authService.getCurrentUserId();
-    
+
     if (!memberId) {
       this.toastService.warning('Tài khoản của bạn cần được cập nhật phiên bản. Vui lòng Đăng xuất và Đăng nhập lại!');
       return;
@@ -152,9 +157,14 @@ export class DashboardComponent implements OnInit {
       this.toastService.warning('Vui lòng đăng nhập tài khoản để đặt chỗ!');
       return;
     }
-    
+
+    if (this.authService.isAdmin()) {
+      this.toastService.warning('Tài khoản Quản trị viên / Thủ thư không thể đăng ký đặt chỗ!');
+      return;
+    }
+
     const memberId = this.authService.getCurrentUserId();
-    
+
     if (!memberId) {
       this.toastService.warning('Tài khoản của bạn cần được cập nhật phiên bản. Vui lòng Đăng xuất và Đăng nhập lại!');
       return;

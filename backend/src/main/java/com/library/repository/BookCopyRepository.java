@@ -15,6 +15,9 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
     // Tìm bản sao sách theo mã vạch.
     Optional<BookCopy> findByBarCode(String barCode);
 
+    // Kiểm tra xem mã vạch đã tồn tại hay chưa.
+    boolean existsByBarCode(String barCode);
+
     // Lấy danh sách bản sao theo sách và tải luôn thông tin Book
     @Query("SELECT bc FROM BookCopy bc JOIN FETCH bc.book WHERE bc.book.id = :bookId")
     List<BookCopy> findByBook_Id(Long bookId);
@@ -27,8 +30,7 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
     @Query("SELECT COUNT(bc) FROM BookCopy bc WHERE bc.book.id = :bookId AND bc.status = :status")
     long countByBookIdAndStatus(long bookId, BookCopyStatus status);
 
-    // Đếm số lượng bản sao AVAILABLE theo từng đầu sách trong một danh sách, dùng
-    // để tránh N+1 query khi cần đếm cho nhiều đầu sách cùng lúc.
+    // Đếm số lượng bản sao theo từng đầu sách trong một danh sách
     @Query("SELECT bc.book.id, COUNT(bc) FROM BookCopy bc " +
             "WHERE bc.book.id IN :bookIds AND bc.status = :status GROUP BY bc.book.id")
     List<Object[]> countByBookIdsAndStatus(List<Long> bookIds, BookCopyStatus status);
@@ -41,7 +43,7 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
     @Query("SELECT COUNT(bc) FROM BookCopy bc WHERE bc.book.id = :bookId")
     long countByBook_Id(long bookId);
 
-    // Lấy tất cả bản sao và tải luôn thông tin Book
-    @Query("SELECT bc FROM BookCopy bc JOIN FETCH bc.book")
+    // Lấy tất cả bản sao và tải luôn thông tin Book (sắp xếp mới nhất lên đầu)
+    @Query("SELECT bc FROM BookCopy bc JOIN FETCH bc.book ORDER BY bc.id DESC")
     List<BookCopy> findAllWithBook();
 }

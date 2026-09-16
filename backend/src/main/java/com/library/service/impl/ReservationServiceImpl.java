@@ -19,10 +19,9 @@ import com.library.service.interfaces.ReservationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 import com.library.exception.AppException;
 import com.library.exception.ErrorCode;
-import com.library.exception.MemberNotFoundException;
-import com.library.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -37,6 +36,7 @@ import com.library.config.RabbitMQConfig;
 import com.library.dto.event.ReservationFulfilledEvent;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -54,10 +54,10 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional
     public ReservationResponse createReservation(ReservationCreationRequest request) {
         Member member = memberRepository.findById(request.getMemberId())
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy độc giả"));
+                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy độc giả"));
 
         Book book = bookRepository.findById(request.getBookId())
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
+                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
 
         // Kiểm tra xem độc giả đã có đặt chỗ đang hoạt động cho sách này chưa
         boolean exists = reservationRepository.existsByMemberIdAndBookIdAndStatusIn(
@@ -87,7 +87,7 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     public List<ReservationResponse> getMyReservations(String username) {
         Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy thành viên"));
+                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy thành viên"));
 
         return mapToResponsesWithExpectedDate(
                 reservationRepository.findByMemberIdOrderByRequestDateDesc(member.getId()));
@@ -133,13 +133,13 @@ public class ReservationServiceImpl implements ReservationService {
     @Transactional
     public void cancelReservation(Long reservationId, String username) {
         Reservation reservation = reservationRepository.findById(reservationId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESERVATION_NOT_FOUND,
+                .orElseThrow(() -> new AppException(ErrorCode.RESERVATION_NOT_FOUND,
                         "Không tìm thấy thông tin đặt trước"));
 
         // Chỉ người sở hữu hoặc admin mới được hủy. Chúng ta đơn giản hóa bằng cách chỉ
         // kiểm tra người sở hữu nếu đó không phải là API của admin.
         Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new MemberNotFoundException("Không tìm thấy người dùng"));
+                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy người dùng"));
 
         if (!reservation.getMember().getId().equals(member.getId())
                 && member.getRole() != MemberRole.ADMIN
@@ -186,14 +186,19 @@ public class ReservationServiceImpl implements ReservationService {
             bookCopyRepository.save(returnedCopy);
 
             // Gửi event qua RabbitMQ
-            ReservationFulfilledEvent event = ReservationFulfilledEvent.builder()
-                    .memberEmail(res.getMember().getEmail())
-                    .memberName(res.getMember().getName())
-                    .bookTitle(res.getBook().getTitle())
-                    .expiryDate(res.getExpiryDate())
-                    .build();
-            rabbitTemplate.convertAndSend(RabbitMQConfig.RESERVATION_EXCHANGE,
-                    RabbitMQConfig.RESERVATION_FULFILLED_ROUTING_KEY, event);
+            try {
+                ReservationFulfilledEvent event = ReservationFulfilledEvent.builder()
+                        .memberEmail(res.getMember().getEmail())
+                        .memberName(res.getMember().getName())
+                        .bookTitle(res.getBook().getTitle())
+                        .expiryDate(res.getExpiryDate())
+                        .build();
+                rabbitTemplate.convertAndSend(RabbitMQConfig.RESERVATION_EXCHANGE,
+                        RabbitMQConfig.RESERVATION_FULFILLED_ROUTING_KEY, event);
+                log.info("[RABBITMQ PRODUCER] Đã gửi ReservationFulfilledEvent cho reservation ID: {}", res.getId());
+            } catch (Exception e) {
+                log.error("Lỗi khi gửi sự kiện đặt chỗ qua RabbitMQ: {}", e.getMessage());
+            }
 
         } else {
             returnedCopy.setStatus(BookCopyStatus.AVAILABLE);

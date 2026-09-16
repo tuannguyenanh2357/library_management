@@ -5,9 +5,17 @@ import com.library.entity.enums.FineStatus;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.Builder;
+import lombok.NoArgsConstructor;
+import lombok.AllArgsConstructor;
 
-@Data
+@Getter
+@Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class FineResponse {
     Long id;
     Long borrowingId;

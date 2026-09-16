@@ -26,7 +26,7 @@ public class ReservationController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('MEMBER')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'LIBRARIAN', 'ADMIN')")
     public ResponseEntity<List<ReservationResponse>> getMyReservations() {
         String username = SecurityUtils.getCurrentUsername();
         return ResponseEntity.ok(reservationService.getMyReservations(username));

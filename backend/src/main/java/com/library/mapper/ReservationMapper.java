@@ -4,9 +4,8 @@ import com.library.dto.response.ReservationResponse;
 import com.library.entity.Reservation;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.ReportingPolicy;
 
-@Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
+@Mapper(componentModel = "spring")
 public interface ReservationMapper {
 
     @Mapping(target = "memberId", source = "member.id")

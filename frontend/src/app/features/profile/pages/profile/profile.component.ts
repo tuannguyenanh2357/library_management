@@ -15,6 +15,7 @@ import { FineService } from '@features/fines/services/fine.service';
 import { FineResponse } from '@features/fines/models/fine.model';
 import { BookDetailModalComponent } from '@shared/components/book-detail-modal/book-detail-modal.component';
 import { ToastService } from '@shared/services/toast.service';
+import { ConfirmService } from '@shared/services/confirm.service';
 import { BooksResponse } from '@shared/models/book.model';
 
 
@@ -34,6 +35,7 @@ export class ProfileComponent implements OnInit {
   private authService = inject(AuthService);
   private router = inject(Router);
   private toastService = inject(ToastService);
+  private confirmService = inject(ConfirmService);
 
   // Profile data state
   protected profile = signal<Member | null>(null);
@@ -98,7 +100,7 @@ export class ProfileComponent implements OnInit {
         // Fetch borrowings
         this.borrowingService.getBorrowingsByMemberId(member.id).subscribe({
           next: (borrowList) => {
-            this.borrowings.set(borrowList);
+            this.borrowings.set(borrowList.sort((a, b) => b.id - a.id));
             this.checkLoadingComplete();
           },
           error: (err) => {
@@ -255,24 +257,26 @@ export class ProfileComponent implements OnInit {
   protected renewBorrowing(b: BorrowingResponse): void {
     this.borrowingService.renewBorrowing(b.id).subscribe({
       next: () => {
+        this.toastService.success('Gia hạn mượn sách thành công!');
         this.loadProfileAndHistory();
       },
       error: (err) => {
         console.error('Lỗi khi gia hạn mượn sách:', err);
-        alert('Không thể gia hạn lúc này. Lỗi: ' + (err?.error?.message || 'Không xác định'));
+        this.toastService.error('Không thể gia hạn lúc này. Lỗi: ' + (err?.error?.message || 'Không xác định'));
       }
     });
   }
 
-  protected cancelOnlineRequest(id: number): void {
-    if (confirm('Bạn có chắc chắn muốn hủy yêu cầu mượn sách này?')) {
+  protected async cancelOnlineRequest(id: number): Promise<void> {
+    if (await this.confirmService.confirm({ title: 'Hủy Yêu Cầu', message: 'Bạn có chắc chắn muốn hủy yêu cầu mượn sách này?' })) {
       this.borrowingRequestService.cancelRequest(id).subscribe({
         next: () => {
+          this.toastService.success('Đã hủy yêu cầu mượn sách thành công!');
           this.loadProfileAndHistory();
         },
         error: (err) => {
           console.error('Lỗi khi hủy yêu cầu mượn:', err);
-          alert('Không thể hủy yêu cầu lúc này. Lỗi: ' + (err?.error?.message || 'Không xác định'));
+          this.toastService.error('Không thể hủy yêu cầu lúc này. Lỗi: ' + (err?.error?.message || 'Không xác định'));
         }
       });
     }
@@ -296,15 +300,16 @@ export class ProfileComponent implements OnInit {
     }
   }
 
-  protected cancelReservation(id: number): void {
-    if (confirm('Bạn có chắc chắn muốn hủy đặt chỗ này? Nếu có sách đang giữ, sách sẽ được nhường cho người tiếp theo.')) {
+  protected async cancelReservation(id: number): Promise<void> {
+    if (await this.confirmService.confirm({ title: 'Hủy Đặt Chỗ', message: 'Bạn có chắc chắn muốn hủy đặt chỗ này? Nếu có sách đang giữ, sách sẽ được nhường cho người tiếp theo.' })) {
       this.reservationService.cancelReservation(id).subscribe({
         next: () => {
+          this.toastService.success('Đã hủy đặt chỗ thành công!');
           this.loadProfileAndHistory(); // Reload để cập nhật
         },
         error: (err) => {
           console.error('Lỗi khi hủy đặt chỗ:', err);
-          alert('Không thể hủy đặt chỗ lúc này. Lỗi: ' + (err?.error?.message || 'Không xác định'));
+          this.toastService.error('Không thể hủy đặt chỗ lúc này. Lỗi: ' + (err?.error?.message || 'Không xác định'));
         }
       });
     }
@@ -312,8 +317,32 @@ export class ProfileComponent implements OnInit {
 
   protected onUpdateProfile(): void {
     const data = this.editForm();
-    if (!data.name || !data.email) {
-      this.updateError.set('Họ tên và Email là bắt buộc!');
+    if (!data.name?.trim()) {
+      this.updateError.set('Họ và tên không được để trống');
+      return;
+    }
+    if (!data.email?.trim()) {
+      this.updateError.set('Email không được để trống');
+      return;
+    }
+    if (data.name.trim().length > 100) {
+      this.updateError.set('Họ tên không được vượt quá 100 ký tự');
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    if (!emailRegex.test(data.email.trim())) {
+      this.updateError.set('Định dạng Email không hợp lệ');
+      return;
+    }
+    if (data.phone?.trim()) {
+      const phoneRegex = /^(0[3|5|7|8|9])+([0-9]{8})$/;
+      if (!phoneRegex.test(data.phone.trim())) {
+        this.updateError.set('Số điện thoại không đúng định dạng VN (VD: 0912345678)');
+        return;
+      }
+    }
+    if (data.address?.trim() && data.address.trim().length > 255) {
+      this.updateError.set('Địa chỉ không được vượt quá 255 ký tự');
       return;
     }
 
@@ -344,8 +373,20 @@ export class ProfileComponent implements OnInit {
 
   protected onChangePassword(): void {
     const data = this.passwordForm();
-    if (!data.oldPassword || !data.newPassword || !data.confirmPassword) {
-      this.passwordError.set('Vui lòng nhập đầy đủ thông tin!');
+    if (!data.oldPassword) {
+      this.passwordError.set('Mật khẩu cũ không được để trống');
+      return;
+    }
+    if (!data.newPassword) {
+      this.passwordError.set('Mật khẩu mới không được để trống');
+      return;
+    }
+    if (!data.confirmPassword) {
+      this.passwordError.set('Vui lòng xác nhận mật khẩu mới!');
+      return;
+    }
+    if (data.newPassword.length < 6) {
+      this.passwordError.set('Mật khẩu mới phải có ít nhất 6 ký tự');
       return;
     }
     if (data.newPassword !== data.confirmPassword) {

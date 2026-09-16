@@ -5,10 +5,11 @@ import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 
-import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Configuration
 public class RabbitMQConfig {
@@ -86,7 +87,7 @@ public class RabbitMQConfig {
 
     // Chuyển đổi dữ liệu Java Object sang định dạng JSON để truyền qua mạng
     @Bean
-    public MessageConverter jsonMessageConverter(tools.jackson.databind.json.JsonMapper jsonMapper) {
-        return new JacksonJsonMessageConverter(jsonMapper);
+    public MessageConverter jsonMessageConverter() {
+        return new Jackson2JsonMessageConverter(new ObjectMapper());
     }
 }

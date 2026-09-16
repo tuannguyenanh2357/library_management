@@ -80,8 +80,7 @@ public class Borrowing {
 
     // kiểm tra xem sách đã được trả trễ hay không
     public boolean wasReturnedLate() {
-        return returnDate != null
-                && returnDate.isAfter(dueDate);
+        return returnDate != null && returnDate.isAfter(dueDate);
     }
 
     // số ngày trả trễ
@@ -89,7 +88,6 @@ public class Borrowing {
         if (!wasReturnedLate()) {
             return 0;
         }
-
         return ChronoUnit.DAYS.between(dueDate, returnDate);
     }
 

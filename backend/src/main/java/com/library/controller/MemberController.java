@@ -28,20 +28,20 @@ public class MemberController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<List<MemberResponse>> getAllMembers() {
         return ResponseEntity.ok(memberService.getAllMembers());
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<MemberResponse> createMember(@Valid @RequestBody MemberCreationRequest request) {
         MemberResponse created = memberService.createMember(request);
         return ResponseEntity.ok(created);
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<MemberResponse> updateMember(@PathVariable Long id,
             @Valid @RequestBody MemberUpdateRequest request) {
         MemberResponse updated = memberService.updateMember(id, request);
@@ -70,15 +70,14 @@ public class MemberController {
     }
 
     @PutMapping("/me/password")
-    public ResponseEntity<MessageResponse> changePassword(
-            @Valid @RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<MessageResponse> changePassword( @Valid @RequestBody ChangePasswordRequest request) {
         String username = SecurityUtils.getCurrentUsername();
         memberService.changePassword(username, request);
         return ResponseEntity.ok(MessageResponse.of("Đổi mật khẩu thành công"));
     }
 
     @GetMapping("/unpaid-fines")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('LIBRARIAN')")
+    @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
     public ResponseEntity<List<UnpaidMemberProjection>> getMembersWithUnpaidFines() {
         return ResponseEntity.ok(memberService.getMembersWithUnpaidFines());
     }

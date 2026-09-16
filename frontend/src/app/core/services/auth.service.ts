@@ -1,14 +1,14 @@
-import { Injectable, inject, signal, PLATFORM_ID } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { isPlatformBrowser } from '@angular/common';
-import { Observable, tap } from 'rxjs';
-import { AuthenticationRequest, AuthenticationResponse, RegisterRequest } from '../models/auth.model';
+import { Observable, tap, catchError, of } from 'rxjs';
+import { AuthenticationRequest, AuthenticationResponse, RegisterRequest, UserResponse } from '../models/auth.model';
 import { environment } from '../../../environments/environment';
 
 interface AuthState {
   username: string | null;
   role: string | null;
   memberId: number | null;
+  initialized: boolean;
 }
 
 @Injectable({
@@ -16,21 +16,39 @@ interface AuthState {
 })
 export class AuthService {
   private http = inject(HttpClient);
-  private platformId = inject(PLATFORM_ID);
   private apiUrl = `${environment.apiUrl}/auth`;
 
-  private state = signal<AuthState>(this.readStateFromStorage());
+  private state = signal<AuthState>({
+    username: null,
+    role: null,
+    memberId: null,
+    initialized: false
+  });
 
-  private readStateFromStorage(): AuthState {
-    if (isPlatformBrowser(this.platformId)) {
-      const memberId = localStorage.getItem('auth_memberId');
-      return {
-        username: localStorage.getItem('auth_username'),
-        role: localStorage.getItem('auth_role'),
-        memberId: memberId ? parseInt(memberId, 10) : null
-      };
-    }
-    return { username: null, role: null, memberId: null };
+  readonly currentUser = computed(() => this.state());
+  readonly isInitialized = computed(() => this.state().initialized);
+
+  // Khôi phục phiên làm việc từ Cookie bằng API /auth/me
+  fetchCurrentUser(): Observable<UserResponse | null> {
+    return this.http.get<UserResponse>(`${this.apiUrl}/me`, { withCredentials: true }).pipe(
+      tap({
+        next: (user) => {
+          this.state.set({
+            username: user.username,
+            role: user.role,
+            memberId: user.id,
+            initialized: true
+          });
+        },
+        error: () => {
+          this.clearUserDetails();
+        }
+      }),
+      catchError(() => {
+        this.clearUserDetails();
+        return of(null);
+      })
+    );
   }
 
   // đăng nhập /auth/login
@@ -49,23 +67,21 @@ export class AuthService {
     return this.http.post<any>(`${this.apiUrl}/register`, request);
   }
 
-  // quản lý thông tin phiên làm việc
   saveUserDetails(response: AuthenticationResponse): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('auth_username', response.username);
-      localStorage.setItem('auth_role', response.role);
-      localStorage.setItem('auth_memberId', response.memberId.toString());
-    }
-    this.state.set({ username: response.username, role: response.role, memberId: response.memberId });
+    this.state.set({
+      username: response.username,
+      role: response.role,
+      memberId: response.memberId,
+      initialized: true
+    });
   }
 
   clearUserDetails(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('auth_username');
-      localStorage.removeItem('auth_role');
-      localStorage.removeItem('auth_memberId');
-    }
-    this.state.set({ username: null, role: null, memberId: null });
+    this.state.set({ username: null, role: null, memberId: null, initialized: true });
+  }
+
+  setMemberId(memberId: number): void {
+    this.state.update(s => ({ ...s, memberId }));
   }
 
   isLoggedIn(): boolean {

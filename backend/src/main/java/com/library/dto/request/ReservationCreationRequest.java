@@ -11,9 +11,9 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ReservationCreationRequest {
-    @NotNull(message = "Member ID is required")
+    @NotNull(message = "ID thành viên không được để trống")
     Long memberId;
     
-    @NotNull(message = "Book ID is required")
+    @NotNull(message = "ID sách không được để trống")
     Long bookId;
 }

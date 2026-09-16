@@ -8,9 +8,10 @@ import com.library.dto.response.TopBookResponse;
 import com.library.entity.Book;
 import com.library.exception.AppException;
 import com.library.exception.ErrorCode;
-import com.library.exception.ResourceNotFoundException;
 import com.library.repository.BookRepository;
 import com.library.repository.BookCopyRepository;
+import com.library.repository.BorrowingRequestRepository;
+import com.library.repository.ReservationRepository;
 import com.library.mapper.BookMapper;
 import com.library.service.interfaces.BookService;
 import com.library.entity.enums.BookCopyStatus;
@@ -35,17 +36,12 @@ import java.util.stream.Collectors;
 public class BookServiceImpl implements BookService {
         BookRepository bookRepository;
         BookCopyRepository bookCopyRepository;
+        BorrowingRequestRepository borrowingRequestRepository;
+        ReservationRepository reservationRepository;
         BookMapper bookMapper;
 
-        BookResponse mapToResponse(Book book) {
-                BookResponse response = bookMapper.toBookResponse(book);
-                long available = bookCopyRepository.countByBookIdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
-                response.setAvailableCopiesCount(available);
-                return response;
-        }
-
         @Override
-        @Cacheable(value = "books", key = "{#id, #title, #author, #category, #publisher, #isbn, #page, #size}")
+  //      @Cacheable(value = "books", key = "{#id, #title, #author, #category, #publisher, #isbn, #page, #size}")
         public PageResponse<BookResponse> getAllBooks(Long id, String title, String author, String category,
                         String publisher, String isbn, int page, int size) {
                 Pageable pageable = PageRequest.of(page, size,
@@ -87,12 +83,19 @@ public class BookServiceImpl implements BookService {
         }
 
         @Override
-        @Cacheable(value = "topBooks")
+      //  @Cacheable(value = "topBooks")
         public List<TopBookResponse> getTop10MostBorrowedBooks() {
                 return bookRepository.getTop10MostBorrowedBooks().stream()
                                 .map(p -> new TopBookResponse(p.getBookId(), p.getTitle(), p.getAuthor(),
                                                 p.getCategory(), p.getImageUrl(), p.getBorrowCount()))
                                 .collect(Collectors.toList());
+        }
+
+        BookResponse mapToResponse(Book book) {
+                BookResponse response = bookMapper.toBookResponse(book);
+                long available = bookCopyRepository.countByBookIdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
+                response.setAvailableCopiesCount(available);
+                return response;
         }
 
         @Override
@@ -107,7 +110,7 @@ public class BookServiceImpl implements BookService {
         @CacheEvict(value = { "books", "topBooks", "categories" }, allEntries = true)
         public BookResponse updateBook(Long bookId, UpdateBookRequest request) {
                 Book book = bookRepository.findById(bookId)
-                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
+                                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
 
                 bookMapper.updateBookFromRequest(request, book);
                 book = bookRepository.save(book);
@@ -119,7 +122,7 @@ public class BookServiceImpl implements BookService {
         @Cacheable(value = "books", key = "#bookId")
         public BookResponse getBookById(Long bookId) {
                 Book book = bookRepository.findById(bookId)
-                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
+                                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
                 return mapToResponse(book);
         }
 
@@ -128,11 +131,16 @@ public class BookServiceImpl implements BookService {
         @Transactional
         public void deleteBook(Long bookId) {
                 Book book = bookRepository.findById(bookId)
-                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.BOOK_NOT_FOUND));
+                                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
 
                 if (!book.getCopies().isEmpty()) {
                         throw new AppException(ErrorCode.INVALID_REQUEST,
                                         "Không thể xóa đầu sách này vì vẫn còn bản sao trong hệ thống. Vui lòng xóa hoặc xử lý các bản sao trước.");
+                }
+
+                if (borrowingRequestRepository.existsByBookId(bookId)) {
+                        throw new AppException(ErrorCode.INVALID_REQUEST,
+                                        "Không thể xóa sách này vì đã từng có lịch sử yêu cầu mượn!");
                 }
 
                 bookRepository.delete(book);
