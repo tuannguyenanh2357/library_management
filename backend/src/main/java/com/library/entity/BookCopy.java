@@ -5,18 +5,22 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@SuppressWarnings("unused")
 @Table(name = "book_copies")
 public class BookCopy {
     @Id
@@ -33,34 +37,22 @@ public class BookCopy {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    BookCopyStatus status;
+    @Builder.Default
+    BookCopyStatus status = BookCopyStatus.AVAILABLE;
 
     // String shelfLocation;
 
-    @OneToMany(mappedBy = "bookCopy", fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "bookCopy", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     @Builder.Default
     List<Borrowing> borrowings = new ArrayList<>();
 
+    @CreatedDate
     @Column(name = "created_at", updatable = false)
-    LocalDate createdAt;
+    LocalDateTime createdAt;
 
+    @LastModifiedDate
     @Column(name = "updated_at")
-    LocalDate updatedAt;
-
-    @PrePersist
-     protected void prePersist() {
-        this.createdAt = LocalDate.now();
-        this.updatedAt = LocalDate.now();
-
-        if(status == null) {
-            this.status = BookCopyStatus.AVAILABLE;
-        }
-    }
-
-    @PreUpdate
-    protected void preUpdate() {
-        this.updatedAt = LocalDate.now();
-    }
+    LocalDateTime updatedAt;
 
     // kiểm tra có thể mượn được không
     public boolean isAvailable() {

@@ -1,0 +1,53 @@
+.forbidden-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+  text-align: center;
+  background-color: #f8f9fa;
+  border-radius: 12px;
+  margin: 20px;
+}
+
+.forbidden-content {
+  padding: 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.error-code {
+  font-size: 120px;
+  font-weight: 800;
+  color: #dc3545;
+  margin: 0;
+  line-height: 1;
+}
+
+.error-title {
+  font-size: 24px;
+  color: #333;
+  margin: 20px 0 10px;
+}
+
+.error-desc {
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.btn-home {
+  display: inline-block;
+  padding: 12px 24px;
+  background-color: #0d6efd;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.btn-home:hover {
+  background-color: #0b5ed7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 10px rgba(13, 110, 253, 0.2);
+}

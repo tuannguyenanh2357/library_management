@@ -3,7 +3,7 @@ spring:
     name: library-management
 
   datasource:
-    url: jdbc:sqlserver://localhost:1433;databaseName=LibraryManagement;encrypt=true;trustServerCertificate=true
+    url: jdbc:sqlserver://localhost:1433;databaseName=LibraryManagement;encrypt=true;trustServerCertificate=true;sendStringParametersAsUnicode=true
     username: library_user
     password: 123456
     driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
@@ -11,8 +11,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+    defer-datasource-initialization: true  #hoãn việc chạy các file script SQL khởi tạo cho đến khi hibernate tạo xong schema
 
-    show-sql: true
+    show-sql: true  #in ra console các câu lệnh sql mà hibernate thực thi và định dạng cho dễ đọc(mục đích là debug)
 
     properties:
       hibernate:
@@ -20,11 +21,56 @@ spring:
 
     database-platform: org.hibernate.dialect.SQLServerDialect
 
+  sql:
+    init:
+      mode: always #luôn chạy các file script SQL khởi tạo, các file này nằm trong src/main/resources/sql
+      encoding: UTF-8
+
   rabbitmq:
     host: localhost
     port: 5672
     username: guest
     password: guest
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000  
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: tuannguyenanh2357@gmail.com
+    password: uaglwnmfcxzfogep
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 server:
   port: 8080
+
+jwt:
+  signerKey: "1234567890123456789012345678901234567890123456789012345678901234"
+
+app:
+  report:
+    top-n: 5
+  library:
+    fine:
+      default-daily-amount: 5000
+      default-replacement-fee: 200000
+    borrowing:
+      max-renewals: 1
+      renewal-extension-days: 7
+      default-days: 14
+      max-days: 30
+
+

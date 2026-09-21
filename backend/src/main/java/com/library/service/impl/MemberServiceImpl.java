@@ -1,0 +1,197 @@
+package com.library.service.impl;
+
+import com.library.dto.response.MemberSummaryProjection;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
+
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.AccessLevel;
+
+import java.util.List;
+import java.util.stream.Collectors;
+import com.library.security.SecurityUtils;
+import com.library.service.interfaces.MemberService;
+import com.library.repository.MemberRepository;
+import com.library.mapper.MemberMapper;
+
+import com.library.dto.response.MemberResponse;
+import com.library.dto.response.UnpaidMemberProjection;
+import com.library.dto.request.MemberCreationRequest;
+import com.library.dto.request.MemberUpdateRequest;
+
+import com.library.entity.Member;
+import com.library.entity.enums.MemberRole;
+import com.library.repository.BorrowingRepository;
+import com.library.repository.FineRepository;
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
+import com.library.dto.request.MyProfileUpdateRequest;
+import com.library.dto.request.ChangePasswordRequest;
+
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class MemberServiceImpl implements MemberService {
+    MemberRepository memberRepository;
+    BorrowingRepository borrowingRepository;
+    FineRepository fineRepository;
+    MemberMapper memberMapper;
+    PasswordEncoder passwordEncoder;
+
+    @Override
+    public List<MemberSummaryProjection> getAllMembers() {
+        // Nếu là thủ thư và không phải ADMIN -> Lọc danh sách chỉ lấy MEMBER
+        if (!SecurityUtils.isAdmin() && SecurityUtils.isLibrarian()) {
+            return memberRepository.findProjectedByRoleOrderByIdDesc(MemberRole.MEMBER);
+        }
+
+        // Nếu là ADMIN -> Lấy tất cả
+        return memberRepository.findProjectedByOrderByIdDesc();
+    }
+
+    @Override
+    public MemberResponse getMemberById(Long memberID) {
+        return memberMapper.toMemberResponse(getMemberByIdOrThrow(memberID));
+    }
+
+    @Override
+    public MemberResponse createMember(MemberCreationRequest request) {
+        if (memberRepository.existsByUsername(request.getUsername())) {
+            throw new AppException(ErrorCode.USER_EXISTED);
+        }
+        if (memberRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
+        }
+        if (memberRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_EXISTED);
+        }
+
+        Member member = memberMapper.toMember(request);
+        member.setPassword(passwordEncoder.encode(member.getPassword()));
+        member = memberRepository.save(member);
+        return memberMapper.toMemberResponse(member);
+    }
+
+    @Override
+    public MemberResponse updateMember(Long memberId, MemberUpdateRequest request) {
+        Member member = getMemberByIdOrThrow(memberId);
+
+        if (!SecurityUtils.isAdmin() && SecurityUtils.isLibrarian() && member.getRole() != MemberRole.MEMBER) {
+            throw new AppException(ErrorCode.UNAUTHORIZED,
+                    "Thủ thư chỉ có quyền cập nhật thông tin tài khoản Độc giả (MEMBER).");
+        }
+
+        if (request.getUsername() != null && !request.getUsername().equals(member.getUsername())) {
+            throw new AppException(ErrorCode.INVALID_REQUEST, "Tên đăng nhập không được phép thay đổi.");
+        }
+        if (!request.getEmail().equals(member.getEmail())
+                && memberRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
+        }
+        if (!request.getPhone().equals(member.getPhone())
+                && memberRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_EXISTED);
+        }
+
+        String newPassword = request.getPassword();
+        memberMapper.updateMemberFromRequest(request, member);
+        if (newPassword != null && !newPassword.isBlank()) {
+            member.setPassword(passwordEncoder.encode(newPassword));
+        }
+
+        member = memberRepository.save(member);
+        return memberMapper.toMemberResponse(member);
+    }
+
+    @Override
+    @Transactional
+    public void deleteMember(Long memberId) {
+        Member member = getMemberByIdOrThrow(memberId);
+
+        if (member.getRole() == MemberRole.ADMIN) {
+            throw new AppException(ErrorCode.CANNOT_DELETE_ADMIN);
+        }
+
+        if (!SecurityUtils.isAdmin()) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Chỉ ADMIN mới có quyền xóa tài khoản.");
+        }
+
+        if (member.hasBorrowedBooks()) {
+            throw new AppException(ErrorCode.CANNOT_DELETE_MEMBER_WITH_BOOKS);
+        }
+
+        // Kiểm tra nếu độc giả đã từng có lịch sử mượn trả hoặc phiếu phạt
+        boolean hasBorrowingHistory = !borrowingRepository.findByMemberId(memberId).isEmpty();
+        boolean hasFineHistory = !fineRepository.findProjectedByMemberId(memberId).isEmpty();
+        if (hasBorrowingHistory || hasFineHistory) {
+            throw new AppException(ErrorCode.CANNOT_DELETE_MEMBER_WITH_HISTORY);
+        }
+
+        memberRepository.delete(member);
+    }
+
+    @Override
+    public MemberResponse getMemberByUsername(String username) {
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(
+                        () -> new AppException(ErrorCode.MEMBER_NOT_FOUND,
+                                "Không tìm thấy thành viên với tên người dùng: " + username));
+        return memberMapper.toMemberResponse(member);
+    }
+
+    @Override
+    public MemberResponse updateMyProfile(String username, MyProfileUpdateRequest request) {
+        Member member = getMemberByUsernameOrThrow(username);
+
+        if (request.getEmail() != null && !request.getEmail().equals(member.getEmail())
+                && memberRepository.existsByEmail(request.getEmail())) {
+            throw new AppException(ErrorCode.EMAIL_EXISTED);
+        }
+        if (request.getPhone() != null && !request.getPhone().equals(member.getPhone())
+                && memberRepository.existsByPhone(request.getPhone())) {
+            throw new AppException(ErrorCode.PHONE_EXISTED);
+        }
+
+        if (request.getName() != null)
+            member.setName(request.getName());
+        if (request.getEmail() != null)
+            member.setEmail(request.getEmail());
+        if (request.getPhone() != null)
+            member.setPhone(request.getPhone());
+        if (request.getAddress() != null)
+            member.setAddress(request.getAddress());
+
+        member = memberRepository.save(member);
+        return memberMapper.toMemberResponse(member);
+    }
+
+    @Override
+    public void changePassword(String username, ChangePasswordRequest request) {
+        Member member = getMemberByUsernameOrThrow(username);
+
+        if (!passwordEncoder.matches(request.getOldPassword(), member.getPassword())) {
+            throw new AppException(ErrorCode.INVALID_PASSWORD);
+        }
+
+        member.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        memberRepository.save(member);
+    }
+
+    @Override
+    public List<UnpaidMemberProjection> getMembersWithUnpaidFines() {
+        return memberRepository.getMembersWithUnpaidFines();
+    }
+
+    private Member getMemberByIdOrThrow(Long memberId) {
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy độc giả"));
+    }
+
+    private Member getMemberByUsernameOrThrow(String username) {
+        return memberRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy độc giả"));
+    }
+
+}

@@ -1,0 +1,200 @@
+package com.library.service.impl;
+
+import com.library.dto.request.ReservationCreationRequest;
+import com.library.dto.response.ReservationResponse;
+import com.library.entity.Book;
+import com.library.entity.BookCopy;
+import com.library.entity.Member;
+import com.library.entity.Reservation;
+import com.library.entity.enums.BookCopyStatus;
+import com.library.entity.enums.MemberRole;
+import com.library.entity.enums.ReservationStatus;
+import com.library.mapper.ReservationMapper;
+import com.library.repository.BookRepository;
+import com.library.repository.BookCopyRepository;
+import com.library.repository.BorrowingRepository;
+import com.library.repository.MemberRepository;
+import com.library.repository.ReservationRepository;
+import com.library.service.interfaces.ReservationService;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import com.library.exception.AppException;
+import com.library.exception.ErrorCode;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import com.library.config.RabbitMQConfig;
+import com.library.dto.event.ReservationFulfilledEvent;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+public class ReservationServiceImpl implements ReservationService {
+
+    ReservationRepository reservationRepository;
+    MemberRepository memberRepository;
+    BookRepository bookRepository;
+    BookCopyRepository bookCopyRepository;
+    BorrowingRepository borrowingRepository;
+    ReservationMapper mapper;
+    RabbitTemplate rabbitTemplate;
+
+    @Override
+    @Transactional
+    public ReservationResponse createReservation(ReservationCreationRequest request) {
+        Member member = memberRepository.findById(request.getMemberId())
+                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy độc giả"));
+
+        Book book = bookRepository.findById(request.getBookId())
+                .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_FOUND));
+
+        // Kiểm tra xem độc giả đã có đặt chỗ đang hoạt động cho sách này chưa
+        boolean exists = reservationRepository.existsByMemberIdAndBookIdAndStatusIn(
+                member.getId(), book.getId(), Arrays.asList(ReservationStatus.PENDING, ReservationStatus.FULFILLED));
+
+        if (exists) {
+            throw new AppException(ErrorCode.RESERVATION_FAILED, "Bạn đã đặt trước cuốn sách này rồi.");
+        }
+
+        // Kiểm tra xem có bản sao nào khả dụng không
+        long availableCount = bookCopyRepository.countByBookIdAndStatus(book.getId(), BookCopyStatus.AVAILABLE);
+        if (availableCount > 0) {
+            throw new AppException(ErrorCode.RESERVATION_FAILED,
+                    "Sách này vẫn còn bản sao sẵn sàng. Vui lòng mượn trực tiếp thay vì đặt trước.");
+        }
+
+        Reservation reservation = Reservation.builder()
+                .member(member)
+                .book(book)
+                .status(ReservationStatus.PENDING)
+                .build();
+
+        Reservation saved = reservationRepository.save(reservation);
+        ReservationResponse response = mapper.toResponse(saved);
+        response.setExpectedAvailableDate(borrowingRepository.findEarliestDueDateByBookId(book.getId()));
+        return response;
+    }
+
+    @Override
+    public List<ReservationResponse> getMyReservations(String username) {
+        if (!memberRepository.existsByUsername(username)) {
+            throw new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy thành viên");
+        }
+        return reservationRepository.findProjectedByMemberUsername(username);
+    }
+
+    @Override
+    public List<ReservationResponse> getPendingReservationsForBook(Long bookId) {
+        return reservationRepository.findProjectedByBookIdAndStatus(bookId, ReservationStatus.PENDING);
+    }
+
+    @Override
+    public List<ReservationResponse> getAllReservations() {
+        return reservationRepository.findProjectedAll();
+    }
+
+    @Override
+    @Transactional
+    public void cancelReservation(Long reservationId, String username) {
+        Reservation reservation = reservationRepository.findById(reservationId)
+                .orElseThrow(() -> new AppException(ErrorCode.RESERVATION_NOT_FOUND,
+                        "Không tìm thấy thông tin đặt trước"));
+
+        // Chỉ người sở hữu hoặc admin mới được hủy. Chúng ta đơn giản hóa bằng cách chỉ
+        // kiểm tra người sở hữu nếu đó không phải là API của admin.
+        Member member = memberRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy người dùng"));
+
+        if (!reservation.getMember().getId().equals(member.getId())
+                && member.getRole() != MemberRole.ADMIN
+                && member.getRole() != MemberRole.LIBRARIAN) {
+            throw new AppException(ErrorCode.UNAUTHORIZED, "Bạn không có quyền hủy đặt chỗ này");
+        }
+
+        if (reservation.getStatus() == ReservationStatus.FULFILLED) {
+            // Sách đã được giữ nếu hủy thì sách phải về AVAILABLE và chuyển cho người tiếp
+            // theo
+            BookCopy copy = reservation.getFulfilledCopy();
+            reservation.setStatus(ReservationStatus.CANCELLED);
+            reservationRepository.save(reservation);
+
+            if (copy != null) {
+                // Sách này không còn bị giữ bởi người này nữa
+                fulfillNextReservationIfAny(reservation.getBook().getId(), copy);
+            }
+        } else if (reservation.getStatus() == ReservationStatus.PENDING) {
+            reservation.setStatus(ReservationStatus.CANCELLED);
+            reservationRepository.save(reservation);
+        } else {
+            throw new AppException(ErrorCode.RESERVATION_FAILED, "Không thể hủy ở trạng thái hiện tại");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void fulfillNextReservationIfAny(Long bookId, BookCopy returnedCopy) {
+        // 1. Tìm người đặt chỗ SỚM NHẤT đang ở trạng thái PENDING
+        Optional<Reservation> nextReservation = reservationRepository
+                .findFirstByBookIdAndStatusOrderByRequestDateAsc(bookId, ReservationStatus.PENDING);
+
+        if (nextReservation.isPresent()) {
+            Reservation res = nextReservation.get();
+            res.setStatus(ReservationStatus.FULFILLED); // đổi sang trạng thái đã có sách
+            res.setFulfilledCopy(returnedCopy);
+            res.setFulfilledDate(LocalDateTime.now());
+            res.setExpiryDate(LocalDateTime.now().plusHours(48));
+
+            returnedCopy.setStatus(BookCopyStatus.RESERVED); // giữ sách lại
+
+            reservationRepository.save(res);
+            bookCopyRepository.save(returnedCopy);
+
+            // Gửi event qua RabbitMQ
+            try {
+                ReservationFulfilledEvent event = ReservationFulfilledEvent.builder()
+                        .memberEmail(res.getMember().getEmail())
+                        .memberName(res.getMember().getName())
+                        .bookTitle(res.getBook().getTitle())
+                        .expiryDate(res.getExpiryDate())
+                        .build();
+                rabbitTemplate.convertAndSend(RabbitMQConfig.RESERVATION_EXCHANGE,
+                        RabbitMQConfig.RESERVATION_FULFILLED_ROUTING_KEY, event);
+                log.info("[RABBITMQ PRODUCER] Đã gửi ReservationFulfilledEvent cho reservation ID: {}", res.getId());
+            } catch (Exception e) {
+                log.error("Lỗi khi gửi sự kiện đặt chỗ qua RabbitMQ: {}", e.getMessage());
+            }
+
+        } else {
+            returnedCopy.setStatus(BookCopyStatus.AVAILABLE);
+            bookCopyRepository.save(returnedCopy);
+        }
+    }
+
+    @Override
+    public boolean hasPendingReservations(Long bookId) {
+        return !reservationRepository
+                .findByBookIdAndStatusOrderByRequestDateAsc(bookId, ReservationStatus.PENDING)
+                .isEmpty();
+    }
+
+    @Override
+    @Transactional
+    public void completeReservationByCopyId(Long copyId) {
+        reservationRepository.findFirstByFulfilledCopyIdAndStatus(copyId, ReservationStatus.FULFILLED)
+                .ifPresent(r -> {
+                    r.setStatus(ReservationStatus.COMPLETED);
+                    reservationRepository.save(r);
+                });
+    }
+}

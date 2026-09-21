@@ -1,0 +1,32 @@
+@if (confirmService.config(); as config) {
+  <div class="modal-backdrop">
+    <div class="modal-container">
+      <div class="modal-header">
+        <h3>{{ config.title }}</h3>
+        <button class="btn-close" (click)="confirmService.respond(false)">
+          ×
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <p>{{ config.message }}</p>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          class="btn btn-secondary"
+          (click)="confirmService.respond(false)"
+        >
+          {{ config.cancelText }}
+        </button>
+
+        <button
+          class="btn btn-primary"
+          (click)="confirmService.respond(true)"
+        >
+          {{ config.confirmText }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
