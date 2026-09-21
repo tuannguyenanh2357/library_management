@@ -1,5 +1,7 @@
 package com.library.dto.response;
 
+import java.time.LocalDate;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -18,10 +20,10 @@ public class BorrowingResponse {
     Long bookId;
     String barCode;
     String bookTitle;
-    String borrowDate;
-    String dueDate;
-    String returnDate;
-    String bookCopy;
+    LocalDate borrowDate;
+    LocalDate dueDate;
+    LocalDate returnDate;
+    Long bookCopy;
     Integer renewalCount;
 
 }

@@ -44,21 +44,7 @@ public class BookCopyServiceImpl implements BookCopyService {
 
     @Override
     public List<BookCopyResponse> getAllBookCopies() {
-        List<BookCopy> copies = bookCopyRepository.findAllWithBook();
-
-        List<Borrowing> activeBorrowings = borrowingRepository.findByStatus(BorrowingStatus.ACTIVE);
-        Map<Long, LocalDate> copyIdToDueDate = activeBorrowings.stream()
-                .filter(b -> b.getBookCopy() != null)
-                .collect(Collectors.toMap(
-                        b -> b.getBookCopy().getId(), Borrowing::getDueDate, (existing, replacement) -> existing));
-
-        return copies.stream()
-                .map(copy -> {
-                    BookCopyResponse response = bookCopyMapper.toResponse(copy);
-                    response.setDueDate(copyIdToDueDate.get(copy.getId()));
-                    return response;
-                })
-                .collect(Collectors.toList());
+        return bookCopyRepository.findAllProjectedResponses();
     }
 
     @Override

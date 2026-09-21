@@ -31,21 +31,17 @@ public class FineServiceImpl implements FineService {
 
     @Override
     public List<FineResponse> getAll() {
-        return repository.findAllWithRelations().stream().map(mapper::toResponse).toList();
+        return repository.findProjectedAll();
     }
 
     @Override
     public List<FineResponse> getByMemberId(Long memberId) {
-        return repository.findByMemberIdWithRelations(memberId).stream()
-                .map(mapper::toResponse)
-                .toList();
+        return repository.findProjectedByMemberId(memberId);
     }
 
     @Override
     public List<FineResponse> getUnpaidFines() {
-        return repository.findByStatusWithRelations(FineStatus.UNPAID).stream()
-                .map(mapper::toResponse)
-                .toList();
+        return repository.findProjectedByStatus(FineStatus.UNPAID);
     }
 
     @Override

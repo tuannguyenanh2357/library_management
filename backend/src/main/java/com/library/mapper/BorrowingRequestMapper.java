@@ -14,7 +14,7 @@ public class BorrowingRequestMapper {
                 .memberName(request.getMember().getName())
                 .bookId(request.getBook().getId())
                 .bookTitle(request.getBook().getTitle())
-                .status(request.getStatus().name())
+                .status(request.getStatus())
                 .requestDate(request.getRequestDate())
                 .expectedDueDate(request.getExpectedDueDate())
                 .processedDate(request.getProcessedDate())

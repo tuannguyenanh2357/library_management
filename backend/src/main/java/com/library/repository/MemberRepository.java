@@ -1,7 +1,9 @@
 package com.library.repository;
 
 import com.library.entity.Member;
+import com.library.dto.response.MemberSummaryProjection;
 import com.library.dto.response.UnpaidMemberProjection;
+import com.library.entity.enums.MemberRole;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,8 +11,11 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
 
-    // Lấy danh sách thành viên sắp xếp theo ID giảm dần (người mới tạo lên đầu)
-    List<Member> findAllByOrderByIdDesc();
+    // Lấy danh sách (Projection) cho tất cả member
+    List<MemberSummaryProjection> findProjectedByOrderByIdDesc();
+
+    // Lấy danh sách (Projection) lọc theo Role
+    List<MemberSummaryProjection> findProjectedByRoleOrderByIdDesc(MemberRole role);
 
     // Kiểm tra xem email đã được đăng ký hay chưa
     boolean existsByEmail(String email);

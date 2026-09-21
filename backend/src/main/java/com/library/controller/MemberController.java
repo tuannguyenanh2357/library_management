@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import com.library.security.SecurityUtils;
 import com.library.service.interfaces.MemberService;
 import com.library.dto.response.MemberResponse;
+import com.library.dto.response.MemberSummaryProjection;
 import com.library.dto.response.MessageResponse;
 import com.library.dto.response.UnpaidMemberProjection;
 import com.library.dto.request.MemberCreationRequest;
@@ -29,7 +30,7 @@ public class MemberController {
 
     @GetMapping
     @PreAuthorize("hasAnyRole('ADMIN', 'LIBRARIAN')")
-    public ResponseEntity<List<MemberResponse>> getAllMembers() {
+    public ResponseEntity<List<MemberSummaryProjection>> getAllMembers() {
         return ResponseEntity.ok(memberService.getAllMembers());
     }
 

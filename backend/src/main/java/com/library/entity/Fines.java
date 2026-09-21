@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.hibernate.annotations.Nationalized;
+import com.library.dto.response.report.WeeklyRevenueReportResponse.TopOffenderEntry;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,7 +18,21 @@ import java.time.LocalDate;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Table(name = "fines")
-
+@SqlResultSetMapping (
+    name = "TopOffendersMapping",
+    classes = @ConstructorResult (
+        targetClass = TopOffenderEntry.class,
+        columns = {
+            @ColumnResult(name = "member_id", type = Long.class),
+            @ColumnResult(name = "member_name", type = String.class),
+            @ColumnResult(name = "email", type = String.class),
+            @ColumnResult(name = "fine_count", type = Integer.class),
+            @ColumnResult(name = "total_amount", type = BigDecimal.class),
+            @ColumnResult(name = "paid_amount", type = BigDecimal.class),
+            @ColumnResult(name = "unpaid_amount", type = BigDecimal.class)
+        }
+    )
+)
 public class Fines {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

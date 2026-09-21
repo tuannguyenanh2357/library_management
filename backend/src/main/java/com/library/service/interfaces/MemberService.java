@@ -5,6 +5,7 @@ import com.library.dto.request.ChangePasswordRequest;
 import com.library.dto.request.MemberCreationRequest;
 import com.library.dto.request.MemberUpdateRequest;
 import com.library.dto.request.MyProfileUpdateRequest;
+import com.library.dto.response.MemberSummaryProjection;
 import com.library.dto.response.UnpaidMemberProjection;
 import java.util.List;
 
@@ -15,7 +16,7 @@ public interface MemberService {
 
     MemberResponse getMemberById(Long memberId);
 
-    List<MemberResponse> getAllMembers();
+    List<MemberSummaryProjection> getAllMembers();
 
     void deleteMember(Long memberId);
 

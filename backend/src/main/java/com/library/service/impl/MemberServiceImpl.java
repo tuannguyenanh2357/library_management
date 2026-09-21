@@ -1,5 +1,6 @@
 package com.library.service.impl;
 
+import com.library.dto.response.MemberSummaryProjection;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -40,19 +41,14 @@ public class MemberServiceImpl implements MemberService {
     PasswordEncoder passwordEncoder;
 
     @Override
-    public List<MemberResponse> getAllMembers() {
-        List<Member> members = memberRepository.findAllByOrderByIdDesc();
-
-        // Nếu là thử thư và không phải ADMIN Chỉ được xem danh sách Độc giả
+    public List<MemberSummaryProjection> getAllMembers() {
+        // Nếu là thủ thư và không phải ADMIN -> Lọc danh sách chỉ lấy MEMBER
         if (!SecurityUtils.isAdmin() && SecurityUtils.isLibrarian()) {
-            members = members.stream()
-                    .filter(m -> m.getRole() == MemberRole.MEMBER)
-                    .collect(Collectors.toList());
+            return memberRepository.findProjectedByRoleOrderByIdDesc(MemberRole.MEMBER);
         }
 
-        return members.stream()
-                .map(memberMapper::toMemberResponse)
-                .collect(Collectors.toList());
+        // Nếu là ADMIN -> Lấy tất cả
+        return memberRepository.findProjectedByOrderByIdDesc();
     }
 
     @Override
@@ -128,7 +124,7 @@ public class MemberServiceImpl implements MemberService {
 
         // Kiểm tra nếu độc giả đã từng có lịch sử mượn trả hoặc phiếu phạt
         boolean hasBorrowingHistory = !borrowingRepository.findByMemberId(memberId).isEmpty();
-        boolean hasFineHistory = !fineRepository.findByMemberIdWithRelations(memberId).isEmpty();
+        boolean hasFineHistory = !fineRepository.findProjectedByMemberId(memberId).isEmpty();
         if (hasBorrowingHistory || hasFineHistory) {
             throw new AppException(ErrorCode.CANNOT_DELETE_MEMBER_WITH_HISTORY);
         }

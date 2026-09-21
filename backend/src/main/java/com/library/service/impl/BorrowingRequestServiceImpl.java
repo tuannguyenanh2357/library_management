@@ -87,46 +87,25 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         // Lấy danh sách các Yêu cầu mượn sách đang chờ duyệt (PENDING)
         @Override
         public List<BorrowingRequestResponse> getPendingRequests() {
-                return requestRepository.findByStatusWithRelations(BorrowingRequestStatus.PENDING)
-                                .stream()
-                                .map(r -> mapper.toResponse(r,
-                                                bookCopyRepository.countByBookIdAndStatus(r.getBook().getId(),
-                                                                BookCopyStatus.AVAILABLE)))
-                                .collect(Collectors.toList());
+                return requestRepository.findProjectedByStatus(BorrowingRequestStatus.PENDING);
         }
 
         // Lấy danh sách các Yêu cầu mượn sách đã được duyệt - đang chờ độc giả đến lấy (APPROVED)
         @Override
         public List<BorrowingRequestResponse> getApprovedRequests() {
-                return requestRepository.findByStatusWithRelations(BorrowingRequestStatus.APPROVED)
-                                .stream()
-                                .map(r -> mapper.toResponse(r,
-                                                bookCopyRepository.countByBookIdAndStatus(r.getBook().getId(),
-                                                                BookCopyStatus.AVAILABLE)))
-                                .collect(Collectors.toList());
+                return requestRepository.findProjectedByStatus(BorrowingRequestStatus.APPROVED);
         }
 
         @Override
         public List<BorrowingRequestResponse> getHistoryRequests() {
-                return requestRepository.findHistoryWithRelations()
-                                .stream()
-                                .map(r -> mapper.toResponse(r,
-                                                bookCopyRepository.countByBookIdAndStatus(r.getBook().getId(),
-                                                                BookCopyStatus.AVAILABLE)))
-                                .collect(Collectors.toList());
+                return requestRepository.findProjectedHistory();
         }
 
         // member xem danh sách yêu cầu mượn sách
         @Override
         public List<BorrowingRequestResponse> getRequestsByMember(Long memberId) {
-                return requestRepository.findByMemberIdWithRelations(memberId)
-                                .stream()
-                                .map(r -> mapper.toResponse(r,
-                                                bookCopyRepository.countByBookIdAndStatus(r.getBook().getId(),
-                                                                BookCopyStatus.AVAILABLE)))
-                                .collect(Collectors.toList());
+                return requestRepository.findProjectedByMemberId(memberId);
         }
-
 
         @Override
         @Transactional
@@ -178,7 +157,7 @@ public class BorrowingRequestServiceImpl implements BorrowingRequestService {
         }
 
         /**
-         * Bước 2 - GIAO SÁCH: Độc giả đến thư viện lấy sách, Admin xác nhận giao.
+         * GIAO SÁCH: Độc giả đến thư viện lấy sách, Admin xác nhận giao.
          * Lúc này mới thực sự tạo Borrowing - ngày mượn tính từ hôm nay.
          */
         @Override

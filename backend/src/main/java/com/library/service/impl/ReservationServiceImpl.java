@@ -81,52 +81,27 @@ public class ReservationServiceImpl implements ReservationService {
                 .build();
 
         Reservation saved = reservationRepository.save(reservation);
-        return mapToResponsesWithExpectedDate(List.of(saved)).get(0);
+        ReservationResponse response = mapper.toResponse(saved);
+        response.setExpectedAvailableDate(borrowingRepository.findEarliestDueDateByBookId(book.getId()));
+        return response;
     }
 
     @Override
     public List<ReservationResponse> getMyReservations(String username) {
-        Member member = memberRepository.findByUsername(username)
-                .orElseThrow(() -> new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy thành viên"));
-
-        return mapToResponsesWithExpectedDate(
-                reservationRepository.findByMemberIdOrderByRequestDateDesc(member.getId()));
+        if (!memberRepository.existsByUsername(username)) {
+            throw new AppException(ErrorCode.MEMBER_NOT_FOUND, "Không tìm thấy thành viên");
+        }
+        return reservationRepository.findProjectedByMemberUsername(username);
     }
 
     @Override
     public List<ReservationResponse> getPendingReservationsForBook(Long bookId) {
-        return mapToResponsesWithExpectedDate(
-                reservationRepository.findByBookIdAndStatusOrderByRequestDateAsc(bookId, ReservationStatus.PENDING));
+        return reservationRepository.findProjectedByBookIdAndStatus(bookId, ReservationStatus.PENDING);
     }
 
     @Override
     public List<ReservationResponse> getAllReservations() {
-        return mapToResponsesWithExpectedDate(reservationRepository.findAllByOrderByRequestDateDesc());
-    }
-
-    // Gộp truy vấn ngày dự kiến có sách cho tất cả reservation PENDING trong một
-    // lần thay vì gọi lại DB cho từng phần tử (tránh N+1 query).
-    private List<ReservationResponse> mapToResponsesWithExpectedDate(List<Reservation> reservations) {
-        List<Long> pendingBookIds = reservations.stream()
-                .filter(r -> r.getStatus() == ReservationStatus.PENDING)
-                .map(r -> r.getBook().getId())
-                .distinct()
-                .collect(Collectors.toList());
-
-        Map<Long, LocalDate> earliestDueDateByBookId = pendingBookIds.isEmpty()
-                ? Map.of()
-                : borrowingRepository.findEarliestDueDatesByBookIds(pendingBookIds).stream()
-                        .collect(Collectors.toMap(row -> (Long) row[0], row -> (LocalDate) row[1]));
-
-        return reservations.stream()
-                .map(reservation -> {
-                    ReservationResponse response = mapper.toResponse(reservation);
-                    if (reservation.getStatus() == ReservationStatus.PENDING) {
-                        response.setExpectedAvailableDate(earliestDueDateByBookId.get(reservation.getBook().getId()));
-                    }
-                    return response;
-                })
-                .collect(Collectors.toList());
+        return reservationRepository.findProjectedAll();
     }
 
     @Override

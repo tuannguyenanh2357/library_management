@@ -16,20 +16,6 @@ public interface BookRepository extends JpaRepository<Book, Long> {
         // Kiểm tra ISBN đã tồn tại hay chưa.
         boolean existsByIsbn(String isbn);
 
-        // Tìm sách theo ISBN.
-        Optional<Book> findByIsbn(String isbn);
-
-        // Tìm sách theo tiêu đề.
-        Optional<Book> findByTitle(String title);
-
-        // Lấy danh sách sách của một tác giả.
-        List<Book> findByAuthor(String author);
-
-        // Lấy danh sách sách theo thể loại.
-        List<Book> findByCategory(String category);
-
-        // Tìm kiếm sách theo tiêu đề (không phân biệt hoa/thường).
-        List<Book> findByTitleContainingIgnoreCase(String title);
 
         // Gọi Stored Procedure để lấy Top 10 sách được mượn nhiều nhất.
         @Query(value = "EXEC dbo.GetTop10MostBorrowedBooks", nativeQuery = true)

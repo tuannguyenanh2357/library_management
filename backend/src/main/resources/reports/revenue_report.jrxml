@@ -13,6 +13,9 @@
     <property name="net.sf.jasperreports.default.pdf.encoding" value="Identity-H" />
     <property name="net.sf.jasperreports.default.pdf.embedded" value="true" />
 
+    <import value="java.time.format.DateTimeFormatter" />
+    <import value="java.util.Date" />
+
     <!-- =========================================
          STYLES
     ============================================ -->
@@ -107,7 +110,7 @@
 
             <!-- Ngày xuất báo cáo label -->
             <staticText>
-                <reportElement x="370" y="10" width="165" height="12" forecolor="#AAAAAA" />
+                <reportElement x="350" y="10" width="170" height="12" forecolor="#AAAAAA" />
                 <textElement textAlignment="Right">
                     <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
                         isPdfEmbedded="true" />
@@ -115,12 +118,12 @@
                 <text><![CDATA[Xuất báo cáo:]]></text>
             </staticText>
             <textField pattern="dd/MM/yyyy HH:mm">
-                <reportElement x="370" y="22" width="165" height="12" forecolor="#CCCCCC" />
+                <reportElement x="350" y="22" width="170" height="12" forecolor="#CCCCCC" />
                 <textElement textAlignment="Right">
                     <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
                         isPdfEmbedded="true" />
                 </textElement>
-                <textFieldExpression><![CDATA[new java.util.Date()]]></textFieldExpression>
+                <textFieldExpression><![CDATA[new Date()]]></textFieldExpression>
             </textField>
 
             <!-- Divider -->
@@ -151,20 +154,36 @@
 
             <!-- Số trang -->
             <staticText>
-                <reportElement x="400" y="70" width="50" height="12" forecolor="#999999" />
+                <reportElement x="385" y="70" width="50" height="12" forecolor="#999999" />
                 <textElement textAlignment="Right">
                     <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
                         isPdfEmbedded="true" />
                 </textElement>
                 <text><![CDATA[Trang:]]></text>
             </staticText>
-            <textField evaluationTime="Report">
-                <reportElement x="452" y="70" width="83" height="12" forecolor="#999999" />
+            <textField>
+                <reportElement x="440" y="70" width="35" height="12" forecolor="#999999" />
                 <textElement textAlignment="Right">
                     <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
                         isPdfEmbedded="true" />
                 </textElement>
-                <textFieldExpression><![CDATA[$V{PAGE_NUMBER} + " / "]]></textFieldExpression>
+                <textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
+            </textField>
+            <staticText>
+                <reportElement x="475" y="70" width="12" height="12" forecolor="#999999" />
+                <textElement textAlignment="Center">
+                    <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <text><![CDATA[/]]></text>
+            </staticText>
+            <textField evaluationTime="Report">
+                <reportElement x="487" y="70" width="33" height="12" forecolor="#999999" />
+                <textElement textAlignment="Left">
+                    <font size="7" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
+                        isPdfEmbedded="true" />
+                </textElement>
+                <textFieldExpression><![CDATA[$V{PAGE_NUMBER}]]></textFieldExpression>
             </textField>
 
             <!-- Divider dưới -->
@@ -300,32 +319,32 @@
                 </graphicElement>
             </rectangle>
             <staticText>
-                <reportElement x="5" y="16" width="80" height="16" forecolor="#FFFFFF" />
-                <textElement verticalAlignment="Middle">
+                <reportElement x="0" y="16" width="133" height="16" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Center">
                     <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
                         pdfEncoding="Identity-H" isPdfEmbedded="true" />
                 </textElement>
                 <text><![CDATA[Ngày]]></text>
             </staticText>
             <staticText>
-                <reportElement x="90" y="16" width="100" height="16" forecolor="#FFFFFF" />
-                <textElement verticalAlignment="Middle">
+                <reportElement x="133" y="16" width="133" height="16" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Center">
                     <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
                         pdfEncoding="Identity-H" isPdfEmbedded="true" />
                 </textElement>
                 <text><![CDATA[Thứ]]></text>
             </staticText>
             <staticText>
-                <reportElement x="200" y="16" width="170" height="16" forecolor="#FFFFFF" />
-                <textElement verticalAlignment="Middle" textAlignment="Right">
+                <reportElement x="266" y="16" width="134" height="16" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Center">
                     <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
                         pdfEncoding="Identity-H" isPdfEmbedded="true" />
                 </textElement>
                 <text><![CDATA[Số Tiền Thu Được (VND)]]></text>
             </staticText>
             <staticText>
-                <reportElement x="380" y="16" width="155" height="16" forecolor="#FFFFFF" />
-                <textElement verticalAlignment="Middle" textAlignment="Right">
+                <reportElement x="400" y="16" width="135" height="16" forecolor="#FFFFFF" />
+                <textElement verticalAlignment="Middle" textAlignment="Center">
                     <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
                         pdfEncoding="Identity-H" isPdfEmbedded="true" />
                 </textElement>
@@ -351,19 +370,19 @@
             </rectangle>
 
             <!-- Date -->
-            <textField pattern="dd/MM/yyyy">
-                <reportElement x="5" y="0" width="80" height="16" forecolor="#333333" />
-                <textElement verticalAlignment="Middle">
+            <textField>
+                <reportElement x="0" y="0" width="133" height="16" forecolor="#333333" />
+                <textElement verticalAlignment="Middle" textAlignment="Center">
                     <font size="8" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
                         isPdfEmbedded="true" />
                 </textElement>
-                <textFieldExpression><![CDATA[$F{date}]]></textFieldExpression>
+                <textFieldExpression><![CDATA[$F{date}.format(DateTimeFormatter.ofPattern("dd/MM/yyyy"))]]></textFieldExpression>
             </textField>
 
             <!-- Day name -->
             <textField>
-                <reportElement x="90" y="0" width="100" height="16" forecolor="#555555" />
-                <textElement verticalAlignment="Middle">
+                <reportElement x="133" y="0" width="133" height="16" forecolor="#555555" />
+                <textElement verticalAlignment="Middle" textAlignment="Center">
                     <font size="8" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
                         isPdfEmbedded="true" />
                 </textElement>
@@ -372,8 +391,8 @@
 
             <!-- Collected Amount -->
             <textField pattern="#,##0">
-                <reportElement x="200" y="0" width="170" height="16" forecolor="#1A1A1A" />
-                <textElement verticalAlignment="Middle" textAlignment="Right">
+                <reportElement x="266" y="0" width="134" height="16" forecolor="#1A1A1A" />
+                <textElement verticalAlignment="Middle" textAlignment="Center">
                     <font size="8" isBold="true" pdfFontName="fonts/Arial-Bold.ttf"
                         pdfEncoding="Identity-H" isPdfEmbedded="true" />
                 </textElement>
@@ -382,8 +401,8 @@
 
             <!-- Count -->
             <textField>
-                <reportElement x="380" y="0" width="155" height="16" forecolor="#555555" />
-                <textElement verticalAlignment="Middle" textAlignment="Right">
+                <reportElement x="400" y="0" width="135" height="16" forecolor="#555555" />
+                <textElement verticalAlignment="Middle" textAlignment="Center">
                     <font size="8" pdfFontName="fonts/Arial.ttf" pdfEncoding="Identity-H"
                         isPdfEmbedded="true" />
                 </textElement>

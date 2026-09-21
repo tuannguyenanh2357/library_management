@@ -240,37 +240,22 @@ public class BorrowingServiceImpl implements BorrowingService {
 
     @Override
     public List<BorrowingResponse> getAll() {
-
-        return borrowingRepository.findAllWithRelations()
-                .stream()
-                .map(borrowingMapper::toResponse)
-                .toList();
+        return borrowingRepository.findProjectedAll();
     }
 
     @Override
     public List<BorrowingResponse> getByMemberId(Long memberId) {
-
-        return borrowingRepository.findByMemberIdWithRelations(memberId)
-                .stream()
-                .map(borrowingMapper::toResponse)
-                .toList();
+        return borrowingRepository.findProjectedByMemberId(memberId);
     }
 
     @Override
     public List<BorrowingResponse> getOverdueBorrowings() {
-
-        return borrowingRepository.findOverdueBorrowings(LocalDate.now())
-                .stream()
-                .map(borrowingMapper::toResponse)
-                .toList();
+        return borrowingRepository.findProjectedOverdueBorrowings(LocalDate.now());
     }
 
     @Override
     public List<BorrowingResponse> getByCopyId(Long copyId) {
-        return borrowingRepository.findByBookCopyIdWithRelations(copyId)
-                .stream()
-                .map(borrowingMapper::toResponse)
-                .toList();
+        return borrowingRepository.findProjectedByBookCopyId(copyId);
     }
 
     @Override

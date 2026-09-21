@@ -1,5 +1,6 @@
 package com.library.repository;
 
+import com.library.dto.response.BookCopyResponse;
 import com.library.entity.BookCopy;
 import com.library.entity.enums.BookCopyStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,32 +19,21 @@ public interface BookCopyRepository extends JpaRepository<BookCopy, Long> {
     // Kiểm tra xem mã vạch đã tồn tại hay chưa.
     boolean existsByBarCode(String barCode);
 
-    // Lấy danh sách bản sao theo sách và tải luôn thông tin Book
-    @Query("SELECT bc FROM BookCopy bc JOIN FETCH bc.book WHERE bc.book.id = :bookId")
-    List<BookCopy> findByBook_Id(Long bookId);
-
-    // Lấy danh sách bản sao theo trạng thái và tải luôn thông tin Book.
-    @Query("SELECT bc FROM BookCopy bc JOIN FETCH bc.book WHERE bc.status = :status")
-    List<BookCopy> findByStatus(BookCopyStatus status);
 
     // Đếm số lượng bản sao của một đầu sách theo trạng thái.
     @Query("SELECT COUNT(bc) FROM BookCopy bc WHERE bc.book.id = :bookId AND bc.status = :status")
     long countByBookIdAndStatus(long bookId, BookCopyStatus status);
 
-    // Đếm số lượng bản sao theo từng đầu sách trong một danh sách
-    @Query("SELECT bc.book.id, COUNT(bc) FROM BookCopy bc " +
-            "WHERE bc.book.id IN :bookIds AND bc.status = :status GROUP BY bc.book.id")
-    List<Object[]> countByBookIdsAndStatus(List<Long> bookIds, BookCopyStatus status);
 
     // Khóa bản ghi ở mức ghi để đảm bảo chỉ một transaction
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<BookCopy> findFirstByBook_IdAndStatus(long bookId, BookCopyStatus status);
 
-    // Đếm tổng số bản sao của một đầu sách.
-    @Query("SELECT COUNT(bc) FROM BookCopy bc WHERE bc.book.id = :bookId")
-    long countByBook_Id(long bookId);
-
-    // Lấy tất cả bản sao và tải luôn thông tin Book (sắp xếp mới nhất lên đầu)
-    @Query("SELECT bc FROM BookCopy bc JOIN FETCH bc.book ORDER BY bc.id DESC")
-    List<BookCopy> findAllWithBook();
+    // Lấy tất cả bản sao dưới dạng Projection (DTO) kèm theo Hạn trả từ phiếu mượn ACTIVE
+    @Query("SELECT new com.library.dto.response.BookCopyResponse(" +
+           "bc.id, bc.barCode, bc.status, bc.book.author, bc.book.title, br.dueDate, bc.book.id) " +
+           "FROM BookCopy bc " +
+           "LEFT JOIN Borrowing br ON br.bookCopy = bc AND br.status = com.library.entity.enums.BorrowingStatus.ACTIVE " +
+           "ORDER BY bc.id DESC")
+    List<BookCopyResponse> findAllProjectedResponses();
 }

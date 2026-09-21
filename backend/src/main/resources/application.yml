@@ -11,9 +11,9 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
-    defer-datasource-initialization: true
+    defer-datasource-initialization: true  #hoãn việc chạy các file script SQL khởi tạo cho đến khi hibernate tạo xong schema
 
-    show-sql: true
+    show-sql: true  #in ra console các câu lệnh sql mà hibernate thực thi và định dạng cho dễ đọc(mục đích là debug)
 
     properties:
       hibernate:
@@ -23,7 +23,7 @@ spring:
 
   sql:
     init:
-      mode: always
+      mode: always #luôn chạy các file script SQL khởi tạo, các file này nằm trong src/main/resources/sql
       encoding: UTF-8
 
   rabbitmq:
@@ -61,6 +61,8 @@ jwt:
   signerKey: "1234567890123456789012345678901234567890123456789012345678901234"
 
 app:
+  report:
+    top-n: 5
   library:
     fine:
       default-daily-amount: 5000
@@ -70,11 +72,5 @@ app:
       renewal-extension-days: 7
       default-days: 14
       max-days: 30
-  setup:
-    admin:
-      username: ${ADMIN_USERNAME:admin}
-      password: ${ADMIN_PASSWORD:admin123}
-    librarian:
-      username: ${LIBRARIAN_USERNAME:librarian}
-      password: ${LIBRARIAN_PASSWORD:librarian123}
+
 

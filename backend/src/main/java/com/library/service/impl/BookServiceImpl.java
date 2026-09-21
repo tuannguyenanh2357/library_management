@@ -11,7 +11,6 @@ import com.library.exception.ErrorCode;
 import com.library.repository.BookRepository;
 import com.library.repository.BookCopyRepository;
 import com.library.repository.BorrowingRequestRepository;
-import com.library.repository.ReservationRepository;
 import com.library.mapper.BookMapper;
 import com.library.service.interfaces.BookService;
 import com.library.entity.enums.BookCopyStatus;
@@ -37,11 +36,10 @@ public class BookServiceImpl implements BookService {
         BookRepository bookRepository;
         BookCopyRepository bookCopyRepository;
         BorrowingRequestRepository borrowingRequestRepository;
-        ReservationRepository reservationRepository;
         BookMapper bookMapper;
 
         @Override
-  //      @Cacheable(value = "books", key = "{#id, #title, #author, #category, #publisher, #isbn, #page, #size}")
+        @Cacheable(value = "books", key = "{#id, #title, #author, #category, #publisher, #isbn, #page, #size}")
         public PageResponse<BookResponse> getAllBooks(Long id, String title, String author, String category,
                         String publisher, String isbn, int page, int size) {
                 Pageable pageable = PageRequest.of(page, size,
@@ -73,17 +71,17 @@ public class BookServiceImpl implements BookService {
                                 .map(this::mapToResponse)
                                 .collect(Collectors.toList());
 
-                return PageResponse.<BookResponse>builder()
-                                .content(content)
-                                .pageNumber(bookPage.getNumber())
-                                .pageSize(bookPage.getSize())
-                                .totalElements(bookPage.getTotalElements())
-                                .totalPages(bookPage.getTotalPages())
-                                .build();
+                PageResponse<BookResponse> response = new PageResponse<>();
+                response.setContent(content);
+                response.setPageNumber(bookPage.getNumber());
+                response.setPageSize(bookPage.getSize());
+                response.setTotalElements(bookPage.getTotalElements());
+                response.setTotalPages(bookPage.getTotalPages());
+                return response;
         }
 
         @Override
-      //  @Cacheable(value = "topBooks")
+        @Cacheable(value = "topBooks")
         public List<TopBookResponse> getTop10MostBorrowedBooks() {
                 return bookRepository.getTop10MostBorrowedBooks().stream()
                                 .map(p -> new TopBookResponse(p.getBookId(), p.getTitle(), p.getAuthor(),

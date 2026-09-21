@@ -1,5 +1,7 @@
 package com.library.dto.response;
 
+import com.library.entity.enums.BorrowingRequestStatus;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,12 +25,12 @@ public class BorrowingRequestResponse {
     String memberName;
     Long bookId;
     String bookTitle;
-    String status;
+    BorrowingRequestStatus status;
     LocalDateTime requestDate;
     LocalDate expectedDueDate;
     LocalDateTime processedDate;
     String notes;
-    long availableCopiesCount;
+    Long availableCopiesCount;
     // ID của BookCopy đang được giữ chỗ (chỉ có giá trị khi status = APPROVED)
     Long assignedBookCopyId;
     // Thời điểm được duyệt (dùng để hiển thị thời gian đã chờ)
